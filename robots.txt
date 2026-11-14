@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://sokolvegorka-dev.github.io/nutripate/sitemap.xml
+Sitemap: https://nutripate.github.io/sitemap.xml
