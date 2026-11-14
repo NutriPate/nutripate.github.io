@@ -9,7 +9,7 @@ const $=id=>document.getElementById(id);
 const loadState=()=>{try{return JSON.parse(localStorage.getItem(stateKey))||{}}catch{return {}}};
 let state=Object.assign({pets:[],activePetId:null,owner:{name:'',email:'',privacyConsent:false},selectedFoods:{},favorites:[],feedEntries:[],weights:[],diaryDay:null},loadState());
 function normalizePet(p){const q=petDefaults(p);q.weight=Number(p?.weight??p?.weightKg??q.weight)||4.2;q.targetWeight=p?.targetWeight??p?.targetWeightKg??null;q.ageMonths=Number(p?.ageMonths??q.ageMonths??24);q.diagnoses=q.diagnoses?.length?q.diagnoses:['healthy'];q.allergens=q.allergens||[];q.activity=q.activity||'medium';q.sterilized=q.sterilized!==false;return q}
-state.pets=(state.pets||[]).map(normalizePet);state.owner=Object.assign({name:'',email:'',privacyConsent:false},state.owner||{});if(state.pets.length===1&&state.pets[0].id==='luna'&&state.pets[0].name==='Луна'&&!state.feedEntries.length&&!state.weights.length){state.pets=[];state.activePetId=null;save();}
+state.pets=(state.pets||[]).map(normalizePet);state.owner=Object.assign({name:'',email:'',privacyConsent:false},state.owner||{});if(state.pets.length===1&&state.pets[0].id==='luna'&&state.pets[0].name==='Луна'&&!state.feedEntries.length&&!state.weights.length){state.pets=[];state.activePetId=null;localStorage.setItem(stateKey,JSON.stringify(state));}
 const save=()=>localStorage.setItem(stateKey,JSON.stringify(state));
 const activePet=()=>state.pets.find(p=>p.id===state.activePetId)||state.pets[0];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
