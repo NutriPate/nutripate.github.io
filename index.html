@@ -77,9 +77,13 @@
     @media(max-width:850px){.nav{font-size:16px}.brand{font-size:23px}.brand-mark,.brand-logo{width:40px;height:40px}.lead,.section-lead{font-size:21px}.feature-grid p,.benefit p{font-size:18px}.tier-card ul{font-size:18px}}
     @media(max-width:480px){body{font-size:19px}.brand{font-size:21px}.brand-mark,.brand-logo{width:38px;height:38px}.lead,.section-lead{font-size:20px}.feature-grid p,.benefit p{font-size:18px}.button{padding:20px 27px;font-size:17px}.plan span{font-size:13px}.plan b{font-size:20px}}
   </style>
-  <style id="typography-system">
+  <style id="typography-system">@font-face{font-family:'MontserratLocal';src:url('fonts/Montserrat-Regular.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'MontserratLocal';src:url('fonts/Montserrat-Medium.ttf') format('truetype');font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:'MontserratLocal';src:url('fonts/Montserrat-SemiBold.ttf') format('truetype');font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:'MontserratLocal';src:url('fonts/Montserrat-Bold.ttf') format('truetype');font-weight:700;font-style:normal;font-display:swap}
+
     /* Единая типографическая система NutriPate: Montserrat, 14/18 для текста, 12/16 для подписей. */
-    :root{--font-main:'MontserratLocal','Montserrat',Arial,sans-serif}
+    :root{--font-main:'MontserratLocal','Montserrat',Arial,sans-serif;--font-display:'Newspaper','Georgia','Times New Roman',serif}
     html,body{font-family:var(--font-main)}
     body{font-size:14px;line-height:1.55}
     h1,h2,h3,p,small,span,li,a,button{font-family:var(--font-main)}
@@ -98,7 +102,7 @@
   </style>
 <style id="video-design-palette">
 :root{--brand:#13B5B5!important;--ink:#07383A!important;--mint:#D9F8F5!important;--white:#FFFFFF!important;--secondary:#5B7470!important;--border:#D7E5E2!important;--cream:#F7FAF8!important;--radius:24px!important}
-html,body,button,input,textarea,select{font-family:"Times New Roman",Times,serif!important}
+html,body,button,input,textarea,select{font-family:var(--font-main)!important}h1,h2,h3{font-family:var(--font-display)!important}
 body{background:#FFFFFF!important;color:#07383A!important}
 .hero{background:#D9F8F5!important}.pro-section{background:#FFFFFF!important}
 .feature-stage,.tier-card.tier-pro,.legal-section{background:#07383A!important}
