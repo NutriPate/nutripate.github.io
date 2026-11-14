@@ -1,8 +1,8 @@
 const stateKey='nutripate-web-state-v1';
 const fallbackFoods=[
- {id:'demo-1',name:'Sterilised 37',brand:'Royal Canin',species:'cat',form:'dry',kcalPer100g:367,proteinPer100g:37,fatPer100g:12,tier:'premium',image:'assets/foods_white/food-001.jpg',composition:'Белок, рис, кукуруза, жиры и функциональные добавки.'},
- {id:'demo-2',name:'Indoor 27',brand:'Royal Canin',species:'cat',form:'dry',kcalPer100g:374,proteinPer100g:27,fatPer100g:13,tier:'premium',image:'assets/foods_white/food-002.jpg',composition:'Рацион для домашних кошек с умеренной активностью.'},
- {id:'demo-3',name:'Sensitive',brand:'Pro Plan',species:'cat',form:'wet',kcalPer100g:90,proteinPer100g:10,fatPer100g:5,tier:'good',image:'assets/foods_white/food-003.jpg',composition:'Влажный рацион для чувствительного пищеварения.'}
+ {id:'demo-1',name:'Sterilised 37',brand:'Royal Canin',species:'cat',form:'dry',kcalPer100g:367,proteinPer100g:37,fatPer100g:12,tier:'premium',image:'assets/foods_white/catalog-rcat-ajo01.jpg',composition:'Белок, рис, кукуруза, жиры и функциональные добавки.'},
+ {id:'demo-2',name:'Indoor 27',brand:'Royal Canin',species:'cat',form:'dry',kcalPer100g:374,proteinPer100g:27,fatPer100g:13,tier:'premium',image:'assets/foods_white/catalog-rcat-ajo-fs.jpg',composition:'Рацион для домашних кошек с умеренной активностью.'},
+ {id:'demo-3',name:'Sensitive',brand:'Pro Plan',species:'cat',form:'wet',kcalPer100g:90,proteinPer100g:10,fatPer100g:5,tier:'good',image:'assets/foods_white/catalog-rcat-ajo-kt.jpg',composition:'Влажный рацион для чувствительного пищеварения.'}
 ];
 let catalog=[]; let tab='today'; let diaryTab='feed'; let query=''; let foodFilter='all';
 const $=id=>document.getElementById(id);
