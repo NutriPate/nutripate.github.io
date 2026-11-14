@@ -22,3 +22,9 @@
 @media(max-width:700px){.modal{width:100vw;max-width:none;height:100svh;max-height:100svh;margin:0;border-radius:0}.modal>div{min-height:100%;padding:20px 18px 100px}.modal h2{font-size:28px}.breed-detail-image{height:250px}}
 .breed-detail-image img{display:block;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:contain}
 .breed-detail-image{padding:18px}
+.breed-detail-image img{width:calc(100% - 36px)!important;height:calc(100% - 36px)!important;object-fit:contain!important;object-position:center!important}
+.breed-detail-image{position:relative;padding:0;overflow:hidden}.breed-detail-image img{position:absolute;top:18px;right:18px;bottom:18px;left:18px;width:auto!important;height:auto!important;max-width:none!important;max-height:none!important;object-fit:contain!important;object-position:center!important}
+.breed-detail-image img{width:calc(100% - 36px)!important;height:calc(100% - 36px)!important;max-width:none!important;max-height:none!important}
+.breed-detail-image{height:auto!important;aspect-ratio:4 / 3;padding:18px;overflow:hidden}.breed-detail-image img{position:static!important;width:100%!important;height:100%!important;object-fit:contain!important}
+.breed-detail-image{height:auto!important;aspect-ratio:auto!important;padding:0!important;overflow:visible!important;background:var(--mint)}.breed-detail-image img{position:static!important;display:block!important;width:100%!important;height:auto!important;max-width:none!important;max-height:none!important;object-fit:contain!important}
+.app-logo .logo-nutri{color:var(--teal)}
