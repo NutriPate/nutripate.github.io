@@ -66,6 +66,7 @@ window.savePet=id=>{const name=$('petInputName').value.trim();const species=$('p
 function petMenu(){openModal(`<h2>Выбрать питомца</h2><div class="pet-grid">${state.pets.map(p=>`<button class="more-row" onclick="choosePet('${p.id}')"><span><img class="pet-inline-photo" src="${petPhoto(p)}" alt=""> ${esc(p.name)}</span><span>${p.id===state.activePetId?'✓':'›'}</span></button>`).join('')}</div><button class="primary full" style="margin-top:12px" onclick="modal.close()">Закрыть</button>`)}
 window.choosePet=id=>{state.activePetId=id;save();$('modal').close();render()};$('petSwitcher').onclick=petMenu;document.addEventListener('DOMContentLoaded',async()=>{try{const data=await fetch('data/nutripate-catalog.json?v=profile4').then(r=>r.json());catalog=data.foods||[]}catch{catalog=fallbackFoods}if(!catalog.length)catalog=fallbackFoods;const p=activePet();if(p&&(!state.selectedFoods?.[p.id]||state.selectedFoods[p.id]==='xl-001')){const demo=recommendedFoods(p)[0]?.food||catalog.find(f=>f.species===p.species);if(demo){state.selectedFoods[p.id]=demo.id;save()}}render()});
 
+window.addEventListener('error',e=>{const m=document.getElementById('appMain');if(m&&!m.innerHTML.trim())m.innerHTML=`<section style="padding:24px"><h1>Ошибка запуска</h1><p>${String(e.message||'Неизвестная ошибка')}</p><small>${String(e.filename||'')} ${e.lineno||''}</small></section>`});
 
 
 
