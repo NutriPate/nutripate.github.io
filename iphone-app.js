@@ -193,3 +193,4 @@ const clearBreedFacts={'Британская':'Спокойная и плотн�
 const readableBreedNoteBase=readableBreedNote;readableBreedNote=function(text,name){return clearBreedFacts[name]||readableBreedNoteBase(text,name)};
 const petFormTargetRequired=petForm;petForm=function(raw){petFormTargetRequired(raw);const input=document.querySelector('#petInputTarget');if(input){input.required=true;input.placeholder='Введите целевой вес'}};
 const savePetTargetRequired=window.savePet;window.savePet=function(id){const target=readNumber('petInputTarget');if(!Number.isFinite(target)||target<=0)return formError('Укажите целевой вес питомца.');return savePetTargetRequired(id)};
+const renderWithPrePetNav=render;render=function(){renderWithPrePetNav();if(!activePet()){const nav=document.querySelector('.bottom-nav');if(nav){nav.hidden=false;nav.style.setProperty('display','grid','important');nav.style.setProperty('visibility','visible','important')}}};render();
