@@ -367,16 +367,15 @@ document.querySelectorAll('a[href^="iphone-app.html"]').forEach((link) => { link
 <script>
   const currentWebAppLink = document.querySelector('.web-section a.button-brand');
   if (currentWebAppLink) currentWebAppLink.href = 'iphone-app.html?v=breed-images2';
-  document.querySelectorAll('.hero-art').forEach((art) => {
-    if (!art.querySelector('.hero-dog-override')) {
-      const dog = document.createElement('img');
-      dog.className = 'photo hero-dog-override';
-      dog.src = 'assets/hero-dog-wave-cutout.png';
-      dog.alt = 'Собака рядом';
-      art.appendChild(dog);
-    }
-  });
 </script>
+<style id="hide-hero-dog">
+  .hero-art .hero-dog,
+  .hero-art .hero-dog-override,
+  .hero-art .note-dog {
+    display: none !important;
+    visibility: hidden !important;
+  }
+</style>
 </body>
 </html>
 
