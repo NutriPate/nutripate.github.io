@@ -230,3 +230,8 @@ window.selectFood=function(id){
   if(p&&chosenFood()?.id===id){state.foodChoiceConfirmed[p.id]=id;save()}
   return result
 };
+function petMenuAppParity(){
+  const pets=state.pets||[],active=activePet();
+  openModal(`<div class="pet-menu-parity"><div class="pet-menu-back" onclick="modal.close()">‹ <span>NutriPate</span></div><h2>Мои питомцы</h2><p class="muted">У каждого свой рацион и дневник.</p>${pets.map(p=>`<button class="pet-menu-card ${p.id===state.activePetId?'selected':''}" onclick="choosePet('${p.id}')"><div><strong>${esc(p.name)}</strong><span>${p.species==='dog'?'Собака':'Кошка'} · ${Number(p.weight||0).toLocaleString('ru-RU',{minimumFractionDigits:1,maximumFractionDigits:1})} кг</span><em>${p.id===state.activePetId?'Выбран':'Выбрать'}</em></div><img src="${petPhoto(p)}" alt=""></button>`).join('')||'<p class="empty">Питомцев пока нет.</p>'}<button class="primary full" onclick="modal.close();petForm()">Добавить питомца</button>${active?`<button class="soft-button full pet-menu-edit" onclick="modal.close();petForm(state.pets.find(x=>x.id==='${active.id}'))">Редактировать ${esc(active.name)}</button>`:''}</div>`)
+}
+petMenu=petMenuAppParity;
