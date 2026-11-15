@@ -60,10 +60,10 @@ html,body,button,input,select,textarea{font-family:"Times New Roman",Times,serif
 .pet-form input,.pet-form select,.pet-form textarea{padding-left:14px!important;text-indent:0!important}
 .pet-form select{padding-left:9px!important}
 .app-logo{font-family:Georgia,"Times New Roman",serif!important;font-size:24px!important;letter-spacing:-.06em!important}
-.pet-switcher{gap:9px!important;font-family:Georgia,"Times New Roman",serif!important;font-size:15px!important;color:var(--ink)!important}
-.pet-switcher .pet-inline-photo{width:32px!important;height:32px!important;border-radius:50%!important;background:var(--mint)!important;object-fit:contain!important}
-.pet-switcher #petAvatar{display:grid!important;place-items:center!important;flex:0 0 32px!important;width:32px!important;height:32px!important;border-radius:50%!important;overflow:hidden!important;background:var(--mint)!important}
-.pet-switcher #petAvatar .pet-inline-photo{display:block!important;width:32px!important;height:32px!important;flex:0 0 32px!important}
+.pet-switcher{gap:10px!important;font-family:Georgia,"Times New Roman",serif!important;font-size:16px!important;color:var(--ink)!important}
+.pet-switcher .pet-inline-photo{width:36px!important;height:36px!important;border-radius:50%!important;background:var(--mint)!important;object-fit:contain!important}
+.pet-switcher #petAvatar{display:grid!important;place-items:center!important;flex:0 0 36px!important;width:36px!important;height:36px!important;border-radius:50%!important;overflow:hidden!important;background:var(--mint)!important}
+.pet-switcher #petAvatar .pet-inline-photo{display:block!important;width:36px!important;height:36px!important;flex:0 0 36px!important}
 .pet-switcher .chevron{font-size:15px!important;color:var(--ink)!important}
 .pet-form select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,#5f5f5f 50%),linear-gradient(135deg,#5f5f5f 50%,transparent 50%);background-position:calc(100% - 17px) 20px,calc(100% - 12px) 20px;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
 .pet-form .form-section:first-child>label:first-of-type{margin-top:0}
