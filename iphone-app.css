@@ -40,6 +40,25 @@ html,body,button,input,select,textarea{font-family:"Times New Roman",Times,serif
 .app-logo,.welcome-brand,.screen-title h1{font-family:"Times New Roman",Times,serif!important}
 @media(max-width:420px){.app-shell{width:100%!important;max-width:none!important}}
 .app-shell.no-pet .bottom-nav{display:none!important;visibility:hidden!important}
+@media(min-width:701px){
+  .modal{width:420px!important;max-width:420px!important;max-height:92svh!important}
+  .modal>div{padding:18px!important}
+  .modal h2{font-size:28px!important;line-height:1.12!important;margin-bottom:18px!important}
+  .form{gap:10px!important}
+  .form label{font-size:14px!important}
+  .form input,.form select,.form textarea{min-height:48px!important;height:48px!important;padding:0 14px!important;font-size:16px!important}
+  .form-section{gap:9px!important}
+  .form-section>b{font-size:14px!important}
+  .form-grid{gap:9px!important}
+  .choice-grid{gap:7px!important}
+  .choice-chip{font-size:12px!important}
+  .choice-chip span{padding:9px 11px!important}
+  .form-hint{font-size:11px!important}
+  .form-actions{gap:8px!important;margin-top:8px!important}
+  .form-actions button{min-height:48px!important;font-size:15px!important}
+  .pet-photo-field{grid-template-columns:64px 1fr!important;gap:10px!important;margin-bottom:14px!important;padding-bottom:12px!important}
+  .pet-photo-field img{width:64px!important;height:64px!important;border-radius:16px!important}
+}
 .welcome-example{text-align:center!important}
 .welcome-example b,.welcome-example p{text-align:center!important}
   .food-placeholder{display:grid;place-items:center;width:42px;height:42px;border:2px solid var(--teal);border-radius:10px;color:var(--teal);font-size:0;line-height:1}
