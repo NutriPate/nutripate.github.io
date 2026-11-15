@@ -170,3 +170,4 @@ p,.muted,.eyebrow,.screen-title p,.food-card p,.pet-card p,.form label,.form-hin
 .app-logo,.welcome-brand{font-size:var(--type-body)!important;letter-spacing:normal!important}
 .grams{font-size:var(--type-heading)!important}.grams small{font-size:var(--type-secondary)!important}.nav-icon{font-size:var(--type-body)!important}.food-favorite-chip{font-size:var(--type-body)!important}.chevron{font-size:var(--type-secondary)!important}
 body h1,body h2,body h3,body h4,body h1 *,body h2 *,body h3 *,body h4 *{font-family:Montserrat,Arial,sans-serif!important;font-size:var(--type-heading)!important;line-height:1.2!important}
+body .screen-title h1,body .food-parity .screen-title h1,body .diary-parity .screen-title h1,body .app-logo,body .welcome-brand{font-family:Montserrat,Arial,sans-serif!important}
