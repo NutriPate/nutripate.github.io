@@ -347,6 +347,10 @@ window.selectPlan = applyPlan;
 window.selectPlan = applyPlan;
 document.querySelectorAll('a[href^="iphone-app.html"]').forEach((link) => { link.href = 'iphone-app.html?v=breed-images1'; });
 </script>
+<script>
+  const currentWebAppLink = document.querySelector('.web-section a.button-brand');
+  if (currentWebAppLink) currentWebAppLink.href = 'iphone-app.html?v=breed-images1';
+</script>
 </body>
 </html>
 
