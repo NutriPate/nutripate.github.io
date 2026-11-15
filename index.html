@@ -575,19 +575,19 @@ document.querySelectorAll('a[href^="iphone-app.html"]').forEach((link) => { link
       if (!section || !copy || !heading || !devices) return;
       if (window.innerWidth > 850 && window.innerWidth <= 1400) {
         section.style.setProperty('display', 'grid', 'important');
-        section.style.setProperty('grid-template-columns', '400px minmax(0, 1fr)', 'important');
+        section.style.setProperty('grid-template-columns', '370px minmax(0, 1fr)', 'important');
         section.style.setProperty('gap', '36px', 'important');
-        copy.style.setProperty('width', '400px', 'important');
-        copy.style.setProperty('max-width', '400px', 'important');
-        copy.style.setProperty('min-width', '400px', 'important');
-        heading.style.setProperty('width', '400px', 'important');
-        heading.style.setProperty('max-width', '400px', 'important');
+        copy.style.setProperty('width', '370px', 'important');
+        copy.style.setProperty('max-width', '370px', 'important');
+        copy.style.setProperty('min-width', '370px', 'important');
+        heading.style.setProperty('width', '370px', 'important');
+        heading.style.setProperty('max-width', '370px', 'important');
         heading.style.setProperty('white-space', 'nowrap', 'important');
         devices.style.setProperty('justify-content', 'flex-end', 'important');
         devices.style.setProperty('min-width', '0', 'important');
         devices.querySelectorAll('.app-device').forEach(function (device) {
-          device.style.setProperty('width', '175px', 'important');
-          device.style.setProperty('max-width', '175px', 'important');
+          device.style.setProperty('width', '205px', 'important');
+          device.style.setProperty('max-width', '205px', 'important');
         });
       }
     }
@@ -595,6 +595,15 @@ document.querySelectorAll('a[href^="iphone-app.html"]').forEach((link) => { link
     window.addEventListener('resize', fixShowcaseLayout);
   }());
 </script>
+<style id="final-showcase-photo-size-fix">
+  @media (min-width:851px) and (max-width:1400px){
+    .showcase{grid-template-columns:370px minmax(0,1fr)!important;gap:30px!important}
+    .showcase-copy,.showcase-copy h2{width:370px!important;min-width:370px!important;max-width:370px!important}
+    .showcase .device-row{min-width:0!important;gap:10px!important}
+    .showcase .app-device{width:205px!important;max-width:205px!important;padding:30px 8px 10px!important}
+    .showcase .app-device img{height:410px!important}
+  }
+</style>
 </body>
 </html>
 
