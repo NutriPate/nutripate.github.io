@@ -89,4 +89,7 @@ h1,h2,h3,h4,p,small,span,li,a{overflow-wrap:normal!important;word-break:normal!i
 .food-detail-hero img{max-width:100%!important;max-height:340px!important;width:auto!important;height:auto!important;object-fit:contain!important}
 .food-thumb img,.hero-food-photo,.welcome-art,.pet-avatar img,.pet-inline-photo,.pet-photo-field img{object-fit:contain!important;object-position:center!important}
 .bottom-nav{width:100%!important;max-width:520px!important}
+.nav-icon{width:31px!important;height:31px!important;border-radius:50%!important;font-size:0!important}
+.nav-icon svg{display:block;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.nav-item.active .nav-icon{background:var(--mint)!important}
 @media(max-width:520px){main{padding-left:16px!important;padding-right:16px!important}.form-grid{grid-template-columns:1fr!important}.screen-title h1{font-size:30px!important}.breed-detail-image{min-height:330px!important;padding:20px!important}.breed-detail-image img{max-height:380px!important}.food-card{grid-template-columns:68px minmax(0,1fr)!important}.food-thumb{width:68px!important;height:88px!important}.modal>div{padding:20px 16px 100px!important}}
