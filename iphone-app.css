@@ -74,3 +74,18 @@ html,body,body *{font-family:Montserrat,Arial,sans-serif!important}
 .breed-guide-card img{width:96px;height:96px;max-width:none;max-height:none;object-fit:contain;object-position:center;overflow:visible;border-radius:14px}
 .breed-detail-image{height:auto!important;min-height:320px!important;padding:24px!important;overflow:visible!important;display:flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important}
 .breed-detail-image img{position:static!important;width:auto!important;height:auto!important;max-width:100%!important;max-height:none!important;object-fit:contain!important;object-position:center!important;flex:0 1 auto!important}
+/* Final app QA override: keep layout stable at every viewport. */
+:root{--app-radius:16px!important}
+html,body,button,input,select,textarea,body *{font-family:Montserrat,Arial,sans-serif!important}
+body{font-size:16px!important;line-height:1.5!important;overflow-x:hidden!important}
+h1,h2,h3,h4,p,small,span,li,a{overflow-wrap:normal!important;word-break:normal!important}
+.card,.food-card,.pet-card,.more-row,.welcome-example,.guide-card,.search,.form input,.form select,.form textarea,.breed-picker-button,.breed-detail-image,.food-detail-hero,.pack,.chart,.icon-button,.primary,.soft-button,.modal,.tabs,.tabs button,.meal-bar,.toast,.badge,.food-thumb,.chip,.choice-chip span,.choice-chip-button,.pro-hero,.pro-table,.pro-plan,.danger-button,.pet-photo-field img{border-radius:var(--app-radius)!important}
+.breed-guide-card{overflow:visible!important;min-height:116px!important}
+.breed-guide-card img{object-fit:contain!important;object-position:center!important}
+.breed-detail-image{height:auto!important;min-height:360px!important;aspect-ratio:auto!important;padding:24px!important;overflow:visible!important;display:flex!important;align-items:center!important;justify-content:center!important}
+.breed-detail-image img{position:static!important;width:auto!important;height:auto!important;max-width:100%!important;max-height:440px!important;object-fit:contain!important;object-position:center!important}
+.food-detail-hero{min-height:240px!important;padding:22px!important;overflow:visible!important}
+.food-detail-hero img{max-width:100%!important;max-height:340px!important;width:auto!important;height:auto!important;object-fit:contain!important}
+.food-thumb img,.hero-food-photo,.welcome-art,.pet-avatar img,.pet-inline-photo,.pet-photo-field img{object-fit:contain!important;object-position:center!important}
+.bottom-nav{width:100%!important;max-width:520px!important}
+@media(max-width:520px){main{padding-left:16px!important;padding-right:16px!important}.form-grid{grid-template-columns:1fr!important}.screen-title h1{font-size:30px!important}.breed-detail-image{min-height:330px!important;padding:20px!important}.breed-detail-image img{max-height:380px!important}.food-card{grid-template-columns:68px minmax(0,1fr)!important}.food-thumb{width:68px!important;height:88px!important}.modal>div{padding:20px 16px 100px!important}}
