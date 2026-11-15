@@ -39,6 +39,7 @@ html,body,button,input,select,textarea{font-family:"Times New Roman",Times,serif
 .app-shell{width:min(100%,420px)!important;max-width:420px!important}
 .app-logo,.welcome-brand,.screen-title h1{font-family:"Times New Roman",Times,serif!important}
 @media(max-width:420px){.app-shell{width:100%!important;max-width:none!important}}
+.app-shell.no-pet .bottom-nav{display:none!important;visibility:hidden!important}
 .welcome-example{text-align:center!important}
 .welcome-example b,.welcome-example p{text-align:center!important}
   .food-placeholder{display:grid;place-items:center;width:42px;height:42px;border:2px solid var(--teal);border-radius:10px;color:var(--teal);font-size:0;line-height:1}
