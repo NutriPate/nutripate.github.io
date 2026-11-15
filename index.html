@@ -607,7 +607,8 @@ document.querySelectorAll('a[href^="iphone-app.html"]').forEach((link) => { link
 <style id="final-showcase-inner-image-fix">
   @media (min-width:851px) and (max-width:1400px){
     .showcase .app-device{width:255px!important;max-width:255px!important;padding:20px 4px 8px!important}
-    .showcase .app-device img{width:100%!important;height:510px!important;object-fit:contain!important}
+    .showcase .app-device{overflow:hidden!important}
+    .showcase .app-device img{width:100%!important;height:510px!important;object-fit:contain!important;transform:scale(1.14)!important;transform-origin:center center!important}
   }
 </style>
 </body>
