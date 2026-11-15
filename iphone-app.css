@@ -40,6 +40,8 @@ html,body,button,input,select,textarea{font-family:"Times New Roman",Times,serif
 .app-logo,.welcome-brand,.screen-title h1{font-family:"Times New Roman",Times,serif!important}
 @media(max-width:420px){.app-shell{width:100%!important;max-width:none!important}}
 .app-shell.no-pet .bottom-nav{display:none!important;visibility:hidden!important}
+.pet-photo-field img{display:none!important}
+.pet-photo-field{grid-template-columns:1fr!important}
 @media(min-width:701px){
   .modal{width:420px!important;max-width:420px!important;max-height:92svh!important}
   .modal>div{padding:18px!important}
