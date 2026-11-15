@@ -565,6 +565,36 @@ document.querySelectorAll('a[href^="iphone-app.html"]').forEach((link) => { link
     .showcase-copy h2{white-space:normal!important}
   }
 </style>
+<script id="final-showcase-layout-script">
+  (function () {
+    function fixShowcaseLayout() {
+      var section = document.querySelector('.showcase');
+      var copy = document.querySelector('.showcase-copy');
+      var heading = document.querySelector('.showcase-copy h2');
+      var devices = document.querySelector('.showcase .device-row');
+      if (!section || !copy || !heading || !devices) return;
+      if (window.innerWidth > 850 && window.innerWidth <= 1400) {
+        section.style.setProperty('display', 'grid', 'important');
+        section.style.setProperty('grid-template-columns', '400px minmax(0, 1fr)', 'important');
+        section.style.setProperty('gap', '36px', 'important');
+        copy.style.setProperty('width', '400px', 'important');
+        copy.style.setProperty('max-width', '400px', 'important');
+        copy.style.setProperty('min-width', '400px', 'important');
+        heading.style.setProperty('width', '400px', 'important');
+        heading.style.setProperty('max-width', '400px', 'important');
+        heading.style.setProperty('white-space', 'nowrap', 'important');
+        devices.style.setProperty('justify-content', 'flex-end', 'important');
+        devices.style.setProperty('min-width', '0', 'important');
+        devices.querySelectorAll('.app-device').forEach(function (device) {
+          device.style.setProperty('width', '175px', 'important');
+          device.style.setProperty('max-width', '175px', 'important');
+        });
+      }
+    }
+    document.addEventListener('DOMContentLoaded', fixShowcaseLayout);
+    window.addEventListener('resize', fixShowcaseLayout);
+  }());
+</script>
 </body>
 </html>
 
