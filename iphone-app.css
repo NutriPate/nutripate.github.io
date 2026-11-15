@@ -75,7 +75,7 @@ html,body,body *{font-family:Montserrat,Arial,sans-serif!important}
 .breed-detail-image{height:auto!important;min-height:320px!important;padding:24px!important;overflow:visible!important;display:flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important}
 .breed-detail-image img{position:static!important;width:auto!important;height:auto!important;max-width:100%!important;max-height:none!important;object-fit:contain!important;object-position:center!important;flex:0 1 auto!important}
 /* Final app QA override: keep layout stable at every viewport. */
-:root{--app-radius:24px!important}
+:root{--app-radius:32px!important}
 html,body,button,input,select,textarea,body *{font-family:Montserrat,Arial,sans-serif!important}
 body{font-size:16px!important;line-height:1.68!important;overflow-x:hidden!important}
 h1,h2,h3,h4,p,small,span,li,a{overflow-wrap:normal!important;word-break:normal!important}
