@@ -95,8 +95,8 @@ h1,h2,h3,h4,p,small,span,li,a{overflow-wrap:normal!important;word-break:normal!i
 .nav-item[data-tab="more"] .nav-icon svg{fill:currentColor!important;stroke:none!important}
 .nav-item[data-tab="pets"] .nav-icon svg{fill:currentColor!important;stroke:none!important}
 .nav-paw-image img{display:block;width:18px;height:18px;object-fit:contain}
-.nav-icon{width:38px!important;height:38px!important}
-.nav-icon svg{width:27px!important;height:27px!important}
-.nav-paw-image img{width:34px!important;height:34px!important;transform:scale(1.45)!important}
+.nav-icon{width:34px!important;height:34px!important}
+.nav-icon svg{width:23px!important;height:23px!important}
+.nav-paw-image img{width:30px!important;height:30px!important;transform:none!important}
 .nav-item.active .nav-icon{background:var(--mint)!important}
 @media(max-width:520px){main{padding-left:16px!important;padding-right:16px!important}.form-grid{grid-template-columns:1fr!important}.screen-title h1{font-size:30px!important}.breed-detail-image{min-height:330px!important;padding:20px!important}.breed-detail-image img{max-height:380px!important}.food-card{grid-template-columns:68px minmax(0,1fr)!important}.food-thumb{width:68px!important;height:88px!important}.modal>div{padding:20px 16px 100px!important}}
