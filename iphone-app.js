@@ -230,6 +230,16 @@ window.selectFood=function(id){
   if(p&&chosenFood()?.id===id){state.foodChoiceConfirmed[p.id]=id;save()}
   return result
 };
+let parityFilterDraft={form:'all',budget:'all',brand:''};
+window.toggleParityFilter=(kind,value)=>{parityFilterDraft[kind]=value;document.querySelectorAll(`[data-pfilter="${kind}"]`).forEach(x=>x.classList.toggle('active',x.dataset.value===value))};
+window.applyParityFilters=()=>{state.foodFilters={form:parityFilterDraft.form,budget:parityFilterDraft.budget!=='all',brand:parityFilterDraft.brand};save();modal.close();render()};
+function filtersModalAppParity(){
+  const f=state.foodFilters||{};parityFilterDraft={form:f.form||'all',budget:f.budget?'budget':'all',brand:f.brand||''};
+  const brands=[...new Set(catalog.map(x=>x.brand).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ru'));
+  const chip=(kind,value,label,active)=>`<button class="chip ${active?'active':''}" data-pfilter="${kind}" data-value="${esc(value)}" onclick="toggleParityFilter('${kind}','${esc(value)}')">${esc(label)}</button>`;
+  openModal(`<div class="filter-parity"><div class="pet-menu-back" onclick="modal.close()">‹ <span>NutriPate</span></div><h2>Фильтры</h2><h3>Тип корма</h3><div class="chips">${chip('form','all','Все',parityFilterDraft.form==='all')}${chip('form','dry','Сухой',parityFilterDraft.form==='dry')}${chip('form','wet','Влажный',parityFilterDraft.form==='wet')}</div><h3>Бюджет в день</h3><div class="chips">${chip('budget','all','Любой',parityFilterDraft.budget==='all')}${chip('budget','40','до 40 ₽',false)}${chip('budget','70','до 70 ₽',false)}${chip('budget','120','до 120 ₽',false)}</div><h3>Бренд</h3><div class="chips brand-filter-chips">${chip('brand','','Любой',!parityFilterDraft.brand)}${brands.map(b=>chip('brand',b,b,parityFilterDraft.brand===b)).join('')}</div><p class="muted filter-note">Бюджет ограничивает цену, а не качество. Подбор учитывает профиль питомца.</p><button class="primary full" onclick="applyParityFilters()">Применить фильтры</button></div>`)
+}
+filtersModal=filtersModalAppParity;
 function petMenuAppParity(){
   const pets=state.pets||[],active=activePet();
   openModal(`<div class="pet-menu-parity"><div class="pet-menu-back" onclick="modal.close()">‹ <span>NutriPate</span></div><h2>Мои питомцы</h2><p class="muted">У каждого свой рацион и дневник.</p>${pets.map(p=>`<button class="pet-menu-card ${p.id===state.activePetId?'selected':''}" onclick="choosePet('${p.id}')"><div><strong>${esc(p.name)}</strong><span>${p.species==='dog'?'Собака':'Кошка'} · ${Number(p.weight||0).toLocaleString('ru-RU',{minimumFractionDigits:1,maximumFractionDigits:1})} кг</span><em>${p.id===state.activePetId?'Выбран':'Выбрать'}</em></div><img src="${petPhoto(p)}" alt=""></button>`).join('')||'<p class="empty">Питомцев пока нет.</p>'}<button class="primary full" onclick="modal.close();petForm()">Добавить питомца</button>${active?`<button class="soft-button full pet-menu-edit" onclick="modal.close();petForm(state.pets.find(x=>x.id==='${active.id}'))">Редактировать ${esc(active.name)}</button>`:''}</div>`)
