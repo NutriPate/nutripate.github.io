@@ -504,6 +504,16 @@ document.querySelectorAll('a[href^="iphone-app.html"]').forEach((link) => { link
   .compare-grid .tier-pro ul li:nth-child(8),
   .compare-grid .tier-pro ul li:nth-child(10){display:none!important}
 </style>
+<style id="final-pricing-interaction-fix">
+  .pricing-card .form-note{display:none!important}
+  .plans .plan{border:2px solid transparent!important;padding:11px 9px!important;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease!important}
+  .plans .plan.active{border-color:var(--brand)!important;padding:11px 9px!important}
+  .plans .plan:hover{transform:translateY(-3px)!important;box-shadow:0 10px 18px rgba(9,47,50,.14)!important}
+  .plans .plan b{white-space:nowrap!important;display:block!important;font-size:15px!important;letter-spacing:-.02em!important}
+  .plans .plan small{white-space:normal!important;line-height:1.25!important}
+  .pricing-card>.button{transition:transform .2s ease,box-shadow .2s ease!important}
+  .pricing-card>.button:hover{transform:translateY(-4px)!important;box-shadow:0 12px 22px rgba(9,47,50,.2)!important}
+</style>
 </body>
 </html>
 
