@@ -118,8 +118,8 @@ body{background:#FFFFFF!important;color:#07383A!important}
 #plan-12:checked ~ .selected-plan #planSaving:after{content:'Экономия 16%';font-size:14px}
 #plan-6:checked ~ .selected-plan #planPrice:after{content:'1 599 ₽';font-size:34px}
 #plan-12:checked ~ .selected-plan #planPrice:after{content:'2 999 ₽';font-size:34px}
-#plan-6:checked ~ .selected-plan #planNote:after{content:'за 6 месяцев · ≈ 266 ₽ / месяц';font-size:14px}
-#plan-12:checked ~ .selected-plan #planNote:after{content:'за 12 месяцев · ≈ 250 ₽ / месяц';font-size:14px}
+#plan-6:checked ~ .selected-plan #planNote:after{content:'за 6 месяцев ≈ 266 ₽ / месяц';font-size:14px}
+#plan-12:checked ~ .selected-plan #planNote:after{content:'за 12 месяцев ≈ 250 ₽ / месяц';font-size:14px}
   </style>
   <style id="hero-pet-layout">
     .hero-art .hero-cat{right:-25%;top:12px;width:220px;height:280px;z-index:6}
@@ -313,8 +313,8 @@ const proSection = document.querySelector('#pro');
 if (compareSection && proSection) proSection.before(compareSection);
 const planData = [
   {label:'1 месяц', price:'299 ₽', note:'за 1 месяц', saving:'Без скидки', discount:''},
-  {label:'6 месяцев', price:'1 599 ₽', note:'за 6 месяцев · ≈ 266 ₽ / месяц', saving:'Экономия 11%', discount:'−11%'},
-  {label:'12 месяцев', price:'2 999 ₽', note:'за 12 месяцев · ≈ 250 ₽ / месяц', saving:'Экономия 16%', discount:'−16%'}
+  {label:'6 месяцев', price:'1 599 ₽', note:'за 6 месяцев ≈ 266 ₽ / месяц', saving:'Экономия 11%', discount:'−11%'},
+  {label:'12 месяцев', price:'2 999 ₽', note:'за 12 месяцев ≈ 250 ₽ / месяц', saving:'Экономия 16%', discount:'−16%'}
 ];
 plans.forEach((plan, index) => {
   const data = planData[index];
