@@ -203,3 +203,21 @@ const selectFoodConfirm=window.selectFood;window.selectFood=function(id){const p
 const foodDetailsNoPrimaryFix=foodDetails;foodDetails=function(id){const noPrimary=!chosenFood();foodDetailsNoPrimaryFix(id);if(noPrimary){const button=document.querySelector('#modalContent .primary');if(button){button.textContent='Добавить в рацион';button.onclick=()=>window.selectFood(id)}}};
 const foodDetailsNoPrimaryFinal=foodDetails;foodDetails=function(id){const noPrimary=!chosenFood();foodDetailsNoPrimaryFinal(id);if(noPrimary){const button=document.querySelector('#modalContent .primary');if(button){button.textContent=foodRecommendation(foodById(id),activePet())?'Добавить в рацион':'Проверить этикетку';button.onclick=()=>window.selectFood(id)}}};
 const viewTodayHideNormWithoutFood=viewToday;viewToday=function(){const p=activePet(),html=viewTodayHideNormWithoutFood();if(!p||chosenFood())return html;return html.replace(/<div class="card norm">[\s\S]*?<\/div>/,'')};render();
+// A food is considered selected only after the user explicitly confirms that exact food.
+// This also clears stale selections left by older builds or demo data.
+state.foodChoiceConfirmed=state.foodChoiceConfirmed&&typeof state.foodChoiceConfirmed==='object'?state.foodChoiceConfirmed:{};
+Object.keys(state.selectedFoods||{}).forEach(petId=>{
+  const selected=state.selectedFoods[petId];
+  if(selected&&selected!=='__not_selected__'&&state.foodChoiceConfirmed[petId]!==selected){
+    state.selectedFoods[petId]='__not_selected__';
+    delete state.foodChoiceConfirmed[petId];
+  }
+});
+save();
+const selectFoodExactFinal=window.selectFood;
+window.selectFood=function(id){
+  const result=selectFoodExactFinal(id);
+  const p=activePet();
+  if(p&&chosenFood()?.id===id){state.foodChoiceConfirmed[p.id]=id;save()}
+  return result
+};
