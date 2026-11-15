@@ -34,6 +34,11 @@ main{width:100%;padding:0 18px 24px}
 .chip,.choice-chip span,.choice-chip-button{border-radius:var(--app-radius)!important}
 .pet-avatar-placeholder{display:block;width:24px;height:24px;border:2px solid var(--teal);border-radius:50%;background:var(--mint)}
 .food-placeholder-icon{display:grid;place-items:center;width:42px;height:42px;border:2px solid var(--teal);border-radius:10px;color:var(--teal);font-size:30px;line-height:1}
+/* Match the desktop app reference: serif typography and compact app canvas. */
+html,body,button,input,select,textarea{font-family:"Times New Roman",Times,serif!important}
+.app-shell{width:min(100%,420px)!important;max-width:420px!important}
+.app-logo,.welcome-brand,.screen-title h1{font-family:"Times New Roman",Times,serif!important}
+@media(max-width:420px){.app-shell{width:100%!important;max-width:none!important}}
   .food-placeholder{display:grid;place-items:center;width:42px;height:42px;border:2px solid var(--teal);border-radius:10px;color:var(--teal);font-size:0;line-height:1}
   .food-placeholder::before{content:'▱';font-size:30px}
 .food-thumb img,.hero-food-photo,.food-detail-hero img,.welcome-art,.pet-avatar img,.pet-inline-photo{object-fit:contain!important;object-position:center!important}
