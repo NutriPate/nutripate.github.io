@@ -637,6 +637,19 @@ document.querySelectorAll('a[href^="iphone-app.html"]').forEach((link) => { link
 <style id="hero-phone-screen-size-fix">
   .hero-art .phone-screen{transform:scale(1.14)!important;transform-origin:center center!important}
 </style>
+<style id="remove-pricing-divider-final">
+  .pricing-card .selected-plan,
+  .selected-plan{border:0!important;border-bottom:0!important;border-block-end:0!important;box-shadow:none!important}
+</style>
+<script id="remove-pricing-divider-runtime">
+  document.addEventListener('DOMContentLoaded',function(){
+    document.querySelectorAll('.selected-plan').forEach(function(el){
+      el.style.setProperty('border','0','important');
+      el.style.setProperty('border-bottom','0','important');
+      el.style.setProperty('border-block-end','0','important');
+    });
+  });
+</script>
 </body>
 </html>
 
