@@ -41,6 +41,19 @@ html,body,button,input,select,textarea{font-family:"Times New Roman",Times,serif
 @media(max-width:420px){.app-shell{width:100%!important;max-width:none!important}}
 .app-shell.no-pet .bottom-nav{display:none!important;visibility:hidden!important}
 .pet-photo-field{display:none!important}
+.pet-form-header{display:flex;align-items:center;gap:10px;margin:0 0 14px;color:var(--teal);font-family:"Times New Roman",Times,serif;font-size:20px}
+.pet-form-header .back-button{width:28px;height:28px;font-size:32px;color:var(--ink)}
+.pet-photo-row{display:flex;align-items:center;gap:12px;margin:8px 0 14px}
+.pet-paw-placeholder{display:grid;place-items:center;width:64px;height:64px;border-radius:16px;background:var(--mint)}
+.pet-paw-mark{width:42px;height:42px;fill:var(--teal)}
+.pet-photo-row .link-button{font-size:14px}
+.pet-species-chips{display:flex;gap:8px;margin:0 0 8px}
+.pet-species-chips .choice-chip-button,.pet-form .choice-chip-button{font:inherit;color:var(--ink);background:#fff;border:1px solid #d6e1dc;border-radius:18px;padding:8px 14px;cursor:pointer}
+.pet-species-chips .choice-chip-button.active{background:var(--mint);border-color:var(--mint)}
+.breed-reference-row{display:flex!important;align-items:center;justify-content:space-between;width:100%;min-height:48px;padding:0!important;border:0!important;border-bottom:1px solid #d6e1dc!important;border-radius:0!important;background:transparent!important;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.breed-reference-row strong{font-weight:400}
+.pet-reference-grid{grid-template-columns:1fr!important}
+.pet-form .form-section:first-child>label:first-of-type{margin-top:0}
 @media(min-width:701px){
   .modal{width:420px!important;max-width:420px!important;max-height:92svh!important}
   .modal>div{padding:18px!important}
