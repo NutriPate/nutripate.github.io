@@ -514,6 +514,20 @@ document.querySelectorAll('a[href^="iphone-app.html"]').forEach((link) => { link
   .pricing-card>.button{transition:transform .2s ease,box-shadow .2s ease!important}
   .pricing-card>.button:hover{transform:translateY(-4px)!important;box-shadow:0 12px 22px rgba(9,47,50,.2)!important}
 </style>
+<style id="final-showcase-mobile-layout-fix">
+  @media(max-width:850px){
+    .showcase{display:block!important;width:100%!important;overflow:hidden!important}
+    .showcase-copy{display:block!important;width:100%!important;max-width:none!important;padding:0!important}
+    .showcase-copy h2{display:block!important;width:100%!important;max-width:none!important;font-size:30px!important;line-height:1.2!important;letter-spacing:-.035em!important}
+    .showcase-copy .section-lead{display:block!important;width:100%!important;max-width:none!important;line-height:1.7!important}
+    .showcase .device-row{display:flex!important;width:100%!important;justify-content:center!important;align-items:flex-end!important;margin-top:40px!important}
+  }
+  @media(max-width:520px){
+    .showcase{padding-left:18px!important;padding-right:18px!important}
+    .showcase-copy h2{font-size:28px!important;line-height:1.22!important}
+    .showcase .device-row{margin-top:32px!important}
+  }
+</style>
 </body>
 </html>
 
