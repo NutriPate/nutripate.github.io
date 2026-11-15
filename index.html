@@ -538,6 +538,17 @@ document.querySelectorAll('a[href^="iphone-app.html"]').forEach((link) => { link
     .showcase .app-device img{height:360px!important}
   }
 </style>
+<style id="final-showcase-fixed-columns">
+  @media (min-width:851px) and (max-width:1100px){
+    .showcase{display:grid!important;grid-template-columns:400px minmax(0,1fr)!important;gap:34px!important}
+    .showcase-copy{width:400px!important;max-width:400px!important;min-width:400px!important}
+    .showcase-copy h2{width:400px!important;max-width:400px!important;font-size:40px!important;line-height:1.15!important;letter-spacing:-.04em!important}
+    .showcase-copy .section-lead{width:390px!important;max-width:390px!important}
+    .showcase .device-row{width:100%!important;min-width:0!important;gap:10px!important;justify-content:flex-end!important}
+    .showcase .app-device{width:165px!important;max-width:165px!important}
+    .showcase .app-device img{height:340px!important}
+  }
+</style>
 </body>
 </html>
 
