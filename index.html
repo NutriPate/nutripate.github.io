@@ -619,6 +619,10 @@ document.querySelectorAll('a[href^="iphone-app.html"]').forEach((link) => { link
   .plans .plan span,.plans .plan b{white-space:nowrap!important;word-break:normal!important}
   .plans .plan small{line-height:1.25!important;word-spacing:normal!important}
 </style>
+<style id="remove-pro-vertical-bars">
+  .pro-benefits .benefit{padding-left:0!important}
+  .pro-benefits .benefit::before{display:none!important;content:none!important}
+</style>
 </body>
 </html>
 
