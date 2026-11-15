@@ -75,11 +75,12 @@ html,body,body *{font-family:Montserrat,Arial,sans-serif!important}
 .breed-detail-image{height:auto!important;min-height:320px!important;padding:24px!important;overflow:visible!important;display:flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important}
 .breed-detail-image img{position:static!important;width:auto!important;height:auto!important;max-width:100%!important;max-height:none!important;object-fit:contain!important;object-position:center!important;flex:0 1 auto!important}
 /* Final app QA override: keep layout stable at every viewport. */
-:root{--app-radius:16px!important}
+:root{--app-radius:24px!important}
 html,body,button,input,select,textarea,body *{font-family:Montserrat,Arial,sans-serif!important}
-body{font-size:16px!important;line-height:1.5!important;overflow-x:hidden!important}
+body{font-size:16px!important;line-height:1.68!important;overflow-x:hidden!important}
 h1,h2,h3,h4,p,small,span,li,a{overflow-wrap:normal!important;word-break:normal!important}
 .card,.food-card,.pet-card,.more-row,.welcome-example,.guide-card,.search,.form input,.form select,.form textarea,.breed-picker-button,.breed-detail-image,.food-detail-hero,.pack,.chart,.icon-button,.primary,.soft-button,.modal,.tabs,.tabs button,.meal-bar,.toast,.badge,.food-thumb,.chip,.choice-chip span,.choice-chip-button,.pro-hero,.pro-table,.pro-plan,.danger-button,.pet-photo-field img{border-radius:var(--app-radius)!important}
+.screen-title{padding-top:20px!important;padding-bottom:24px!important}.screen-title h1{margin-bottom:12px!important}.card,.food-card,.pet-card,.more-row{padding:20px!important}.section-head{margin-top:28px!important;margin-bottom:16px!important}.kv{padding:18px 0!important}.food-card p,.pet-card p,.screen-title p{line-height:1.65!important}
 .breed-guide-card{overflow:visible!important;min-height:116px!important}
 .breed-guide-card img{object-fit:contain!important;object-position:center!important}
 .breed-detail-image{height:auto!important;min-height:360px!important;aspect-ratio:auto!important;padding:24px!important;overflow:visible!important;display:flex!important;align-items:center!important;justify-content:center!important}
