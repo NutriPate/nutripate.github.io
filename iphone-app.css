@@ -43,3 +43,5 @@
 .choice-chip-button{min-height:42px;padding:8px 16px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);font:inherit;cursor:pointer}
 .choice-chip-button.active{border-color:var(--teal);background:var(--mint)}
 html,body,body *{font-family:Montserrat,Arial,sans-serif!important}
+.breed-guide-card{grid-template-columns:96px 1fr 22px;min-height:116px;overflow:visible}
+.breed-guide-card img{width:96px;height:96px;max-width:none;max-height:none;object-fit:contain;object-position:center;overflow:visible;border-radius:14px}
