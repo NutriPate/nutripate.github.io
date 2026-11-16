@@ -324,3 +324,4 @@ weightChartSvg=function(rows,period=weightPeriod){
   rows.forEach(row=>{if(row&&row.date)byDate.set(String(row.date),row);});
   return weightChartSvgDaily([...byDate.values()].sort((a,b)=>String(a.date).localeCompare(String(b.date))),period);
 };
+weightChartSvg=weightChartSvgDaily;
