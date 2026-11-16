@@ -34,7 +34,7 @@
       page();
       text('Отчёт о питомце', 80, 150, 54); text(`${p.name || 'Питомец'} - питание и изменения состояния`, 80, 220, 28, '#53716f');
       box(300, 470, true); text('01 ПАСПОРТ ПИТОМЦА', 95, 340, 20, '#53716f');
-      if (photo) ctx.drawImage(photo, 95, 385, 270, 270);
+      if (photo) { const maxW = 270, maxH = 270, scale = Math.min(maxW / photo.naturalWidth, maxH / photo.naturalHeight), iw = photo.naturalWidth * scale, ih = photo.naturalHeight * scale; ctx.drawImage(photo, 95 + (maxW - iw) / 2, 385 + (maxH - ih) / 2, iw, ih); }
       text(p.name || 'Питомец', 420, 405, 34);
       block(`${p.species === 'dog' ? 'Собака' : 'Кошка'} · ${ru(p.breedLabel || p.breed || 'Порода не указана')}`, 420, 450, 650, 23);
       text(`Текущий вес: ${p.weight || p.kg || '—'} кг`, 420, 550, 25);
