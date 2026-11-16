@@ -189,5 +189,4 @@ html,body,body *,body *::before,body *::after{font-family:Montserrat,Arial,sans-
 .more-parity .channel .brand.max i{background-image:url('/assets/social/max.png')!important}
 .more-parity .channel .brand i::before{content:none!important}
 .more-parity .credits span:first-child,.more-parity .credits span:last-child{display:flex;align-items:center;gap:6px}
-.more-parity .credits span:first-child::before{content:'';display:inline-block;width:28px;height:18px;background:url('/assets/social/russia-flag.png') center/cover no-repeat;border:1px solid #111;border-radius:2px}
-.more-parity .credits span:last-child::before{content:'';display:inline-block;width:28px;height:28px;background:url('/assets/social/hse.png') center/contain no-repeat;border-radius:50%}
+.more-parity .credits span::before{content:none!important;display:none!important}
