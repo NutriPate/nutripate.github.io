@@ -17,5 +17,12 @@
     event.stopImmediatePropagation();
     if (typeof window.ownerForm === 'function') window.ownerForm();
   }, true);
+  const channelLinks = ['https://t.me/nutripate', 'https://max.ru/'];
+  document.querySelectorAll('.more-parity .channel').forEach((channel, index) => {
+    channel.style.cursor = 'pointer';
+    channel.setAttribute('role', 'link');
+    channel.onclick = () => window.open(channelLinks[index], '_blank', 'noopener,noreferrer');
+  });
   if (typeof render === 'function') render();
+  setTimeout(() => document.querySelectorAll('.more-parity .channel').forEach((channel, index) => { channel.style.cursor = 'pointer'; channel.onclick = () => window.open(channelLinks[index], '_blank', 'noopener,noreferrer'); }), 0);
 }());
