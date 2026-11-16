@@ -183,6 +183,7 @@ body .screen-title h1,body .food-parity .screen-title h1,body .diary-parity .scr
 .food-action-stack{display:grid!important;gap:16px!important;width:100%!important;margin-top:10px!important}.food-action-stack>*{width:100%!important;margin:0!important}
 .food-thumb img,.hero-food-photo{object-fit:contain!important;object-position:center!important;background:#fff}
 html,body,body *,body *::before,body *::after{font-family:Montserrat,Arial,sans-serif!important}
+.nav-item,.nav-item:focus,.nav-item:focus-visible{outline:none!important;box-shadow:none!important}
 .more-parity .channel .brand i{background-color:transparent!important;background-image:url('/assets/social/telegram.png')!important;background-position:center!important;background-repeat:no-repeat!important;background-size:contain!important;font-size:0!important}
 .more-parity .channel .brand.max i{background-image:url('/assets/social/max.png')!important}
 .more-parity .channel .brand i::before{content:none!important}
