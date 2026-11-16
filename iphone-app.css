@@ -178,3 +178,4 @@ body .screen-title h1,body .food-parity .screen-title h1,body .diary-parity .scr
 .chart-svg{overflow:hidden!important}
 .chart-svg svg{overflow:hidden!important}
  .weight-goal{margin:8px 0 -8px;text-align:right;color:var(--muted);font-size:12px}
+.food-thumb img,.hero-food-photo{object-fit:cover!important;object-position:center!important;background:#fff}
