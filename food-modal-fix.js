@@ -6,6 +6,7 @@
     button.type = 'button';
     button.className = 'soft-button full food-detail-back';
     button.textContent = '← Назад к кормам';
+  button.style.marginTop = '24px';
     button.addEventListener('click', () => document.querySelector('#modal')?.close());
     content.appendChild(button);
   }

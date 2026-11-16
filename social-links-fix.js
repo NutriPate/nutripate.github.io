@@ -21,4 +21,7 @@
   };
   setTimeout(bind, 0);
   setTimeout(bind, 500);
+  const observer = new MutationObserver(bind);
+  observer.observe(document.body, { childList: true, subtree: true });
+  setInterval(bind, 1000);
 }());
