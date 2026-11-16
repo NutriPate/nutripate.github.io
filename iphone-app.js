@@ -273,7 +273,7 @@ const viewWeightDiaryBase=viewWeightDiary;
 viewWeightDiary=function(p){
   const stored=state.weights,own=stored.filter(x=>x.petId===p.id),hasProfile=own.some(x=>x.note==='Вес при создании профиля');
   const profileWeight=Number(p.weight)>0&&!hasProfile;
-  if(profileWeight)state.weights=stored.concat([{petId:p.id,kg:Number(p.weight).toFixed(1),date:'2026-11-15',note:'Вес при создании профиля'}]);
+  if(profileWeight)state.weights=[{petId:p.id,kg:Number(p.weight).toFixed(1),date:'2026-11-15',note:'Вес при создании профиля'},...stored];
   let html=viewWeightDiaryBase(p);
   state.weights=stored;
   html=html.replaceAll('2026-11-15','15 ноября 2026');
