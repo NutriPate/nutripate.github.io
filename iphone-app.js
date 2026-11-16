@@ -268,3 +268,12 @@ function viewFoodsAppParity(){
   return `<div class="food-parity"><div class="screen-title"><p class="eyebrow"></p><h1>Корма для ${species}</h1></div><input class="search" id="foodSearch" value="${esc(query)}" placeholder="Название, бренд или состав"><div class="chips food-parity-tabs"><button class="chip active" data-filter="all">${species.charAt(0).toUpperCase()+species.slice(1)}</button><button class="chip ${foodFilter==='dry'?'active':''}" data-filter="dry">Сухой</button><button class="chip ${foodFilter==='wet'?'active':''}" data-filter="wet">Влажный</button><button class="chip" data-action="filters">Фильтры</button><button class="chip food-favorite-chip" data-filter="fav">♡</button></div><p class="muted food-parity-intro">Лучшие, хорошие и бюджетные — по профилю. Цена кормов выше не поднимается.</p><section class="recommendation-section food-parity-section"><h2>Для контроля веса</h2><p class="muted">Меньше калорий, разные марки.</p><div class="food-list">${list.map(x=>foodCard(x.food)).join('')||'<div class="empty">Подходящих вариантов пока нет.</div>'}</div></section><p class="muted food-parity-database">В базе ${catalog.length} кормов. Состав сверяли 13 ноября 2026. В списке — подобранные группы, поиск идёт по всей базе.</p><div class="food-parity-footer"><button class="kv" data-action="manual"><span>Своего корма нет в базе</span><span>→</span></button><button class="kv" data-action="compare"><span>Сравнить избранные</span><span>→</span></button></div></div>`
 }
 viewFoods=viewFoodsAppParity;
+
+const viewTodayClearInstruction=viewToday;
+viewToday=function(){
+  const html=viewTodayClearInstruction(),p=activePet(),f=chosenFood();
+  if(!p||!f)return html;
+  const rows=mealRows(),r=rows[loggedToday().length]||rows[2];
+  const instruction=`<div class="today-clear-instruction"><strong>Для ${esc(p.name)}</strong><span>Дать сегодня: <b>${r.grams} г</b> · ${esc(f.brand)} · ${esc(f.name)}</span></div>`;
+  return html.replace('<div class="hero-row">',instruction+'<div class="hero-row">');
+};

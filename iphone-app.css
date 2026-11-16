@@ -171,3 +171,6 @@ p,.muted,.eyebrow,.screen-title p,.food-card p,.pet-card p,.form label,.form-hin
 .grams{font-size:var(--type-heading)!important}.grams small{font-size:var(--type-secondary)!important}.nav-icon{font-size:var(--type-body)!important}.food-favorite-chip{font-size:var(--type-body)!important}.chevron{font-size:var(--type-secondary)!important}
 body h1,body h2,body h3,body h4,body h1 *,body h2 *,body h3 *,body h4 *{font-family:Montserrat,Arial,sans-serif!important;font-size:var(--type-heading)!important;line-height:1.2!important}
 body .screen-title h1,body .food-parity .screen-title h1,body .diary-parity .screen-title h1,body .app-logo,body .welcome-brand{font-family:Montserrat,Arial,sans-serif!important}
+ .today-clear-instruction{display:grid;gap:4px;margin:-2px 0 14px;padding:12px 14px;border-radius:16px;background:#fff;border:1px solid rgba(6,54,55,.12);color:#063637}
+ .today-clear-instruction strong{font-size:15px}
+ .today-clear-instruction span{font-size:13px;line-height:1.35}
