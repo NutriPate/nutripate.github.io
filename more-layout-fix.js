@@ -10,5 +10,12 @@
   const moreView = window.viewMore;
   try { viewMore = moreView; } catch (e) {}
   if (location.search.includes('more=') || location.hash === '#more') tab = 'more';
+  document.addEventListener('click', function (event) {
+    const row = event.target.closest && event.target.closest('.more-parity .owner-row');
+    if (!row) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (typeof window.ownerForm === 'function') window.ownerForm();
+  }, true);
   if (typeof render === 'function') render();
 }());
