@@ -4,17 +4,24 @@
     const detail = content?.querySelector('.food-detail');
     if (!detail) return;
 
+    const imageName = detail.querySelector('.food-detail-hero img')?.src.split('/').pop() || '';
+    const productPages = {
+      'food-011-fixed.jpg': 'https://alphapet.ru/catalog/sterilizovannym-koshkam/anchousy-i-krevetki-myasnye-kusochki-v-souse-dlya-vzroslykh-sterilizovannykh-koshek/'
+    };
+    if (productPages[imageName] && !detail.querySelector('.food-page-link')) {
+      const link = document.createElement('a');
+      link.className = 'food-page-link';
+      link.href = productPages[imageName];
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.innerHTML = '<span>Страница корма</span><b>→</b>';
+      const removeButton = [...detail.querySelectorAll('button')].find((button) => button.textContent.trim().startsWith('Убрать'));
+      if (removeButton) removeButton.before(link);
+      else detail.appendChild(link);
+    }
     [...detail.querySelectorAll('button')].forEach((button) => {
       const label = button.textContent.trim();
-      if (label === 'Сравнить') button.remove();
-      if (label === 'Этикетка' && !button.dataset.fixed) {
-        button.dataset.fixed = '1';
-        button.onclick = () => {
-          const image = detail.querySelector('.food-detail-hero img');
-          if (image?.src) window.open(image.src, '_blank', 'noopener,noreferrer');
-          else window.toast?.('Этикетка для этого корма недоступна');
-        };
-      }
+      if (label === 'Сравнить' || label === 'Этикетка') button.remove();
       if (label === 'Убрать из рациона' && !button.dataset.fixed) {
         button.dataset.fixed = '1';
         button.onclick = () => {

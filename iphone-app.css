@@ -178,4 +178,5 @@ body .screen-title h1,body .food-parity .screen-title h1,body .diary-parity .scr
 .chart-svg{overflow:hidden!important}
 .chart-svg svg{overflow:hidden!important}
  .weight-goal{margin:8px 0 -8px;text-align:right;color:var(--muted);font-size:12px}
+.food-page-link{display:flex;justify-content:space-between;align-items:center;width:100%;margin:14px 0;padding:4px 0;color:var(--teal);text-decoration:none;font-size:15px}.food-page-link b{font-size:22px;font-weight:400}
 .food-thumb img,.hero-food-photo{object-fit:contain!important;object-position:center!important;background:#fff}
