@@ -1,6 +1,6 @@
 (function () {
   window.weightChartSvg = function (rows, period) {
-    period = period || window.weightPeriod || 'week';
+    period = 'all';
     var days = { week: 7, month: 30, quarter: 90, year: 365, all: null }[period];
     var today = new Date(); today.setHours(0, 0, 0, 0);
     var cutoff = days ? new Date(today.getTime() - (days - 1) * 86400000) : null;
@@ -36,5 +36,25 @@
     return '<div class="chart chart-svg"><svg viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="График веса">' + grid + '<polyline points="' + polyline + '"/>' + dots + '<text class="last-value" x="' + Math.min(w - right - 45, Math.max(left, x(points.length - 1) - 12)) + '" y="' + Math.max(14, y(points[points.length - 1].kg) - 12) + '">' + points[points.length - 1].kg.toFixed(1).replace('.', ',') + ' кг</text>' + labels + '</svg></div>';
   };
 }());
+function hideWeightPeriodButtons() {
+  document.querySelectorAll('.screen-title + .tabs + .chips').forEach(function (chips) {
+    var buttons = chips.querySelectorAll('button');
+    buttons.forEach(function (button, index) {
+      if (index < buttons.length - 1) button.remove();
+    });
+    var last = chips.querySelector('button:last-child');
+    if (last) {
+      last.textContent = 'Всё время';
+      last.classList.add('active');
+    }
+  });
+}
 if (typeof weightChartSvg !== 'undefined') weightChartSvg = window.weightChartSvg;
-if (typeof render === 'function') render();
+if (typeof render === 'function') {
+  var originalRender = render;
+  render = function () {
+    originalRender();
+    hideWeightPeriodButtons();
+  };
+  render();
+}
