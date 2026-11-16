@@ -11,13 +11,13 @@
   const bind = () => {
     document.querySelectorAll('.more-parity .channel').forEach((row, index) => {
       const icon = row.querySelector('.brand i');
-      if (icon) icon.innerHTML = `<img src="/assets/social/${index === 0 ? 'telegram' : 'max'}.png" alt="${index === 0 ? 'Telegram' : 'MAX'}">`;
+      if (icon && !icon.querySelector('img')) icon.innerHTML = `<img src="/assets/social/${index === 0 ? 'telegram' : 'max'}.png" alt="${index === 0 ? 'Telegram' : 'MAX'}">`;
       row.style.cursor = 'pointer';
       row.setAttribute('title', index === 0 ? 'Открыть Telegram' : 'Открыть MAX');
       row.onclick = () => window.open(index === 0 ? 'https://t.me/nutripate' : 'https://max.ru/', '_blank', 'noopener,noreferrer');
     });
     const credits = document.querySelector('.more-parity .credits');
-    if (credits) credits.innerHTML = '<span class="credit-item"><img class="flag-mark" src="/assets/social/russia-flag.png" alt="Флаг России"><span>made in Russia</span></span><span class="credit-item"><img class="hse-mark" src="/assets/social/hse.png" alt="Логотип НИУ ВШЭ"><span>НИУ ВШЭ</span></span>';
+    if (credits && !credits.querySelector('.flag-mark')) credits.innerHTML = '<span class="credit-item"><img class="flag-mark" src="/assets/social/russia-flag.png" alt="Флаг России"><span>made in Russia</span></span><span class="credit-item"><img class="hse-mark" src="/assets/social/hse.png" alt="Логотип НИУ ВШЭ"><span>НИУ ВШЭ</span></span>';
   };
   setTimeout(bind, 0);
   setTimeout(bind, 500);
