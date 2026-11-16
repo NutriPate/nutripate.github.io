@@ -4,14 +4,13 @@
     const detail = content?.querySelector('.food-detail');
     if (!detail) return;
 
-    const imageName = detail.querySelector('.food-detail-hero img')?.src.split('/').pop() || '';
-    const productPages = {
-      'food-011-fixed.jpg': 'https://alphapet.ru/catalog/sterilizovannym-koshkam/anchousy-i-krevetki-myasnye-kusochki-v-souse-dlya-vzroslykh-sterilizovannykh-koshek/'
-    };
-    if (productPages[imageName] && !detail.querySelector('.food-page-link')) {
+    const foodName = detail.querySelector('h2')?.textContent.trim() || '';
+    const foodRecord = typeof catalog !== 'undefined' && Array.isArray(catalog) ? catalog.find((food) => food.name === foodName) : null;
+    const productUrl = foodRecord?.productUrl || '';
+    if (productUrl && !detail.querySelector('.food-page-link')) {
       const link = document.createElement('a');
       link.className = 'food-page-link';
-      link.href = productPages[imageName];
+      link.href = productUrl;
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       link.innerHTML = '<span>Страница корма</span><b>→</b>';
