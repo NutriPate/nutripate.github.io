@@ -20,8 +20,8 @@
     var low = Math.min.apply(null, points.map(function (p) { return p.kg; }));
     var high = Math.max.apply(null, points.map(function (p) { return p.kg; }));
     var pad = Math.max(.15, (high - low) * .3), min = low - pad, max = high + pad;
-    var registration = window.weightRegistrationDate || points[0].date;
-    var start = days ? cutoff : new Date(registration + 'T00:00:00');
+    var registration = points[0].date;
+    var start = days ? cutoff : points[0].base;
     var end = days ? today : points[points.length - 1].base;
     var range = Math.max(86400000, end - start), plotWidth = w - left - right, plotHeight = h - top - bottom;
     var x = function (i) { return points.length === 1 ? left + plotWidth / 2 : Math.max(left, Math.min(w - right, left + (points[i].plot - start) / range * plotWidth)); };
@@ -30,7 +30,7 @@
     var grid = [0, 1, 2, 3, 4].map(function (i) { var yy = top + i * plotHeight / 4, value = max - (max - min) * i / 4; return '<line x1="' + left + '" y1="' + yy + '" x2="' + (w - right) + '" y2="' + yy + '"/><text x="2" y="' + (yy + 5) + '">' + value.toFixed(1).replace('.', ',') + '</text>'; }).join('');
     var dots = points.map(function (p, i) { return '<circle cx="' + x(i) + '" cy="' + y(p.kg) + '" r="5"/>'; }).join('');
     var label = function (value) { return window.esc ? window.esc(value) : value; };
-    var labels = '<text x="' + left + '" y="' + (h - 8) + '">' + label(period === 'all' ? registration : points[0].date) + '</text><text x="' + (w - right - 58) + '" y="' + (h - 8) + '">' + label(points[points.length - 1].date) + '</text>';
+    var labels = '<text x="' + left + '" y="' + (h - 8) + '">' + label(points[0].date) + '</text><text x="' + (w - right - 58) + '" y="' + (h - 8) + '">' + label(points[points.length - 1].date) + '</text>';
     return '<div class="chart chart-svg"><svg viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="График веса">' + grid + '<polyline points="' + polyline + '"/>' + dots + '<text class="last-value" x="' + Math.min(w - right - 45, Math.max(left, x(points.length - 1) - 12)) + '" y="' + Math.max(14, y(points[points.length - 1].kg) - 12) + '">' + points[points.length - 1].kg.toFixed(1).replace('.', ',') + ' кг</text>' + labels + '</svg></div>';
   };
 }());
