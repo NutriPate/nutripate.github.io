@@ -9,5 +9,8 @@
     const activity = ({ low: 'Низкая', medium: 'Умеренная', high: 'Высокая', very_high: 'Очень высокая' }[p.activity] || 'Умеренная');
     return `<section class="profile-parity"><h1>Мой ${esc(p.name)}</h1><div class="profile-hero"><img src="${esc(petPhoto(p))}" alt="${esc(p.name)}"><h2>${esc(p.name)}</h2><p>${p.species === 'dog' ? 'Собака' : 'Кошка'} · ${p.ageMonths ? Math.floor(p.ageMonths / 12) + ' года' : 'Возраст не указан'}</p><p>${esc(p.breedLabel || p.breed || 'Порода не указана')}</p><button class="soft-button" data-edit-pet="${p.id}">Редактировать</button></div><div class="profile-row"><span>Пол · стерилизация</span><strong>${p.sex === 'male' ? 'Самец' : 'Самка'} · ${p.sterilized ? 'да' : 'нет'} ›</strong></div><div class="profile-row"><span>Вес · активность</span><strong>${p.weight || '—'} кг · ${activity} ›</strong></div><div class="profile-row"><span>Здоровье и аллергии</span><strong>${esc(health)} ›</strong></div><div class="profile-card"><h3>Рацион ${p.species === 'dog' ? 'собаки' : 'кошки'}</h3><p>${p.foodName ? esc(p.foodName) : 'Корм не выбран'}</p></div><div class="profile-report"><h3>История питомца в одном отчёте</h3><p>График веса, рацион и ваши записи. Отчёт можно сохранить и отправить ветеринару.</p><button class="primary" data-action="report">Скачать отчёт</button></div></section>`;
   };
+  const profileViewPets = window.viewPets;
+  try { viewPets = profileViewPets; } catch (e) {}
+  if (location.search.includes('profile=') || location.hash === '#pets') tab = 'pets';
   if (typeof render === 'function') render();
 }());
