@@ -298,3 +298,13 @@ viewToday=function(){
   const instruction=`<div class="today-clear-instruction"><strong>Для ${esc(p.name)}</strong><span>Дать сегодня: <b>${r.grams} г</b> · ${esc(f.brand)} · ${esc(f.name)}</span></div>`;
   return html.replace('<div class="hero-row">',instruction+'<div class="hero-row">');
 };
+
+weightChartSvg=function(rows,period=weightPeriod){
+  const days={week:7,month:30,quarter:90,year:365,all:null}[period]??7,today=new Date();
+  today.setHours(0,0,0,0);
+  const cutoff=days?new Date(today.getTime()-(days-1)*86400000):null;
+  const pts=rows.map(x=>({date:String(x.date||''),kg:Number(x.kg)})).filter(x=>x.date&&Number.isFinite(x.kg)&&x.kg>0&&(!cutoff||new Date(`${x.date}T00:00:00`)>=cutoff)).sort((a,b)=>a.date.localeCompare(b.date));
+  if(!pts.length)return '<div class="chart chart-empty">Нет записей за этот период</div>';
+  const w=360,h=250,l=48,r=12,t=18,b=36,lo=Math.min(...pts.map(x=>x.kg)),hi=Math.max(...pts.map(x=>x.kg)),pad=Math.max(.15,(hi-lo)*.3),min=lo-pad,max=hi+pad,plotW=w-l-r,plotH=h-t-b,start=cutoff||new Date(`${pts[0].date}T00:00:00`),end=days?today:new Date(`${pts[pts.length-1].date}T00:00:00`),range=Math.max(86400000,end-start),x=i=>pts.length===1?l+plotW/2:l+(new Date(`${pts[i].date}T00:00:00`)-start)/range*plotW,y=v=>t+(max-v)/(max-min)*plotH,points=pts.map((p,i)=>`${x(i).toFixed(1)},${y(p.kg).toFixed(1)}`).join(' '),grid=[0,1,2,3,4].map(i=>{const yy=t+i*plotH/4,val=max-(max-min)*i/4;return `<line x1="${l}" y1="${yy}" x2="${w-r}" y2="${yy}"/><text x="2" y="${yy+5}">${val.toFixed(1).replace('.',',')}</text>`}).join(''),labels=pts.length===1?`<text x="${l}" y="${h-8}">${esc(pts[0].date)}</text>`:`<text x="${l}" y="${h-8}">${esc(pts[0].date)}</text><text x="${w-r-55}" y="${h-8}">${esc(pts[pts.length-1].date)}</text>`,dots=pts.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.kg)}" r="5"/>`).join('');
+  return `<div class="chart chart-svg"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="График веса">${grid}<polyline points="${points}"/>${dots}<text class="last-value" x="${Math.min(w-r-42,Math.max(l,x(pts.length-1)-12))}" y="${Math.max(14,y(pts[pts.length-1].kg)-12)}">${pts[pts.length-1].kg.toFixed(1).replace('.',',')} кг</text>${labels}</svg></div>`;
+};
