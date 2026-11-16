@@ -1,12 +1,12 @@
 (function () {
   const style = document.createElement('style');
-  style.textContent = `.more-parity .brand i{display:grid!important;place-items:center!important;width:34px!important;height:34px!important;border-radius:50%!important;font-size:0!important;font-family:Arial,sans-serif!important;opacity:1!important}.more-parity .brand:not(.max) i{background:#24a9e6!important}.more-parity .brand:not(.max) i::before{content:'✈';font-size:19px;color:#fff}.more-parity .brand.max i{background:#6950d8!important}.more-parity .brand.max i::before{content:'M';font-size:19px;font-weight:700;color:#fff}`;
+  style.textContent = `.more-parity .brand i{display:grid!important;place-items:center!important;width:42px!important;height:42px!important;border-radius:50%!important;font-size:0!important;font-family:Arial,sans-serif!important;opacity:1!important}.more-parity .brand:not(.max) i{background:#24a9e6!important}.more-parity .brand:not(.max) i::before{content:'✈';font-size:19px;color:#fff}.more-parity .brand.max i{background:#6950d8!important}.more-parity .brand.max i::before{content:'M';font-size:19px;font-weight:700;color:#fff}`;
   document.head.appendChild(style);
   const iconStyle = document.createElement('style');
-  iconStyle.textContent = '.more-parity .brand i::before{content:none!important}.more-parity .brand i img{width:34px;height:34px;display:block;object-fit:contain;border-radius:50%}';
+  iconStyle.textContent = '.more-parity .brand i::before{content:none!important}.more-parity .brand i img{width:42px;height:42px;display:block;object-fit:contain;border-radius:50%}';
   document.head.appendChild(iconStyle);
   const footerStyle = document.createElement('style');
-  footerStyle.textContent = '.more-parity .credits .credit-item{display:flex;align-items:center;gap:6px}.more-parity .credits .flag-mark{width:28px;height:18px;object-fit:cover;border-radius:2px}.more-parity .credits .hse-mark{width:28px;height:28px;object-fit:contain;border-radius:50%}';
+  footerStyle.textContent = '.more-parity .credits .credit-item{display:flex;align-items:center;gap:6px}.more-parity .credits .flag-mark{width:28px;height:18px;object-fit:cover;border:1px solid #111;border-radius:2px}.more-parity .credits .hse-mark{width:28px;height:28px;object-fit:contain;border-radius:50%}';
   document.head.appendChild(footerStyle);
   const bind = () => {
     document.querySelectorAll('.more-parity .channel').forEach((row, index) => {
