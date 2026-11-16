@@ -36,3 +36,5 @@
     return '<div class="chart chart-svg"><svg viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="График веса">' + grid + '<polyline points="' + polyline + '"/>' + dots + '<text class="last-value" x="' + Math.min(w - right - 45, Math.max(left, x(points.length - 1) - 12)) + '" y="' + Math.max(14, y(points[points.length - 1].kg) - 12) + '">' + points[points.length - 1].kg.toFixed(1).replace('.', ',') + ' кг</text>' + labels + '</svg></div>';
   };
 }());
+if (typeof weightChartSvg !== 'undefined') weightChartSvg = window.weightChartSvg;
+if (typeof render === 'function') render();
