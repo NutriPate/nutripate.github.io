@@ -11,11 +11,18 @@
     const ctx = canvas.getContext('2d');
     const W = 1200, H = 1700;
     canvas.width = W * 2; canvas.height = H * 2; ctx.scale(2, 2);
-    const ru = value => String(value || '').replace(/\bbeef\b/gi, 'говядина').replace(/\bchicken\b/gi, 'курица').replace(/\bfish\b/gi, 'рыба').replace(/\blow\b/gi, 'низкая').replace(/\bmedium\b/gi, 'умеренная').replace(/\bhigh\b/gi, 'высокая').replace(/\bvery_high\b/gi, 'очень высокая').replace(/\bfemale\b/gi, 'самка').replace(/\bmale\b/gi, 'самец');
+    const ru = value => String(value || '').replace(/\bbeef\b/gi, 'говядина').replace(/\bchicken\b/gi, 'курица').replace(/\bfish\b/gi, 'рыба').replace(/\boverweight\b/gi, 'лишний вес').replace(/\ballergy\b/gi, 'аллергия').replace(/\ballergies\b/gi, 'аллергии').replace(/\blow\b/gi, 'низкая').replace(/\bmedium\b/gi, 'умеренная').replace(/\bhigh\b/gi, 'высокая').replace(/\bvery_high\b/gi, 'очень высокая').replace(/\bfemale\b/gi, 'самка').replace(/\bmale\b/gi, 'самец');
     const text = (s, x, y, size = 24, color = '#07383a', bold = false) => {
       ctx.font = `${bold ? '700 ' : '400 '}${size}px Arial`;
       ctx.fillStyle = color;
       ctx.fillText(String(s || ''), x, y);
+    };
+    const block = (s, x, y, max, size = 24, color = '#07383a', bold = false) => {
+      ctx.font = `${bold ? '700 ' : '400 '}${size}px Arial`;
+      const words = String(s || '').split(/\s+/); let line = ''; let row = 0;
+      words.forEach(word => { const next = line ? `${line} ${word}` : word; if (ctx.measureText(next).width > max && line) { text(line, x, y + row * (size + 8), size, color, bold); row++; line = word; } else line = next; });
+      if (line) text(line, x, y + row * (size + 8), size, color, bold);
+      return row + 1;
     };
     const box = (y, h, mint = false) => {
       ctx.fillStyle = mint ? '#d9f6f3' : '#fff';
@@ -26,14 +33,14 @@
     const draw = photo => {
       page();
       text('Отчёт о питомце', 80, 150, 54); text(`${p.name || 'Питомец'} - питание и изменения состояния`, 80, 220, 28, '#53716f');
-      box(300, 360, true); text('01 ПАСПОРТ ПИТОМЦА', 95, 340, 20, '#53716f');
+      box(300, 470, true); text('01 ПАСПОРТ ПИТОМЦА', 95, 340, 20, '#53716f');
       if (photo) ctx.drawImage(photo, 105, 390, 190, 190);
       text(p.name || 'Питомец', 360, 405, 34);
-      text(`${p.species === 'dog' ? 'Собака' : 'Кошка'} · ${ru(p.breedLabel || p.breed || 'Порода не указана')}`, 360, 450, 23);
+      block(`${p.species === 'dog' ? 'Собака' : 'Кошка'} · ${ru(p.breedLabel || p.breed || 'Порода не указана')}`, 360, 450, 690, 23);
       text(`Текущий вес: ${p.weight || p.kg || '—'} кг`, 360, 525, 25);
       text(`Целевой вес: ${p.targetWeight || '—'} кг`, 760, 525, 25);
-      text(`Аллергии: ${ru(p.allergens || 'не указаны')}`, 105, 650, 21);
-      text(`Особенности: ${ru(p.diagnoses || 'не указаны')}`, 105, 690, 21);
+      block(`Аллергии: ${ru(p.allergens || 'не указаны')}`, 105, 650, 980, 21);
+      block(`Особенности: ${ru(p.diagnoses || 'не указаны')}`, 105, 700, 980, 21);
       text('Данные внесены владельцем и не заменяют консультацию ветеринара.', 105, 735, 18, '#53716f');
       box(790, 560); text('02 ДИНАМИКА ВЕСА', 95, 830, 20, '#53716f'); text('Вес за всё время', 95, 875, 34);
       const first = Number(weights[0]?.kg || p.weight || p.kg || 0), last = Number(weights.at(-1)?.kg || first), vals = weights.map(x => Number(x.kg)).filter(Number.isFinite);
