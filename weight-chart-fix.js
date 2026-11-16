@@ -21,8 +21,8 @@
     var high = Math.max.apply(null, points.map(function (p) { return p.kg; }));
     var pad = Math.max(.15, (high - low) * .3), min = low - pad, max = high + pad;
     var registration = points[0].date;
-    var start = points[0].base;
-    var end = points[points.length - 1].base;
+    var start = period === 'all' ? points[0].base : cutoff;
+    var end = period === 'all' ? points[points.length - 1].base : today;
     var range = Math.max(86400000, end - start), plotWidth = w - left - right, plotHeight = h - top - bottom;
     var x = function (i) { return points.length === 1 ? left + plotWidth / 2 : period === 'all' ? left + i / (points.length - 1) * plotWidth : Math.max(left, Math.min(w - right, left + (points[i].plot - start) / range * plotWidth)); };
     var y = function (value) { return top + (max - value) / (max - min) * plotHeight; };
