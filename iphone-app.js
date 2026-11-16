@@ -4,7 +4,7 @@ const fallbackFoods=[
  {id:'demo-2',name:'Indoor 27',brand:'Royal Canin',species:'cat',form:'dry',kcalPer100g:374,proteinPer100g:27,fatPer100g:13,tier:'premium',image:'assets/foods_white/catalog-rcat-ajo-fs.jpg',composition:'Рацион для домашних кошек с умеренной активностью.'},
  {id:'demo-3',name:'Sensitive',brand:'Pro Plan',species:'cat',form:'wet',kcalPer100g:90,proteinPer100g:10,fatPer100g:5,tier:'good',image:'assets/foods_white/catalog-rcat-ajo-kt.jpg',composition:'Влажный рацион для чувствительного пищеварения.'}
 ];
-let catalog=[]; let tab='today'; let diaryTab='feed'; let weightPeriod='week'; let query=''; let foodFilter='all'; let foodLimitWeb=8;
+let catalog=[]; let tab='today'; let diaryTab='feed'; let weightPeriod='week'; let weightRegistrationDate=''; let query=''; let foodFilter='all'; let foodLimitWeb=8;
 const $=id=>document.getElementById(id);
 const loadState=()=>{try{return JSON.parse(localStorage.getItem(stateKey))||{}}catch{return {}}};
 let state=Object.assign({pets:[],activePetId:null,owner:{name:'',email:'',privacyConsent:false},selectedFoods:{},favorites:[],feedEntries:[],weights:[],diaryDay:null},loadState());state.pets=Array.isArray(state.pets)?state.pets:[];state.feedEntries=Array.isArray(state.feedEntries)?state.feedEntries:[];state.weights=Array.isArray(state.weights)?state.weights:[];state.favorites=Array.isArray(state.favorites)?state.favorites:[];state.selectedFoods=state.selectedFoods&&typeof state.selectedFoods==='object'?state.selectedFoods:{};
@@ -274,6 +274,7 @@ viewWeightDiary=function(p){
   const stored=state.weights,own=stored.filter(x=>x.petId===p.id),hasProfile=own.some(x=>x.note==='Вес при создании профиля');
   const profileWeight=Number(p.weight)>0&&!hasProfile;
   if(profileWeight)state.weights=[{petId:p.id,kg:Number(p.weight).toFixed(1),date:'2026-11-15',note:'Вес при создании профиля'},...stored];
+  weightRegistrationDate=(state.weights.filter(x=>x.petId===p.id).map(x=>String(x.date||'')).filter(Boolean).sort()[0])||'2026-11-15';
   let html=viewWeightDiaryBase(p);
   state.weights=stored;
   html=html.replaceAll('2026-11-15','15 ноября 2026');
@@ -333,6 +334,14 @@ weightChartSvg=function(rows,period=weightPeriod){
   return weightChartSvgDaily([...byDate.values()].sort((a,b)=>String(a.date).localeCompare(String(b.date))),period);
 };
 weightChartSvg=weightChartSvgDaily;
+weightChartSvg=function(rows,period=weightPeriod){
+  const days={week:7,month:30,quarter:90,year:365,all:null}[period]??7,today=new Date();today.setHours(0,0,0,0),cutoff=days?new Date(today.getTime()-(days-1)*86400000):null;
+  const raw=rows.map((x,i)=>({date:String(x.date||''),kg:Number(x.kg),order:i})).filter(x=>x.date&&Number.isFinite(x.kg)&&x.kg>0).sort((a,b)=>a.date.localeCompare(b.date)||a.order-b.order),counts={};raw.forEach(x=>counts[x.date]=(counts[x.date]||0)+1);const seen={};
+  const pts=raw.map(x=>{const base=new Date(`${x.date}T00:00:00`),i=seen[x.date]||0;seen[x.date]=i+1;return {...x,base,plot:new Date(base.getTime()+(i-(counts[x.date]-1)/2)*86400000*.35)}}).filter(x=>!cutoff||x.base>=cutoff);
+  if(!pts.length)return '<div class="chart chart-empty">Нет записей за этот период</div>';
+  const w=360,h=250,l=52,r=18,t=18,b=38,lo=Math.min(...pts.map(x=>x.kg)),hi=Math.max(...pts.map(x=>x.kg)),pad=Math.max(.15,(hi-lo)*.3),min=lo-pad,max=hi+pad,start=days?cutoff:new Date(`${weightRegistrationDate||pts[0].date}T00:00:00`),end=today,range=Math.max(86400000,end-start),pw=w-l-r,ph=h-t-b,x=i=>pts.length===1?l+pw/2:Math.max(l,Math.min(w-r,l+(pts[i].plot-start)/range*pw)),y=v=>t+(max-v)/(max-min)*ph,points=pts.map((p,i)=>`${x(i).toFixed(1)},${y(p.kg).toFixed(1)}`).join(' '),grid=[0,1,2,3,4].map(i=>{const yy=t+i*ph/4,val=max-(max-min)*i/4;return `<line x1="${l}" y1="${yy}" x2="${w-r}" y2="${yy}"/><text x="2" y="${yy+5}">${val.toFixed(1).replace('.',',')}</text>`}).join(''),labels=pts.length===1?`<text x="${l}" y="${h-8}">${esc(pts[0].date)}</text>`:`<text x="${l}" y="${h-8}">${esc(weightRegistrationDate||pts[0].date)}</text><text x="${w-r-58}" y="${h-8}">${esc(today.toISOString().slice(0,10))}</text>`,dots=pts.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.kg)}" r="5"/>`).join('');
+  return `<div class="chart chart-svg"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="График веса">${grid}<polyline points="${points}"/>${dots}<text class="last-value" x="${Math.min(w-r-45,Math.max(l,x(pts.length-1)-12))}" y="${Math.max(14,y(pts[pts.length-1].kg)-12)}">${pts[pts.length-1].kg.toFixed(1).replace('.',',')} кг</text>${labels}</svg></div>`;
+};
 weightChartSvg=function(rows,period=weightPeriod){
   const days={week:7,month:30,quarter:90,year:365,all:null}[period]??7,today=new Date();today.setHours(0,0,0,0);
   const cutoff=days?new Date(today.getTime()-(days-1)*86400000):null,raw=rows.map(x=>({date:String(x.date||''),kg:Number(x.kg)})).filter(x=>x.date&&Number.isFinite(x.kg)&&x.kg>0).sort((a,b)=>a.date.localeCompare(b.date)),seen={},counts={};
