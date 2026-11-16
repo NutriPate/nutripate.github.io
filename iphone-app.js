@@ -272,9 +272,10 @@ viewFoods=viewFoodsAppParity;
 const viewWeightDiaryBase=viewWeightDiary;
 viewWeightDiary=function(p){
   const stored=state.weights,own=stored.filter(x=>x.petId===p.id);
-  if(!own.length&&Number(p.weight)>0)state.weights=stored.concat([{petId:p.id,kg:Number(p.weight).toFixed(1),date:'15 ноября 2026',note:'Вес при создании профиля'}]);
+  if(!own.length&&Number(p.weight)>0)state.weights=stored.concat([{petId:p.id,kg:Number(p.weight).toFixed(1),date:'2026-11-15',note:'Вес при создании профиля'}]);
   let html=viewWeightDiaryBase(p);
   state.weights=stored;
+  html=html.replaceAll('2026-11-15','15 ноября 2026');
   if(p.targetWeight)html=html.replace('<div class="weight-summary">',`<div class="weight-goal">Цель ${esc(Number(p.targetWeight).toFixed(1))} кг</div><div class="weight-summary">`);
   return html;
 };
