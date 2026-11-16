@@ -4,9 +4,16 @@
   document.head.appendChild(style);
   window.ownerForm = function () {
     const o = state.owner || {};
-    const html = `<div class="owner-parity"><h2>Профиль владельца</h2><p class="owner-subtitle">Данные хранятся только на этом устройстве.</p><div class="owner-note"><b>Забота начинается с вас</b><span>Профиль помогает подписывать отчёты и не потерять имя владельца.</span></div><div class="form"><label>Имя<input id="ownerInputName" type="text" value="${esc(o.name || '')}" placeholder="Как к вам обращаться"></label><label>Электронная почта<input id="ownerInputEmail" type="email" value="${esc(o.email || '')}" placeholder="Необязательно"></label><label class="consent-row"><input id="ownerConsent" type="checkbox" ${o.privacyConsent ? 'checked' : ''}><span>Я согласен(на) на обработку персональных данных</span></label><p class="owner-local">Аккаунт не создаётся в интернете: приложение работает локально.</p><p id="ownerFormError" class="form-error" role="alert"></p><div class="form-actions"><button class="primary" onclick="saveOwner()">Сохранить профиль</button></div></div></div>`;
+    const html = `<div class="owner-parity"><h2>Профиль владельца</h2><p class="owner-subtitle">Данные хранятся только на этом устройстве.</p><div class="owner-note"><b>Забота начинается с вас</b><span>Профиль помогает подписывать отчёты и не потерять имя владельца.</span></div><div class="form"><label>Имя<input id="ownerInputName" type="text" value="${esc(o.name || '')}" placeholder="Как к вам обращаться"></label><label>Электронная почта<input id="ownerInputEmail" type="email" required value="${esc(o.email || '')}" placeholder="Введите электронную почту"></label><label class="consent-row"><input id="ownerConsent" type="checkbox" ${o.privacyConsent ? 'checked' : ''}><span>Я согласен(на) на обработку персональных данных</span></label><a class="policy-link" href="privacy-policy.pdf" target="_blank" rel="noopener">Открыть политику обработки персональных данных</a><p class="owner-local">Аккаунт не создаётся в интернете: приложение работает локально.</p><p id="ownerFormError" class="form-error" role="alert"></p><div class="form-actions"><button class="primary" onclick="saveOwner()">Сохранить профиль</button></div></div></div>`;
     openModal(html);
   };
+  const saveOwnerBase = window.saveOwner;
+  window.saveOwner = function () {
+    const email = document.getElementById('ownerInputEmail')?.value.trim();
+    if (!email) return formError('Укажите электронную почту.');
+    return saveOwnerBase();
+  };
+  try { saveOwner = window.saveOwner; } catch (e) {}
   try { ownerForm = window.ownerForm; } catch (e) {}
   document.addEventListener('click', function (event) {
     const row = event.target.closest && event.target.closest('.more-parity .owner-row');
