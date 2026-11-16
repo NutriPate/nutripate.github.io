@@ -8,4 +8,13 @@
     openModal(html);
   };
   try { ownerForm = window.ownerForm; } catch (e) {}
+  document.addEventListener('click', function (event) {
+    const row = event.target.closest && event.target.closest('.more-parity .owner-row');
+    if (!row) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    window.ownerForm();
+  }, true);
+  const row = document.querySelector('.more-parity .owner-row');
+  if (row) row.onclick = () => window.ownerForm();
 }());
