@@ -180,5 +180,6 @@ body .screen-title h1,body .food-parity .screen-title h1,body .diary-parity .scr
  .weight-goal{margin:8px 0 -8px;text-align:right;color:var(--muted);font-size:12px}
 .food-page-link{display:flex;justify-content:space-between;align-items:center;width:100%;margin:14px 0;padding:4px 0;color:var(--teal);text-decoration:none;font-size:17px}.food-page-link b{font-size:23px;font-weight:400}
 .food-detail .form-actions{display:grid!important;grid-template-columns:1fr!important;gap:10px!important;margin-top:14px!important}.food-detail .form-actions>*{width:100%!important}.food-detail>.soft-button,.food-detail>.primary,.food-detail>.food-detail-back{display:flex!important;width:100%!important;margin-top:10px!important}.food-detail>.food-detail-back{margin-top:24px!important;display:flex!important}.food-detail .food-page-link{margin-top:14px!important;margin-bottom:4px!important}
+.food-action-stack{display:grid!important;gap:16px!important;width:100%!important;margin-top:10px!important}.food-action-stack>*{width:100%!important;margin:0!important}
 .food-thumb img,.hero-food-photo{object-fit:contain!important;object-position:center!important;background:#fff}
 html,body,body *,body *::before,body *::after{font-family:Montserrat,Arial,sans-serif!important}
