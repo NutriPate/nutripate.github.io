@@ -174,4 +174,6 @@ body .screen-title h1,body .food-parity .screen-title h1,body .diary-parity .scr
  .today-clear-instruction{display:grid;gap:4px;margin:-2px 0 14px;padding:12px 14px;border-radius:16px;background:#fff;border:1px solid rgba(6,54,55,.12);color:#063637}
  .today-clear-instruction strong{font-size:15px}
  .today-clear-instruction span{font-size:13px;line-height:1.35}
+.chart-svg{overflow:hidden!important}
+.chart-svg svg{overflow:hidden!important}
  .weight-goal{margin:8px 0 -8px;text-align:right;color:var(--muted);font-size:12px}
