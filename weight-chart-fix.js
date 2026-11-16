@@ -30,7 +30,9 @@
     var grid = [0, 1, 2, 3, 4].map(function (i) { var yy = top + i * plotHeight / 4, value = max - (max - min) * i / 4; return '<line x1="' + left + '" y1="' + yy + '" x2="' + (w - right) + '" y2="' + yy + '"/><text x="2" y="' + (yy + 5) + '">' + value.toFixed(1).replace('.', ',') + '</text>'; }).join('');
     var dots = points.map(function (p, i) { return '<circle cx="' + x(i) + '" cy="' + y(p.kg) + '" r="5"/>'; }).join('');
     var label = function (value) { return window.esc ? window.esc(value) : value; };
-    var labels = '<text x="' + left + '" y="' + (h - 8) + '">' + label(points[0].date) + '</text><text x="' + (w - right - 58) + '" y="' + (h - 8) + '">' + label(points[points.length - 1].date) + '</text>';
+    var leftLabel = period === 'all' ? points[0].date : start.toISOString().slice(0, 10);
+    var rightLabel = period === 'all' ? points[points.length - 1].date : end.toISOString().slice(0, 10);
+    var labels = '<text x="' + left + '" y="' + (h - 8) + '">' + label(leftLabel) + '</text><text x="' + (w - right - 58) + '" y="' + (h - 8) + '">' + label(rightLabel) + '</text>';
     return '<div class="chart chart-svg"><svg viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="График веса">' + grid + '<polyline points="' + polyline + '"/>' + dots + '<text class="last-value" x="' + Math.min(w - right - 45, Math.max(left, x(points.length - 1) - 12)) + '" y="' + Math.max(14, y(points[points.length - 1].kg) - 12) + '">' + points[points.length - 1].kg.toFixed(1).replace('.', ',') + ' кг</text>' + labels + '</svg></div>';
   };
 }());
