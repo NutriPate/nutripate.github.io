@@ -271,8 +271,8 @@ viewFoods=viewFoodsAppParity;
 
 const viewWeightDiaryBase=viewWeightDiary;
 viewWeightDiary=function(p){
-  const stored=state.weights,own=stored.filter(x=>x.petId===p.id);
-  const profileWeight=!own.length&&Number(p.weight)>0;
+  const stored=state.weights,own=stored.filter(x=>x.petId===p.id),hasProfile=own.some(x=>x.note==='Вес при создании профиля');
+  const profileWeight=Number(p.weight)>0&&!hasProfile;
   if(profileWeight)state.weights=stored.concat([{petId:p.id,kg:Number(p.weight).toFixed(1),date:'2026-11-15',note:'Вес при создании профиля'}]);
   const previousPeriod=weightPeriod;
   if(profileWeight)weightPeriod='all';
