@@ -9,6 +9,11 @@
   <link rel="icon" href="assets/nutripate-icon.jpg">
     <link rel="stylesheet" href="iphone-app.css?v=typography-v3">
   <title>NutriPate · приложение</title>
+  <script>
+    if (location.search.includes('typography-v3') && document.referrer === location.origin + '/') {
+      location.replace('/?site=1');
+    }
+  </script>
 </head>
 <body>
   <div class="app-shell">
