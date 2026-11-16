@@ -5,7 +5,7 @@ const fallbackFoods=[
  {id:'demo-2',name:'Indoor 27',brand:'Royal Canin',species:'cat',form:'dry',kcalPer100g:374,proteinPer100g:27,fatPer100g:13,tier:'premium',image:'assets/foods_white/catalog-rcat-ajo-fs.jpg',composition:'Рацион для домашних кошек с умеренной активностью.'},
  {id:'demo-3',name:'Sensitive',brand:'Pro Plan',species:'cat',form:'wet',kcalPer100g:90,proteinPer100g:10,fatPer100g:5,tier:'good',image:'assets/foods_white/catalog-rcat-ajo-kt.jpg',composition:'Влажный рацион для чувствительного пищеварения.'}
 ];
-let catalog=[]; let tab='today'; let diaryTab='feed'; let weightPeriod='week'; let weightRegistrationDate=''; let query=''; let foodFilter='all'; let foodLimitWeb=8;
+let catalog=[]; let tab='today'; let diaryTab='feed'; let weightPeriod='week'; let weightRegistrationDate=''; window.weightPeriod=weightPeriod; let query=''; let foodFilter='all'; let foodLimitWeb=8;
 const $=id=>document.getElementById(id);
 const loadState=()=>{try{return JSON.parse(localStorage.getItem(stateKey))||{}}catch{return {}}};
 let state=Object.assign({pets:[],activePetId:null,owner:{name:'',email:'',privacyConsent:false},selectedFoods:{},favorites:[],feedEntries:[],weights:[],diaryDay:null},loadState());state.pets=Array.isArray(state.pets)?state.pets:[];state.feedEntries=Array.isArray(state.feedEntries)?state.feedEntries:[];state.weights=Array.isArray(state.weights)?state.weights:[];state.favorites=Array.isArray(state.favorites)?state.favorites:[];state.selectedFoods=state.selectedFoods&&typeof state.selectedFoods==='object'?state.selectedFoods:{};
@@ -276,7 +276,7 @@ viewWeightDiary=function(p){
   const stored=state.weights,own=stored.filter(x=>x.petId===p.id),hasProfile=own.some(x=>x.note==='Вес при создании профиля');
   const profileWeight=Number(p.weight)>0&&!hasProfile;
   if(profileWeight)state.weights=[{petId:p.id,kg:Number(p.weight).toFixed(1),date:'2026-11-15',note:'Вес при создании профиля'},...stored];
-  weightRegistrationDate=(state.weights.filter(x=>x.petId===p.id).map(x=>String(x.date||'')).filter(Boolean).sort()[0])||'2026-11-15';
+  weightRegistrationDate=(state.weights.filter(x=>x.petId===p.id).map(x=>String(x.date||'')).filter(Boolean).sort()[0])||'2026-11-15'; window.weightRegistrationDate=weightRegistrationDate;
   let html=viewWeightDiaryBase(p);
   state.weights=stored;
   html=html.replaceAll('2026-11-15','15 ноября 2026');
@@ -316,7 +316,7 @@ document.addEventListener('click',function(event){
   if(!button)return;
   event.preventDefault();
   event.stopImmediatePropagation();
-  weightPeriod=button.dataset.weightPeriod;
+  weightPeriod=button.dataset.weightPeriod; window.weightPeriod=weightPeriod;
   render();
 },true);
 weightChartSvg=function(rows,period=weightPeriod){
