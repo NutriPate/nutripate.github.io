@@ -5,13 +5,20 @@
   const iconStyle = document.createElement('style');
   iconStyle.textContent = '.more-parity .brand i::before{content:none!important}.more-parity .brand i img{width:34px;height:34px;display:block;object-fit:contain;border-radius:50%}';
   document.head.appendChild(iconStyle);
-  const bind = () => document.querySelectorAll('.more-parity .channel').forEach((row, index) => {
-    const icon = row.querySelector('.brand i');
-    if (icon) icon.innerHTML = `<img src="assets/social/${index === 0 ? 'telegram' : 'max'}.png" alt="${index === 0 ? 'Telegram' : 'MAX'}">`;
-    row.style.cursor = 'pointer';
-    row.setAttribute('title', index === 0 ? 'Открыть Telegram' : 'Открыть MAX');
-    row.onclick = () => window.open(index === 0 ? 'https://t.me/nutripate' : 'https://max.ru/', '_blank', 'noopener,noreferrer');
-  });
+  const footerStyle = document.createElement('style');
+  footerStyle.textContent = '.more-parity .credits .credit-item{display:flex;align-items:center;gap:6px}.more-parity .credits .flag-mark{width:28px;height:18px;object-fit:cover;border-radius:2px}.more-parity .credits .hse-mark{width:28px;height:28px;object-fit:contain;border-radius:50%}';
+  document.head.appendChild(footerStyle);
+  const bind = () => {
+    document.querySelectorAll('.more-parity .channel').forEach((row, index) => {
+      const icon = row.querySelector('.brand i');
+      if (icon) icon.innerHTML = `<img src="assets/social/${index === 0 ? 'telegram' : 'max'}.png" alt="${index === 0 ? 'Telegram' : 'MAX'}">`;
+      row.style.cursor = 'pointer';
+      row.setAttribute('title', index === 0 ? 'Открыть Telegram' : 'Открыть MAX');
+      row.onclick = () => window.open(index === 0 ? 'https://t.me/nutripate' : 'https://max.ru/', '_blank', 'noopener,noreferrer');
+    });
+    const credits = document.querySelector('.more-parity .credits');
+    if (credits) credits.innerHTML = '<span class="credit-item"><img class="flag-mark" src="assets/social/russia-flag.png" alt="Флаг России"><span>made in Russia</span></span><span class="credit-item"><img class="hse-mark" src="assets/social/hse.png" alt="Логотип НИУ ВШЭ"><span>НИУ ВШЭ</span></span>';
+  };
   setTimeout(bind, 0);
   setTimeout(bind, 500);
 }());
