@@ -650,6 +650,14 @@ document.querySelectorAll('a[href^="/webversion/"]').forEach((link) => { link.hr
     });
   });
 </script>
+<script id="open-web-version-in-new-tab">
+  document.addEventListener('click', function (event) {
+    var link = event.target.closest('a[href="/webversion/"]');
+    if (!link) return;
+    event.preventDefault();
+    window.open(link.href, '_blank', 'noopener,noreferrer');
+  });
+</script>
 </body>
 </html>
 
