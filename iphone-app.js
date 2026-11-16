@@ -269,6 +269,25 @@ function viewFoodsAppParity(){
 }
 viewFoods=viewFoodsAppParity;
 
+const viewWeightDiaryBase=viewWeightDiary;
+viewWeightDiary=function(p){
+  const stored=state.weights,own=stored.filter(x=>x.petId===p.id);
+  if(!own.length&&Number(p.weight)>0)state.weights=stored.concat([{petId:p.id,kg:Number(p.weight).toFixed(1),date:'15 ноября 2026',note:'Вес при создании профиля'}]);
+  let html=viewWeightDiaryBase(p);
+  state.weights=stored;
+  if(p.targetWeight)html=html.replace('<div class="weight-summary">',`<div class="weight-goal">Цель ${esc(Number(p.targetWeight).toFixed(1))} кг</div><div class="weight-summary">`);
+  return html;
+};
+const viewDiaryParityBase=viewDiary;
+viewDiary=function(){
+  if(diaryTab==='weight'){
+    const p=activePet();
+    if(!p)return '<div class="empty">Добавьте питомца, чтобы открыть дневник.</div>';
+    return `${title('','Вес '+esc(p.name),'')}<div class="tabs"><button data-diary="feed">Питание</button><button class="active" data-diary="weight">Вес</button></div>${viewWeightDiary(p)}`;
+  }
+  return viewDiaryParityBase();
+};
+
 const viewTodayClearInstruction=viewToday;
 viewToday=function(){
   const html=viewTodayClearInstruction(),p=activePet(),f=chosenFood();
