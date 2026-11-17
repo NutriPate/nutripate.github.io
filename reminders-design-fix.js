@@ -43,7 +43,8 @@
 
   const originalViewPets = viewPets;
   viewPets = function viewPetsWithReminderEntry() {
-    return `${originalViewPets()}<button class="pet-reminders-entry" data-action="reminders"><span><b>Напоминания</b><small>${state.reminders?.enabled ? 'Кормление включено' : 'Настроить время кормлений'}</small></span><strong>›</strong></button>`;
+    const base = originalViewPets().replace(/<button class="primary full" style="margin-top:14px" data-action="add-pet">Добавить питомца<\/button>/, '');
+    return `${base}<button class="pet-reminders-entry" data-action="reminders"><span><b>Напоминания</b><small>${state.reminders?.enabled ? 'Кормление включено' : 'Настроить'}</small></span><strong>›</strong></button><button class="pet-add-entry" data-action="add-pet">+ Добавить питомца</button><p class="pet-disclaimer">Расчёт — ориентир. При болезни рацион согласовывают с ветеринаром.</p>`;
   };
 
   const originalViewToday = viewToday;
