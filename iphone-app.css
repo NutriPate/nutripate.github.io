@@ -197,6 +197,9 @@ html,body,body *,body *::before,body *::after{font-family:Montserrat,Arial,sans-
 .reminder-pill input{position:absolute;opacity:0;pointer-events:none}
 .reminder-pill:has(input:not(:checked)){background:#f2f6f4;color:#879795}
 .reminder-note{margin:18px 0 16px;font:400 12px/1.4 Georgia,"Times New Roman",serif;color:#53716f!important}
+.reminder-permission-box{display:grid;gap:6px;margin-top:12px}
+.reminder-permission-box .soft-button{min-height:44px;border-radius:16px!important;font:600 14px/1 Georgia,"Times New Roman",serif!important}
+.reminder-permission-box small{font:400 11px/1.35 Georgia,"Times New Roman",serif;color:#53716f}
 .reminders-save-button{min-height:52px;border-radius:16px!important;font:600 15px/1 Georgia,"Times New Roman",serif!important}
 .pet-reminders-entry{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:16px;padding:16px;border:1px solid #d7e4df;border-radius:16px;background:#fff;color:#294e50;text-align:left;cursor:pointer}
 .pet-reminders-entry span{display:grid;gap:3px}
