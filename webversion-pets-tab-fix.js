@@ -14,6 +14,9 @@
     .pets-tab-edit{display:block;width:100%;margin-top:16px;background:#d9f6f3!important;color:#07383a!important}
   `;
   document.head.appendChild(style);
+  const removeWebReminders=()=>document.querySelectorAll('[data-action="reminders"],.pet-reminders-entry,.reminders-screen,.reminders-save-button').forEach(el=>el.remove());
+  new MutationObserver(removeWebReminders).observe(document.body,{childList:true,subtree:true});
+  removeWebReminders();
   viewPets=function(){
     const pets=Array.isArray(state.pets)?state.pets:[];
     const cards=pets.map(p=>`<article class="pets-tab-card"><div><h2>${esc(p.name||'Питомец')}</h2><p>${p.species==='dog'?'Собака':'Кошка'} · ${Number(p.weight||0).toLocaleString('ru-RU',{minimumFractionDigits:1,maximumFractionDigits:1})} кг</p><a href="#" data-edit-pet="${esc(p.id)}">${esc(p.breedLabel||p.breed||'Порода не указана')}</a></div><img src="${esc(petPhoto(p))}" alt="${esc(p.name||'Питомец')}"></article>`).join('');
