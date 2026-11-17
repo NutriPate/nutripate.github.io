@@ -11,7 +11,7 @@
     .pets-tab-card a{display:inline-block;margin-top:9px;color:#12aeb0}
     .pets-tab-card img{width:112px;height:140px;object-fit:contain;flex:0 0 auto}
     .pets-tab-add{margin-top:16px}
-    .pets-tab-edit{margin-top:16px;background:#d9f6f3!important;color:#07383a!important}
+    .pets-tab-edit{display:block;width:100%;margin-top:16px;background:#d9f6f3!important;color:#07383a!important}
   `;
   document.head.appendChild(style);
   viewPets=function(){
