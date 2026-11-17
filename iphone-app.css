@@ -198,6 +198,11 @@ html,body,body *,body *::before,body *::after{font-family:Montserrat,Arial,sans-
 .reminder-pill:has(input:not(:checked)){background:#f2f6f4;color:#879795}
 .reminder-note{margin:18px 0 16px;font:400 12px/1.4 Georgia,"Times New Roman",serif;color:#53716f!important}
 .reminders-save-button{min-height:52px;border-radius:16px!important;font:600 15px/1 Georgia,"Times New Roman",serif!important}
+.pet-reminders-entry{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:16px;padding:16px;border:1px solid #d7e4df;border-radius:16px;background:#fff;color:#294e50;text-align:left;cursor:pointer}
+.pet-reminders-entry span{display:grid;gap:3px}
+.pet-reminders-entry b{font:600 15px/1.25 Georgia,"Times New Roman",serif}
+.pet-reminders-entry small{font:400 12px/1.3 Georgia,"Times New Roman",serif;color:#53716f}
+.pet-reminders-entry strong{font:400 24px/1 Georgia,"Times New Roman",serif;color:#13b5b5}
 .nav-paw-image img{background:transparent!important;mix-blend-mode:multiply!important;border-radius:50%!important}
 .nav-item,.nav-item:focus,.nav-item:focus-visible{outline:none!important;box-shadow:none!important}
 .more-parity .channel .brand i{background-color:transparent!important;background-image:url('/assets/social/telegram.png')!important;background-position:center!important;background-repeat:no-repeat!important;background-size:contain!important;font-size:0!important}

@@ -40,4 +40,19 @@
       });
     });
   };
+
+  const originalViewPets = viewPets;
+  viewPets = function viewPetsWithReminderEntry() {
+    return `${originalViewPets()}<button class="pet-reminders-entry" data-action="reminders"><span><b>Напоминания</b><small>${state.reminders?.enabled ? 'Кормление включено' : 'Настроить время кормлений'}</small></span><strong>›</strong></button>`;
+  };
+
+  const originalViewToday = viewToday;
+  viewToday = function viewTodayWithoutReminderEntry() {
+    return originalViewToday().replace(/<button class="kv" data-action="reminders">[\s\S]*?<\/button>/, '');
+  };
+
+  const originalViewMore = viewMore;
+  viewMore = function viewMoreWithoutReminderEntry() {
+    return originalViewMore().replace(/<button class="more-row" data-action="reminders">[\s\S]*?<\/button>/, '');
+  };
 })();
