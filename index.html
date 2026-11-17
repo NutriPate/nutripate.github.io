@@ -423,11 +423,11 @@ if (subscribeButton) {
 window.selectPlan = applyPlan;
 window.selectPlan = applyPlan;
 window.selectPlan = applyPlan;
-document.querySelectorAll('a[href^="/webversion/"]').forEach((link) => { link.href = '/webversion/'; });
+document.querySelectorAll('a[href^="/webversion/"]').forEach((link) => { link.href = '/webversion/?v=2b3afab'; });
 </script>
 <script>
   const currentWebAppLink = document.querySelector('.web-section a.button-brand');
-  if (currentWebAppLink) currentWebAppLink.href = '/webversion/';
+  if (currentWebAppLink) currentWebAppLink.href = '/webversion/?v=2b3afab';
 </script>
 <style id="hide-hero-dog">
   .hero-art .hero-dog,
@@ -669,7 +669,7 @@ document.querySelectorAll('a[href^="/webversion/"]').forEach((link) => { link.hr
 </script>
 <script id="open-web-version-in-new-tab">
   document.addEventListener('click', function (event) {
-    var link = event.target.closest('a[href="/webversion/"]');
+    var link = event.target.closest('a[href^="/webversion/"]');
     if (!link) return;
     event.preventDefault();
     window.open(link.href, '_blank', 'noopener,noreferrer');
