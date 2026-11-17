@@ -183,6 +183,21 @@ body .screen-title h1,body .food-parity .screen-title h1,body .diary-parity .scr
 .food-action-stack{display:grid!important;gap:16px!important;width:100%!important;margin-top:10px!important}.food-action-stack>*{width:100%!important;margin:0!important}
 .food-thumb img,.hero-food-photo{object-fit:contain!important;object-position:center!important;background:#fff}
 html,body,body *,body *::before,body *::after{font-family:Montserrat,Arial,sans-serif!important}
+.reminders-screen{padding:2px 0 14px;color:#294e50}
+.reminders-heading h2{margin:0 0 20px;font:400 24px/1.2 Georgia,"Times New Roman",serif!important;letter-spacing:0!important;color:#294e50}
+.reminder-time-block{margin:0 0 24px}
+.reminder-time-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 0 12px;border-bottom:1px solid #d7e4df;font:400 15px/1.3 Georgia,"Times New Roman",serif;color:#53716f}
+.reminder-time-row strong{font:400 15px/1.3 Georgia,"Times New Roman",serif;color:#294e50}
+.reminder-time-input{width:100%;height:48px;margin-top:15px;padding:0 15px;border:1px solid #d7e4df;border-radius:16px;background:#fff;color:#294e50;font:400 16px/1 Georgia,"Times New Roman",serif;outline:0}
+.reminder-time-input:focus{border-color:#13b5b5;box-shadow:0 0 0 3px rgba(19,181,181,.12)}
+.reminder-section-title{margin:8px 0 28px;font:400 20px/1.2 Georgia,"Times New Roman",serif;color:#294e50}
+.reminder-weight-block{margin-bottom:18px}
+.reminder-status-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.reminder-pill{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:16px;background:#d9f8f5;color:#53716f;font:400 13px/1 Georgia,"Times New Roman",serif;cursor:pointer}
+.reminder-pill input{position:absolute;opacity:0;pointer-events:none}
+.reminder-pill:has(input:not(:checked)){background:#f2f6f4;color:#879795}
+.reminder-note{margin:18px 0 16px;font:400 12px/1.4 Georgia,"Times New Roman",serif;color:#53716f!important}
+.reminders-save-button{min-height:52px;border-radius:16px!important;font:600 15px/1 Georgia,"Times New Roman",serif!important}
 .nav-paw-image img{background:transparent!important;mix-blend-mode:multiply!important;border-radius:50%!important}
 .nav-item,.nav-item:focus,.nav-item:focus-visible{outline:none!important;box-shadow:none!important}
 .more-parity .channel .brand i{background-color:transparent!important;background-image:url('/assets/social/telegram.png')!important;background-position:center!important;background-repeat:no-repeat!important;background-size:contain!important;font-size:0!important}
