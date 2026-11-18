@@ -18,6 +18,8 @@
   let pushTimer = 0;
   let lastPayload = '';
   let syncing = false;
+  let pendingEmail = '';
+  let pendingMode = '';
 
   const style = document.createElement('style');
   style.textContent = `
@@ -35,7 +37,7 @@
   `;
   document.head.appendChild(style);
 
-  const loginScreen = () => `<section class="web-auth-screen"><button class="web-auth-back" type="button" data-web-auth="back">‹ Назад</button><h1>${accountEmail ? 'Вы уже вошли' : 'Войти в аккаунт'}</h1><p>${accountEmail ? 'Имя, питомцы и дневник этого аккаунта подтягиваются на любое устройство.' : 'Введите почту. Мы отправим одноразовый код и создадим аккаунт, если его ещё нет.'}</p><div class="web-auth-form">${accountEmail ? `<p>Почта <b>${esc(accountEmail)}</b></p><button class="soft-button full" type="button" data-web-auth="logout">Выйти</button>` : `<label>Почта<input id="webAuthEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Одноразовый код<input id="webAuthCode" class="web-auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><button class="primary full" type="button" data-web-auth="send">Получить код</button><button class="soft-button full" type="button" data-web-auth="verify">Войти по коду</button>`}</div><p class="web-auth-note" id="webAuthNote">Код приходит письмом от NutriPate. Если в письме есть ссылка, откройте её в этом же браузере.</p></section>`;
+  const loginScreen = () => `<section class="web-auth-screen"><button class="web-auth-back" type="button" data-web-auth="back">‹ Назад</button><h1>${accountEmail ? 'Вы уже вошли' : 'Аккаунт'}</h1><p>${accountEmail ? 'Имя, питомцы и дневник этого аккаунта подтягиваются на любое устройство.' : 'Аккаунт создаётся только по кнопке «Создать аккаунт» и только на почту, которую вы введёте. Если аккаунт уже есть, нажмите «Войти».'}</p><div class="web-auth-form">${accountEmail ? `<p>Почта <b>${esc(accountEmail)}</b></p><button class="soft-button full" type="button" data-web-auth="logout">Выйти</button>` : `<label>Почта<input id="webAuthEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Одноразовый код<input id="webAuthCode" class="web-auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><button class="primary full" type="button" data-web-auth="signup">Создать аккаунт</button><button class="soft-button full" type="button" data-web-auth="login">Войти</button><button class="soft-button full" type="button" data-web-auth="verify">Подтвердить код</button>`}</div><p class="web-auth-note" id="webAuthNote">Код приходит письмом от NutriPate. Если в письме есть ссылка, откройте её в этом же браузере.</p></section>`;
 
   const welcomeScreen = () => `<section class="welcome-screen"><div class="welcome-brand">Nutri<span>Pate</span></div><h1>Добро пожаловать!</h1><img class="welcome-art" src="assets/welcome_pets.png" alt="Питомцы рядом"><h2>Здесь будет день<br>вашего питомца</h2><p class="welcome-lead">Всего один профиль — и важное всегда под рукой: корм, порция и время кормления.</p><button class="primary" data-action="start-onboarding">Добавить первого питомца</button><div class="welcome-example"><b>Что понадобится</b><p>Возраст, вес, активность и особенности здоровья.</p></div><button class="soft-button full web-auth-login" type="button" data-web-auth="open">${accountEmail ? 'Аккаунт: ' + esc(accountEmail) : 'Войдите в свой аккаунт'}</button><p class="welcome-note">Один питомец и основной дневник — бесплатно.</p></section>`;
 
@@ -181,27 +183,37 @@
     }
   }
 
-  async function sendCode() {
+  async function sendCode(createUser) {
     const email = (document.getElementById('webAuthEmail').value || '').trim().toLowerCase();
     if (!email.includes('@') || !email.includes('.')) return note('Проверьте адрес почты.', true);
     note('Отправляем код…');
     const { error } = await client.auth.signInWithOtp({
       email,
-      options: { shouldCreateUser: true, emailRedirectTo: REDIRECT_URL },
+      options: { shouldCreateUser: createUser, emailRedirectTo: REDIRECT_URL },
     });
-    if (error) return note(explain(error), true);
-    note('Код отправлен на ' + email + '. Введите его ниже. Если письма нет, проверьте «Спам».');
+    if (error) {
+      const lower = String(error.message || error).toLowerCase();
+      if (!createUser && (lower.includes('not found') || lower.includes('signup') || lower.includes('signups'))) {
+        return note('Аккаунта на эту почту нет. Нажмите «Создать аккаунт», чтобы завести его именно на неё.', true);
+      }
+      return note(explain(error), true);
+    }
+    pendingEmail = email;
+    pendingMode = createUser ? 'signup' : 'login';
+    if (createUser) note('Код отправлен на ' + email + '. Аккаунт будет создан только для этой почты. Введите код.');
+    else note('Код для входа отправлен на ' + email + '.');
   }
 
   async function verifyCode() {
     const email = (document.getElementById('webAuthEmail').value || '').trim().toLowerCase();
     const token = (document.getElementById('webAuthCode').value || '').replace(/\s/g, '');
     if (!email.includes('@')) return note('Сначала укажите почту.', true);
+    if (pendingEmail && email !== pendingEmail) return note('Код запрошен для ' + pendingEmail, true);
     if (!/^\d{6,10}$/.test(token)) return note('Введите код из письма.', true);
     note('Проверяем код…');
     const { error } = await client.auth.verifyOtp({ email, token, type: 'email' });
     if (error) return note(explain(error), true);
-    if (typeof toast === 'function') toast('Вы вошли');
+    if (typeof toast === 'function') toast(pendingMode === 'signup' ? 'Аккаунт создан' : 'Вы вошли');
     if (typeof render === 'function') render();
   }
 
@@ -234,7 +246,8 @@
       return;
     }
     if (action === 'back') { if (typeof render === 'function') render(); return; }
-    if (action === 'send') { sendCode().catch((error) => note(explain(error), true)); return; }
+    if (action === 'signup') { sendCode(true).catch((error) => note(explain(error), true)); return; }
+    if (action === 'login') { sendCode(false).catch((error) => note(explain(error), true)); return; }
     if (action === 'verify') { verifyCode().catch((error) => note(explain(error), true)); return; }
     if (action === 'logout') { logout().catch((error) => note(explain(error), true)); }
   });
