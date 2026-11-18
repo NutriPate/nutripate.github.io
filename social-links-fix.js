@@ -1,6 +1,6 @@
 (function () {
   const style = document.createElement('style');
-  style.textContent = `.more-parity .brand i{display:grid!important;place-items:center!important;width:42px!important;height:42px!important;border-radius:50%!important;font-size:0!important;font-family:Arial,sans-serif!important;opacity:1!important}.more-parity .brand:not(.max) i{background:#24a9e6!important}.more-parity .brand:not(.max) i::before{content:'✈';font-size:19px;color:#fff}.more-parity .brand.max i{background:#6950d8!important}.more-parity .brand.max i::before{content:'M';font-size:19px;font-weight:700;color:#fff}`;
+  style.textContent = `.more-parity .brand i{display:grid!important;place-items:center!important;width:42px!important;height:42px!important;border-radius:50%!important;font-size:0!important;font-family:Montserrat,sans-serif!important;opacity:1!important}.more-parity .brand:not(.max) i{background:#24a9e6!important}.more-parity .brand:not(.max) i::before{content:'✈';font-size:19px;color:#fff}.more-parity .brand.max i{background:#6950d8!important}.more-parity .brand.max i::before{content:'M';font-size:19px;font-weight:700;color:#fff}`;
   document.head.appendChild(style);
   const iconStyle = document.createElement('style');
   iconStyle.textContent = '.more-parity .brand i::before{content:none!important}.more-parity .brand i img{width:42px;height:42px;display:block;object-fit:contain;border-radius:50%}';

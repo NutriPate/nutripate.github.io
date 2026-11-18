@@ -2,11 +2,11 @@
   const style=document.createElement('style');
   style.textContent=`
     .pets-tab-screen{padding:0 0 22px}
-    .pets-tab-back{margin:0 0 10px;font:18px Georgia,serif;color:#07383a}
-    .pets-tab-screen h1{margin:0 0 4px;font:30px Georgia,serif;color:#07383a}
+    .pets-tab-back{margin:0 0 10px;font:18px Montserrat,sans-serif;color:#07383a}
+    .pets-tab-screen h1{margin:0 0 4px;font:30px Montserrat,sans-serif;color:#07383a}
     .pets-tab-subtitle{margin:0 0 18px;color:#53716f}
     .pets-tab-card{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:180px;padding:22px;border-radius:18px;background:#d9f6f3}
-    .pets-tab-card h2{margin:0 0 6px;font:25px Georgia,serif;color:#07383a}
+    .pets-tab-card h2{margin:0 0 6px;font:25px Montserrat,sans-serif;color:#07383a}
     .pets-tab-card p{margin:3px 0;color:#53716f}
     .pets-tab-card a{display:inline-block;margin-top:9px;color:#12aeb0}
     .pets-tab-card img{width:112px;height:140px;object-fit:contain;flex:0 0 auto}

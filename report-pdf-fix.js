@@ -13,12 +13,12 @@
     canvas.width = W * 2; canvas.height = H * 2; ctx.scale(2, 2);
     const ru = value => String(value || '').replace(/\bbeef\b/gi, 'говядина').replace(/\bchicken\b/gi, 'курица').replace(/\bfish\b/gi, 'рыба').replace(/\boverweight\b/gi, 'лишний вес').replace(/\ballergy\b/gi, 'аллергия').replace(/\ballergies\b/gi, 'аллергии').replace(/\blow\b/gi, 'низкая').replace(/\bmedium\b/gi, 'умеренная').replace(/\bhigh\b/gi, 'высокая').replace(/\bvery_high\b/gi, 'очень высокая').replace(/\bfemale\b/gi, 'самка').replace(/\bmale\b/gi, 'самец');
     const text = (s, x, y, size = 24, color = '#07383a', bold = false) => {
-      ctx.font = `${bold ? '700 ' : '400 '}${size}px Arial`;
+      ctx.font = `${bold ? '700 ' : '400 '}${size}px Montserrat`;
       ctx.fillStyle = color;
       ctx.fillText(String(s || ''), x, y);
     };
     const block = (s, x, y, max, size = 24, color = '#07383a', bold = false) => {
-      ctx.font = `${bold ? '700 ' : '400 '}${size}px Arial`;
+      ctx.font = `${bold ? '700 ' : '400 '}${size}px Montserrat`;
       const words = String(s || '').split(/\s+/); let line = ''; let row = 0;
       words.forEach(word => { const next = line ? `${line} ${word}` : word; if (ctx.measureText(next).width > max && line) { text(line, x, y + row * (size + 8), size, color, bold); row++; line = word; } else line = next; });
       if (line) text(line, x, y + row * (size + 8), size, color, bold);
