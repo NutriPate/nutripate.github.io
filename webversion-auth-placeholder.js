@@ -17,6 +17,7 @@
   let accountEmail = '';
   let pushTimer = 0;
   let lastPayload = '';
+  let lastRemoteAt = '';
   let syncing = false;
   let pendingEmail = '';
   let pendingMode = '';
@@ -326,6 +327,13 @@
     if (typeof window.nutripateReadState !== 'function') return;
     const { data } = await client.auth.getSession();
     if (!data.session) return;
+    if (!lastRemoteAt) return;
+    const fresh = await client.from('app_states').select('updated_at').limit(1);
+    const serverAt = fresh.data && fresh.data[0] && fresh.data[0].updated_at;
+    if (serverAt && stampOf({ updatedAt: serverAt }) > stampOf({ updatedAt: lastRemoteAt })) {
+      await pullAccount();
+      return;
+    }
     const payload = slim(window.nutripateReadState());
     if (accountEmail) payload.owner.email = accountEmail;
     const serial = JSON.stringify(payload);
@@ -364,8 +372,11 @@
         return;
       }
       accountEmail = data.user.email || '';
-      const stored = await client.from('app_states').select('state').limit(1);
-      const remote = mirrorHistory((stored.data && stored.data[0] && stored.data[0].state) || (data.user.user_metadata && data.user.user_metadata.nutripate) || {});
+      const stored = await client.from('app_states').select('state, updated_at').limit(1);
+      const row = stored.data && stored.data[0];
+      const remote = mirrorHistory((row && row.state) || (data.user.user_metadata && data.user.user_metadata.nutripate) || {});
+      if (row && row.updated_at) remote.updatedAt = row.updated_at;
+      lastRemoteAt = remote.updatedAt || remote.savedAt || new Date().toISOString();
       const proOnAccount = Boolean((remote && remote.pro) || (data.user.user_metadata && data.user.user_metadata.nutripate_pro));
       lastPayload = JSON.stringify(slim(remote || {}));
       if (typeof window.nutripateReadState !== 'function' || typeof window.nutripateReplaceState !== 'function') return;
@@ -524,6 +535,7 @@
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") pullAccount().catch(() => {});
   });
+  setInterval(() => { pullAccount().catch(() => {}); }, 4000);
 
   if (typeof window.savePet === "function" && !window.savePet.nutripateBreed) {
     const previousSavePet = window.savePet;
