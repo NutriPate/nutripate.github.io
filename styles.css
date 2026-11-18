@@ -124,15 +124,17 @@ h3 { margin-bottom: 8px; font-size: 26px; }
 .facts span { color: var(--muted); font-size: 13px; line-height: 1.35; }
 
 .stage {
-  position: relative;
-  display: grid;
-  justify-items: center;
-  min-height: 460px;
-  margin: 0 auto;
-  max-width: 460px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 520px;
+  margin: 8px auto 0;
 }
 .phone {
-  width: min(250px, 68vw);
+  flex: 0 0 58%;
+  width: 58%;
   margin: 0;
   padding: 10px;
   border-radius: 36px;
@@ -146,12 +148,9 @@ h3 { margin-bottom: 8px; font-size: 26px; }
   background: white;
 }
 .stage-cat {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: min(190px, 46vw);
+  flex: 0 0 36%;
+  width: 36%;
   height: auto;
-  z-index: 2;
   pointer-events: none;
   filter: drop-shadow(0 16px 18px rgba(7, 56, 58, 0.18));
 }
@@ -279,9 +278,9 @@ body { overflow-x: hidden; }
   .header-cta { margin-left: 0; }
   .hero, .section { padding: 72px 40px; }
   .hero { grid-template-columns: 1.05fr 0.95fr; align-items: center; gap: 40px; }
-  .stage { min-height: 620px; }
-  .phone { width: 290px; }
-  .stage-cat { width: 250px; }
+  .stage { max-width: none; justify-content: flex-end; gap: 16px; margin: 0; }
+  .phone { flex-basis: 250px; width: 250px; }
+  .stage-cat { flex-basis: 190px; width: 190px; }
   .cards, .downloads { grid-template-columns: repeat(3, 1fr); }
   .tiers, .pro-grid, .web, .about, .legal-grid { grid-template-columns: 1fr 1fr; gap: 28px; }
   .plans { grid-template-columns: repeat(3, 1fr); }
