@@ -66,6 +66,7 @@
 
   function showAuth(mode) {
     if (mode === 'login' || mode === 'signup') authMode = mode;
+    state.authScreen = authMode === "signup" ? "register" : "login";
     if (typeof modal !== 'undefined' && modal && modal.open && typeof modal.close === 'function') modal.close();
     const main = document.getElementById('appMain');
     if (main) main.innerHTML = authScreen();
@@ -78,6 +79,15 @@
   const welcomeScreen = () => `<section class="welcome-screen"><div class="welcome-brand">Nutri<span>Pate</span></div><h1>Добро пожаловать!</h1><img class="welcome-art" src="assets/welcome_pets.png" alt="Питомцы рядом"><h2>Здесь будет день<br>вашего питомца</h2><p class="welcome-lead">Всего один профиль — и важное всегда под рукой: корм, порция и время кормления.</p><button class="primary" data-action="start-onboarding">Добавить первого питомца</button><div class="welcome-example"><b>Что понадобится</b><p>Возраст, вес, активность и особенности здоровья.</p></div><div class="web-auth-actions web-auth-login">${accountEmail ? `<button class="soft-button" type="button" data-web-auth="open-login">Аккаунт</button>` : `<button class="primary" type="button" data-web-auth="open-login">Войти</button><button class="soft-button" type="button" data-web-auth="open-signup">Зарегистрироваться</button>`}</div><p class="welcome-note">Один питомец и основной дневник — бесплатно.</p></section>`;
 
   try { viewWelcome = welcomeScreen; } catch (e) {}
+  if (typeof viewFirstLaunch === "function") {
+    const originalFirst = viewFirstLaunch;
+    viewFirstLaunch = function () {
+      const buttons = accountEmail
+        ? `<button class="soft-button" type="button" data-web-auth="open-login">Аккаунт</button>`
+        : `<button class="primary" type="button" data-web-auth="open-login">Войти</button><button class="soft-button" type="button" data-web-auth="open-signup">Зарегистрироваться</button>`;
+      return originalFirst().replace("</section>", `<div class="web-auth-actions web-auth-login">${buttons}</div><p class="welcome-note">Войти: почта и код. Регистрация: имя, почта, код и согласие.</p></section>`);
+    };
+  }
 
   function accountSection() {
     if (accountEmail) {
@@ -373,7 +383,7 @@
     const action = button.dataset.webAuth;
     if (action === 'open' || action === 'open-login' || action === 'show-login') { showAuth('login'); return; }
     if (action === 'open-signup' || action === 'show-signup') { showAuth('signup'); return; }
-    if (action === 'back') { if (typeof render === 'function') render(); return; }
+    if (action === 'back') { state.authScreen = null; if (typeof render === 'function') render(); return; }
     if (action === 'signup') { sendCode(true).catch((error) => note(explain(error), true)); return; }
     if (action === 'login') { sendCode(false).catch((error) => note(explain(error), true)); return; }
     if (action === 'enter' || action === 'create' || action === 'verify') { verifyCode().catch((error) => note(explain(error), true)); return; }
@@ -402,5 +412,44 @@
     window.enablePro = accountEnablePro;
   }
 
-  if (typeof render === 'function') render();
+  if (typeof remindersForm === "function" && !remindersForm.nutripateNote) {
+    const originalReminders = remindersForm;
+    const notedReminders = function () {
+      originalReminders();
+      const box = document.getElementById("modalContent");
+      if (!box || box.querySelector(".web-remind-note")) return;
+      const note = document.createElement("p");
+      note.className = "muted web-remind-note";
+      note.textContent = "Время порций сохраняется в аккаунте. Всплывающие уведомления приходят в приложении на телефоне и компьютере.";
+      const title = box.querySelector("h2");
+      if (title) title.after(note);
+    };
+    notedReminders.nutripateNote = true;
+    remindersForm = notedReminders;
+  }
+
+  if (typeof render === "function") {
+    const renderBeforeAccount = render;
+    render = function () {
+      if (state.authScreen) {
+        const nav = document.querySelector(".bottom-nav");
+        if (nav) {
+          nav.hidden = true;
+          nav.style.setProperty("display", "none", "important");
+        }
+        const main = document.getElementById("appMain");
+        if (main) main.innerHTML = authScreen();
+        return;
+      }
+      renderBeforeAccount();
+      if (typeof activePet === "function" && !activePet()) {
+        const nav = document.querySelector(".bottom-nav");
+        if (nav) {
+          nav.hidden = true;
+          nav.style.setProperty("display", "none", "important");
+        }
+      }
+    };
+    render();
+  }
 })();
