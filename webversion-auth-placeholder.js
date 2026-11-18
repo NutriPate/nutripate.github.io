@@ -79,14 +79,24 @@
   const welcomeScreen = () => `<section class="welcome-screen"><div class="welcome-brand">Nutri<span>Pate</span></div><h1>Добро пожаловать!</h1><img class="welcome-art" src="assets/welcome_pets.png" alt="Питомцы рядом"><h2>Здесь будет день<br>вашего питомца</h2><p class="welcome-lead">Всего один профиль — и важное всегда под рукой: корм, порция и время кормления.</p><button class="primary" data-action="start-onboarding">Добавить первого питомца</button><div class="welcome-example"><b>Что понадобится</b><p>Возраст, вес, активность и особенности здоровья.</p></div><div class="web-auth-actions web-auth-login">${accountEmail ? `<button class="soft-button" type="button" data-web-auth="open-login">Аккаунт</button>` : `<button class="primary" type="button" data-web-auth="open-login">Войти</button><button class="soft-button" type="button" data-web-auth="open-signup">Зарегистрироваться</button>`}</div><p class="welcome-note">Один питомец и основной дневник — бесплатно.</p></section>`;
 
   try { viewWelcome = welcomeScreen; } catch (e) {}
-  if (typeof viewFirstLaunch === "function") {
-    const originalFirst = viewFirstLaunch;
-    viewFirstLaunch = function () {
-      const buttons = accountEmail
-        ? `<button class="soft-button" type="button" data-web-auth="open-login">Аккаунт</button>`
-        : `<button class="primary" type="button" data-web-auth="open-login">Войти</button><button class="soft-button" type="button" data-web-auth="open-signup">Зарегистрироваться</button>`;
-      return originalFirst().replace("</section>", `<div class="web-auth-actions web-auth-login">${buttons}</div><p class="welcome-note">Войти: почта и код. Регистрация: имя, почта, код и согласие.</p></section>`);
-    };
+
+  function accountButtons() {
+    if (accountEmail) return `<button class="soft-button" type="button" data-web-auth="open-login">Аккаунт</button>`;
+    return `<button class="primary" type="button" data-web-auth="open-login">Войти</button><button class="soft-button" type="button" data-web-auth="open-signup">Зарегистрироваться</button>`;
+  }
+
+  function decorateWelcome() {
+    const main = document.getElementById("appMain");
+    if (!main || main.querySelector("[data-web-auth='open-login']")) return;
+    const section = main.querySelector(".welcome-screen");
+    if (!section) return;
+    const actions = document.createElement("div");
+    actions.className = "web-auth-actions web-auth-login";
+    actions.innerHTML = accountButtons();
+    const hint = document.createElement("p");
+    hint.className = "welcome-note";
+    hint.textContent = "Войти: почта и код. Регистрация: имя, почта, код и согласие.";
+    section.append(actions, hint);
   }
 
   function accountSection() {
@@ -448,6 +458,7 @@
           nav.hidden = true;
           nav.style.setProperty("display", "none", "important");
         }
+        decorateWelcome();
       }
     };
     render();
