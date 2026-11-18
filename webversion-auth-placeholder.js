@@ -107,27 +107,71 @@
     return message || 'Не получилось связаться с аккаунтом.';
   }
 
+  function sameRow(left, right) {
+    return ['date', 'time', 'at', 'kind', 'grams', 'kcal', 'text', 'name', 'weightKg', 'kg'].every((key) => left[key] === right[key]);
+  }
+
+  function mirrorHistory(source) {
+    const state = Object.assign({}, source || {});
+    const feedDiary = Object.assign({}, state.feedDiary || {});
+    const entries = Array.isArray(state.feedEntries) ? state.feedEntries.slice() : [];
+    entries.forEach((entry) => {
+      if (!entry || !entry.petId) return;
+      const row = { id: entry.id, date: entry.date, at: entry.at || entry.time || '', kind: entry.kind || 'feed', meal: entry.meal || entry.kind || 'feed', name: entry.name || entry.foodName || '', grams: entry.grams, kcal: entry.kcal, text: entry.text || '' };
+      const bucket = (feedDiary[entry.petId] || []).slice();
+      if (!bucket.some((item) => item && sameRow(item, row))) bucket.push(row);
+      feedDiary[entry.petId] = bucket;
+    });
+    const seen = new Set();
+    const mergedEntries = [];
+    Object.keys(feedDiary).forEach((petId) => {
+      (feedDiary[petId] || []).forEach((row) => {
+        if (!row) return;
+        const entry = { id: row.id, petId, date: row.date, time: row.at || row.time || '', kind: row.kind || 'feed', meal: row.meal || '', name: row.name || row.text || '', foodName: row.name || '', grams: row.grams, kcal: row.kcal, text: row.text || '' };
+        const marker = [petId, entry.date, entry.time, entry.kind, entry.grams, entry.text].join('|');
+        if (seen.has(marker)) return;
+        seen.add(marker);
+        mergedEntries.push(entry);
+      });
+    });
+    state.feedDiary = feedDiary;
+    state.feedEntries = mergedEntries;
+    const weightDiary = Object.assign({}, state.weightDiary || {});
+    (Array.isArray(state.weights) ? state.weights : []).forEach((item) => {
+      if (!item || !item.petId) return;
+      const row = { date: item.date, weightKg: item.weightKg != null ? item.weightKg : item.kg, note: item.note || '', time: item.time || '' };
+      const bucket = (weightDiary[item.petId] || []).slice();
+      if (!bucket.some((saved) => saved && sameRow(saved, row))) bucket.push(row);
+      weightDiary[item.petId] = bucket;
+    });
+    const seenWeights = new Set();
+    const flat = [];
+    Object.keys(weightDiary).forEach((petId) => {
+      (weightDiary[petId] || []).forEach((row) => {
+        if (!row) return;
+        const kg = row.weightKg != null ? row.weightKg : row.kg;
+        const marker = [petId, row.date, row.time || '', kg].join('|');
+        if (seenWeights.has(marker)) return;
+        seenWeights.add(marker);
+        flat.push({ petId, date: row.date, kg, note: row.note || '', time: row.time || '' });
+      });
+    });
+    state.weightDiary = weightDiary;
+    state.weights = flat;
+    return state;
+  }
+
   function slim(source) {
-    const state = source || {};
-    const pets = (Array.isArray(state.pets) ? state.pets : []).map((pet) => {
+    const state = JSON.parse(JSON.stringify(source || {}));
+    delete state.account;
+    delete state.authScreen;
+    state.pets = (Array.isArray(state.pets) ? state.pets : []).map((pet) => {
       const copy = Object.assign({}, pet);
       if (typeof copy.photo === 'string' && copy.photo.startsWith('data:')) delete copy.photo;
       return copy;
     });
-    return {
-      pets,
-      activePetId: state.activePetId || null,
-      owner: Object.assign({ name: '', email: '', privacyConsent: false }, state.owner || {}),
-      selectedFoods: state.selectedFoods && typeof state.selectedFoods === 'object' ? state.selectedFoods : {},
-      favorites: Array.isArray(state.favorites) ? state.favorites.slice(-200) : [],
-      feedEntries: Array.isArray(state.feedEntries) ? state.feedEntries.slice(-400) : [],
-      weights: Array.isArray(state.weights) ? state.weights.slice(-400) : [],
-      diaryDay: state.diaryDay || null,
-      reminders: state.reminders || null,
-      savedAt: state.savedAt || null,
-      pro: Boolean(state.pro),
-      proPlan: state.pro ? (state.proPlan || 'account') : null,
-    };
+    state.owner = Object.assign({ name: '', email: '', privacyConsent: false }, state.owner || {});
+    return mirrorHistory(state);
   }
 
   function entryKey(item) {
@@ -188,11 +232,19 @@
     if (accountEmail) payload.owner.email = accountEmail;
     const serial = JSON.stringify(payload);
     if (serial === lastPayload) return;
-    const { error } = await client.auth.updateUser({ data: { nutripate: payload, nutripate_pro: Boolean(payload.pro) } });
-    if (error) {
-      console.warn(error.message);
+    const user = data.session.user;
+    const now = new Date().toISOString();
+    const saved = await client.from('app_states').upsert({ user_id: user.id, state: payload, updated_at: now }, { onConflict: 'user_id' });
+    if (saved.error) {
+      console.warn(saved.error.message);
       return;
     }
+    await client.from('profiles').upsert({
+      user_id: user.id,
+      display_name: (payload.owner && payload.owner.name) || '',
+      email: user.email || accountEmail,
+      privacy_consent_at: payload.owner && payload.owner.privacyConsent ? now : null,
+    }, { onConflict: 'user_id' });
     lastPayload = serial;
   }
 
@@ -213,8 +265,9 @@
         return;
       }
       accountEmail = data.user.email || '';
-      const remote = data.user.user_metadata && data.user.user_metadata.nutripate;
-      const proOnAccount = Boolean(data.user.user_metadata && data.user.user_metadata.nutripate_pro);
+      const stored = await client.from('app_states').select('state').limit(1);
+      const remote = mirrorHistory((stored.data && stored.data[0] && stored.data[0].state) || (data.user.user_metadata && data.user.user_metadata.nutripate) || {});
+      const proOnAccount = Boolean((remote && remote.pro) || (data.user.user_metadata && data.user.user_metadata.nutripate_pro));
       lastPayload = JSON.stringify(slim(remote || {}));
       if (typeof window.nutripateReadState !== 'function' || typeof window.nutripateReplaceState !== 'function') return;
       const merged = mergeStates(window.nutripateReadState(), remote || {}, accountEmail, proOnAccount);
