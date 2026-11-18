@@ -20,6 +20,8 @@
   let syncing = false;
   let pendingEmail = '';
   let pendingMode = '';
+  let pendingName = '';
+  let authMode = 'login';
 
   const style = document.createElement('style');
   style.textContent = `
@@ -30,64 +32,58 @@
     .web-auth-screen>p{color:#53716f;margin:0 0 20px}
     .web-auth-form{display:grid;gap:12px}
     .web-auth-form label{display:grid;gap:6px;color:#53716f;font-size:13px}
-    .web-auth-form input{width:100%;box-sizing:border-box;border:1px solid #d8e5e1;border-radius:14px;padding:14px 15px;background:#fff;color:#07383a;font:16px Montserrat,sans-serif}
+    .web-auth-form input[type=text],.web-auth-form input[type=email]{width:100%;box-sizing:border-box;border:1px solid #d8e5e1;border-radius:14px;padding:14px 15px;background:#fff;color:#07383a;font:16px Montserrat,sans-serif}
     .web-auth-code{letter-spacing:.24em}
     .web-auth-note{font-size:12px;color:#53716f;margin-top:14px}
     .web-auth-error{color:#9b3b3b}
-    .email-suggest{position:fixed;left:50%;transform:translateX(-50%);z-index:8;width:min(420px,calc(100% - 28px));min-height:46px;border:1px solid #b7e3de;border-radius:16px;background:#e7f6f3;color:#07383a;font:700 15px Montserrat,sans-serif;cursor:pointer}
-    body.has-email-suggest .app-shell{padding-bottom:156px}
+    .web-auth-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .web-auth-actions .primary,.web-auth-actions .soft-button{width:100%;min-height:48px}
+    .web-auth-consent{display:flex;align-items:flex-start;gap:10px;color:#07383a;font:14px Montserrat,sans-serif}
+    .web-auth-consent input{width:18px;height:18px;margin-top:2px;accent-color:#12b6b8;flex:none}
+    .web-auth-consent a{color:#0a8f8c}
   `;
   document.head.appendChild(style);
 
-  const loginScreen = () => `<section class="web-auth-screen"><button class="web-auth-back" type="button" data-web-auth="back">‹ Назад</button><h1>${accountEmail ? 'Вы уже вошли' : 'Аккаунт'}</h1><p>${accountEmail ? 'Имя, питомцы и дневник этого аккаунта подтягиваются на любое устройство.' : 'Аккаунт создаётся только по кнопке «Создать аккаунт» и только на почту, которую вы введёте. Если аккаунт уже есть, нажмите «Войти».'}</p><div class="web-auth-form">${accountEmail ? `<p>Почта <b>${esc(accountEmail)}</b></p><button class="soft-button full" type="button" data-web-auth="logout">Выйти</button>` : `<label>Почта<input id="webAuthEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Одноразовый код<input id="webAuthCode" class="web-auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><button class="primary full" type="button" data-web-auth="signup">Создать аккаунт</button><button class="soft-button full" type="button" data-web-auth="login">Войти</button><button class="soft-button full" type="button" data-web-auth="verify">Подтвердить код</button>`}</div><p class="web-auth-note" id="webAuthNote">Код приходит письмом от NutriPate. Если в письме есть ссылка, откройте её в этом же браузере.</p><p class="web-auth-note"><a href="privacy-policy.pdf" target="_blank" rel="noopener">Политика обработки персональных данных</a></p></section>`;
+  const oldBar = document.getElementById('emailSuggest');
+  if (oldBar) oldBar.remove();
+  document.body.classList.remove('has-email-suggest');
 
-  function placeEmailBar() {
-    const bar = document.getElementById('emailSuggest');
-    if (!bar) return;
-    const nav = document.querySelector('.bottom-nav');
-    const style = nav ? getComputedStyle(nav) : null;
-    const visible = nav && style.display !== 'none' && style.visibility !== 'hidden' && nav.getClientRects().length;
-    if (!visible) {
-      bar.style.bottom = '16px';
-      return;
-    }
-    const gap = 12;
-    bar.style.bottom = Math.round(window.innerHeight - nav.getBoundingClientRect().top + gap) + 'px';
+  function ownerName() {
+    if (typeof state !== 'undefined' && state.owner && state.owner.name) return state.owner.name;
+    return '';
   }
 
-  function ensureEmailBar() {
+  const authScreen = () => {
+    if (accountEmail) {
+      const name = ownerName();
+      return `<section class="web-auth-screen"><button class="web-auth-back" type="button" data-web-auth="back">‹ Назад</button><h1>Аккаунт</h1><p>Имя, питомцы и дневник открываются на любом устройстве, где вы войдёте по этой почте.</p><div class="web-auth-form">${name ? `<p>Имя <b>${esc(name)}</b></p>` : ''}<p>Почта <b>${esc(accountEmail)}</b></p><button class="soft-button full" type="button" data-web-auth="logout">Выйти</button></div></section>`;
+    }
+    if (authMode === 'signup') {
+      return `<section class="web-auth-screen"><button class="web-auth-back" type="button" data-web-auth="back">‹ Назад</button><h1>Регистрация</h1><p>Аккаунт создаётся только на почту, которую вы укажете. Код придёт письмом.</p><div class="web-auth-form"><label>Имя<input id="webAuthName" type="text" autocomplete="name" placeholder="Как к вам обращаться"></label><label>Почта<input id="webAuthEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Одноразовый код<input id="webAuthCode" class="web-auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><div class="web-auth-consent"><input id="webAuthConsent" type="checkbox"><span>Я согласен(на) на <a href="privacy-policy.pdf" target="_blank" rel="noopener">обработку персональных данных</a></span></div><button class="soft-button full" type="button" data-web-auth="signup">Получить код</button><button class="primary full" type="button" data-web-auth="create">Создать аккаунт</button><button class="soft-button full" type="button" data-web-auth="show-login">Уже есть аккаунт — войти</button></div><p class="web-auth-note" id="webAuthNote">Сначала имя и почта, затем код из письма, и после этого согласие.</p></section>`;
+    }
+    return `<section class="web-auth-screen"><button class="web-auth-back" type="button" data-web-auth="back">‹ Назад</button><h1>Вход</h1><p>Почта и одноразовый код из письма. Имя указывается только при регистрации.</p><div class="web-auth-form"><label>Почта<input id="webAuthEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Одноразовый код<input id="webAuthCode" class="web-auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><button class="soft-button full" type="button" data-web-auth="login">Получить код</button><div class="web-auth-actions"><button class="primary" type="button" data-web-auth="enter">Войти</button><button class="soft-button" type="button" data-web-auth="show-signup">Зарегистрироваться</button></div></div><p class="web-auth-note" id="webAuthNote">Код приходит письмом от NutriPate.</p></section>`;
+  };
+
+  function showAuth(mode) {
+    if (mode === 'login' || mode === 'signup') authMode = mode;
+    if (typeof modal !== 'undefined' && modal && modal.open && typeof modal.close === 'function') modal.close();
     const main = document.getElementById('appMain');
-    const onAuth = main && main.querySelector('.web-auth-screen');
-    let bar = document.getElementById('emailSuggest');
-    if (accountEmail || onAuth) {
-      if (bar) bar.remove();
-      document.body.classList.remove('has-email-suggest');
-      return;
-    }
-    if (!bar) {
-      bar = document.createElement('button');
-      bar.id = 'emailSuggest';
-      bar.type = 'button';
-      bar.className = 'email-suggest';
-      bar.setAttribute('data-web-auth', 'open');
-      bar.textContent = 'или войти по почте';
-      document.body.appendChild(bar);
-    }
-    document.body.classList.add('has-email-suggest');
-    placeEmailBar();
+    if (main) main.innerHTML = authScreen();
+    const bar = document.getElementById('emailSuggest');
+    if (bar) bar.remove();
   }
 
-  window.addEventListener('resize', placeEmailBar);
+  window.nutripateOpenAuth = showAuth;
 
-  const welcomeScreen = () => `<section class="welcome-screen"><div class="welcome-brand">Nutri<span>Pate</span></div><h1>Добро пожаловать!</h1><img class="welcome-art" src="assets/welcome_pets.png" alt="Питомцы рядом"><h2>Здесь будет день<br>вашего питомца</h2><p class="welcome-lead">Всего один профиль — и важное всегда под рукой: корм, порция и время кормления.</p><button class="primary" data-action="start-onboarding">Добавить первого питомца</button><div class="welcome-example"><b>Что понадобится</b><p>Возраст, вес, активность и особенности здоровья.</p></div><button class="soft-button full web-auth-login" type="button" data-web-auth="open">${accountEmail ? 'Аккаунт: ' + esc(accountEmail) : 'или войти по почте'}</button><p class="welcome-note">Один питомец и основной дневник — бесплатно.</p></section>`;
+  const welcomeScreen = () => `<section class="welcome-screen"><div class="welcome-brand">Nutri<span>Pate</span></div><h1>Добро пожаловать!</h1><img class="welcome-art" src="assets/welcome_pets.png" alt="Питомцы рядом"><h2>Здесь будет день<br>вашего питомца</h2><p class="welcome-lead">Всего один профиль — и важное всегда под рукой: корм, порция и время кормления.</p><button class="primary" data-action="start-onboarding">Добавить первого питомца</button><div class="welcome-example"><b>Что понадобится</b><p>Возраст, вес, активность и особенности здоровья.</p></div><div class="web-auth-actions web-auth-login">${accountEmail ? `<button class="soft-button" type="button" data-web-auth="open-login">Аккаунт</button>` : `<button class="primary" type="button" data-web-auth="open-login">Войти</button><button class="soft-button" type="button" data-web-auth="open-signup">Зарегистрироваться</button>`}</div><p class="welcome-note">Один питомец и основной дневник — бесплатно.</p></section>`;
 
   try { viewWelcome = welcomeScreen; } catch (e) {}
 
   function accountSection() {
     if (accountEmail) {
-      return `<section class="more-section"><h2>Аккаунт</h2><button class="more-row" type="button" data-web-auth="open"><span>${esc(accountEmail)}</span><span>Аккаунт ›</span></button></section>`;
+      return `<section class="more-section"><h2>Аккаунт</h2><button class="more-row" type="button" data-web-auth="open-login"><span>${esc(accountEmail)}</span><span>Аккаунт ›</span></button></section>`;
     }
-    return `<section class="more-section"><h2>Аккаунт</h2><button class="more-row" type="button" data-web-auth="open"><span>Войти по почте</span><span>›</span></button></section>`;
+    return `<section class="more-section"><h2>Аккаунт</h2><div class="web-auth-actions"><button class="primary" type="button" data-web-auth="open-login">Войти</button><button class="soft-button" type="button" data-web-auth="open-signup">Зарегистрироваться</button></div></section>`;
   }
 
   if (typeof viewMore === 'function') {
@@ -222,6 +218,17 @@
       lastPayload = JSON.stringify(slim(remote || {}));
       if (typeof window.nutripateReadState !== 'function' || typeof window.nutripateReplaceState !== 'function') return;
       const merged = mergeStates(window.nutripateReadState(), remote || {}, accountEmail, proOnAccount);
+      if (pendingMode === 'signup' && pendingName) {
+        merged.state.owner = Object.assign({}, merged.state.owner, {
+          name: pendingName,
+          email: accountEmail,
+          privacyConsent: true,
+          privacyConsentAt: new Date().toISOString(),
+        });
+        merged.changed = true;
+        pendingMode = '';
+        pendingName = '';
+      }
       window.nutripateReplaceState(merged.state);
       syncing = false;
       if (merged.changed) await pushAccount();
@@ -230,9 +237,29 @@
     }
   }
 
+  function signupName() {
+    const name = (document.getElementById('webAuthName').value || '').trim();
+    if (name.length < 2) {
+      note('Напишите, как к вам обращаться.', true);
+      return false;
+    }
+    pendingName = name;
+    return true;
+  }
+
+  function signupConsent() {
+    const consent = document.getElementById('webAuthConsent');
+    if (!consent || !consent.checked) {
+      note('Нужно согласие на обработку персональных данных.', true);
+      return false;
+    }
+    return true;
+  }
+
   async function sendCode(createUser) {
     const email = (document.getElementById('webAuthEmail').value || '').trim().toLowerCase();
     if (!email.includes('@') || !email.includes('.')) return note('Проверьте адрес почты.', true);
+    if (createUser && !signupName()) return;
     note('Отправляем код…');
     const { error } = await client.auth.signInWithOtp({
       email,
@@ -254,6 +281,8 @@
   async function verifyCode() {
     const email = (document.getElementById('webAuthEmail').value || '').trim().toLowerCase();
     const token = (document.getElementById('webAuthCode').value || '').replace(/\s/g, '');
+    if (authMode === 'signup' && (!signupName() || !signupConsent())) return;
+    if (authMode === 'signup') pendingMode = 'signup';
     if (!email.includes('@')) return note('Сначала укажите почту.', true);
     if (pendingEmail && email !== pendingEmail) return note('Код запрошен для ' + pendingEmail, true);
     if (!/^\d{6,10}$/.test(token)) return note('Введите код из письма.', true);
@@ -289,15 +318,12 @@
     if (!button) return;
     event.preventDefault();
     const action = button.dataset.webAuth;
-    if (action === 'open') {
-      document.getElementById('appMain').innerHTML = loginScreen();
-      ensureEmailBar();
-      return;
-    }
+    if (action === 'open' || action === 'open-login' || action === 'show-login') { showAuth('login'); return; }
+    if (action === 'open-signup' || action === 'show-signup') { showAuth('signup'); return; }
     if (action === 'back') { if (typeof render === 'function') render(); return; }
     if (action === 'signup') { sendCode(true).catch((error) => note(explain(error), true)); return; }
     if (action === 'login') { sendCode(false).catch((error) => note(explain(error), true)); return; }
-    if (action === 'verify') { verifyCode().catch((error) => note(explain(error), true)); return; }
+    if (action === 'enter' || action === 'create' || action === 'verify') { verifyCode().catch((error) => note(explain(error), true)); return; }
     if (action === 'logout') { logout().catch((error) => note(explain(error), true)); }
   });
 
@@ -313,9 +339,7 @@
         if (!data || !data.session) {
           if (typeof toast === 'function') toast('Сначала войдите по почте. Pro запишется на неё и включится на телефоне, в Windows и в веб-версии.');
           if (typeof modal !== 'undefined' && modal && typeof modal.close === 'function') modal.close();
-          const main = document.getElementById('appMain');
-          if (main) main.innerHTML = loginScreen();
-          ensureEmailBar();
+          showAuth('login');
           return;
         }
         originalEnablePro(plan);
@@ -323,17 +347,6 @@
     };
     accountEnablePro.nutripateAccount = true;
     window.enablePro = accountEnablePro;
-  }
-
-  if (typeof render === 'function' && !render.nutripateEmailBar) {
-    const previousRender = render;
-    const wrappedRender = function () {
-      const result = previousRender.apply(this, arguments);
-      ensureEmailBar();
-      return result;
-    };
-    wrappedRender.nutripateEmailBar = true;
-    render = wrappedRender;
   }
 
   if (typeof render === 'function') render();
