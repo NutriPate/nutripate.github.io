@@ -181,16 +181,34 @@ body { overflow-x: hidden; }
   scroll-snap-type: x mandatory;
 }
 .screen-row figure {
-  flex: 0 0 210px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 0 0 176px;
   margin: 0;
   scroll-snap-align: start;
 }
-.screen-row img {
+.screen-row figcaption {
+  margin: 0;
+  font-family: Fraunces, Georgia, serif;
+  font-size: 26px;
+  font-weight: 560;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+.device {
+  padding: 8px;
+  border-radius: 28px;
+  background: #02191a;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
+}
+.device img {
   width: 100%;
-  border-radius: 24px;
+  height: auto;
+  border-radius: 20px;
   background: white;
 }
-.screen-row figcaption { margin-top: 8px; font-weight: 800; }
 
 .tiers ul, .benefits { margin: 0 0 18px; padding-left: 18px; }
 .tiers li + li, .benefits li + li { margin-top: 6px; }
@@ -235,9 +253,25 @@ body { overflow-x: hidden; }
   align-items: center;
 }
 .web img { width: min(100%, 420px); margin: 0 auto; border-radius: 24px; }
-.about { padding-top: 10px; }
-.about ul { margin: 0; padding: 0; list-style: none; }
-.about li { padding: 16px 0; border-top: 1px solid var(--line); }
+.about {
+  margin: 8px 20px 36px;
+  padding: 28px 22px 32px;
+  border-radius: 32px;
+  background: var(--ink);
+  color: white;
+}
+.about .eyebrow { color: #8fd9d4; }
+.about h2, .about b { color: white; }
+.about p { color: #d7efeb; }
+.about ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+.about li {
+  padding: 16px 18px;
+  border: 0;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 17px;
+}
+.about li b { display: block; margin-bottom: 4px; font-size: 20px; }
 
 .legal { padding: 36px 20px 56px; background: var(--ink); color: white; }
 .legal .eyebrow, .legal p, .legal .fine { color: #e7f6f3; }
@@ -276,8 +310,10 @@ body { overflow-x: hidden; }
   .tiers, .pro-grid, .web, .about, .legal-grid { grid-template-columns: 1fr 1fr; gap: 28px; }
   .plans { grid-template-columns: repeat(3, 1fr); }
   .web { margin: 0 40px 40px; padding: 40px; }
-  .screen-row { display: grid; grid-template-columns: repeat(4, 1fr); overflow: visible; }
+  .about { margin: 0 40px 48px; padding: 48px 44px; border-radius: 36px; }
+  .screen-row { display: grid; grid-template-columns: repeat(4, minmax(0, 220px)); justify-content: center; gap: 28px; overflow: visible; }
   .screen-row figure { flex-basis: auto; }
+  .screen-row figcaption { font-size: 30px; }
   .footer { grid-template-columns: auto 1fr auto; align-items: center; padding: 24px 40px; }
   .footer p { margin: 0; }
 }
