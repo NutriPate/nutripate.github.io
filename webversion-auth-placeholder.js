@@ -41,6 +41,12 @@
     .web-auth-consent{display:flex;align-items:flex-start;gap:10px;color:#07383a;font:14px Montserrat,sans-serif}
     .web-auth-consent input{width:18px;height:18px;margin-top:2px;accent-color:#12b6b8;flex:none}
     .web-auth-consent a{color:#0a8f8c}
+    .web-auth-start{margin:0 0 18px;padding:14px;border:1px solid #d8e5e1;border-radius:16px;background:#f3fffd}
+    .web-auth-start-title{margin:0 0 10px;text-align:center;color:#07383a;font:600 16px Montserrat,sans-serif}
+    .account-pointer{display:grid;justify-items:center;gap:2px;margin:4px 0 18px;color:#0a8f8c;text-align:center}
+    .account-pointer b{font-size:32px;line-height:1;font-weight:700}
+    .account-pointer span{color:#53716f;font-size:14px}
+    .nav-item[data-tab="more"] .nav-alert{width:16px;height:16px;border-radius:50%;background:#B42318;color:#fff;font:700 11px/16px Montserrat,sans-serif;text-align:center;pointer-events:none}
   `;
   document.head.appendChild(style);
 
@@ -87,28 +93,47 @@
 
   function decorateWelcome() {
     const main = document.getElementById("appMain");
-    if (!main || main.querySelector("[data-web-auth='open-login']")) return;
+    if (!main || accountEmail) return;
     const section = main.querySelector(".welcome-screen");
-    if (!section) return;
-    const actions = document.createElement("div");
-    actions.className = "web-auth-actions web-auth-login";
-    actions.innerHTML = accountButtons();
-    const hint = document.createElement("p");
-    hint.className = "welcome-note";
-    hint.textContent = "Войти: почта и код. Регистрация: имя, почта, код и согласие.";
-    section.append(actions, hint);
+    if (!section || section.querySelector("[data-web-auth='open-signup']")) return;
+    const box = document.createElement("div");
+    box.className = "web-auth-start";
+    box.innerHTML = `<p class="web-auth-start-title">Зарегистрируйтесь</p><div class="web-auth-actions">${accountButtons()}</div><p class="welcome-note">Имя, почта, код из письма и согласие на обработку данных.</p>`;
+    section.prepend(box);
+  }
+
+  function markAccountNav() {
+    const more = document.querySelector(".nav-item[data-tab='more']");
+    if (!more) return;
+    let badge = more.querySelector(".nav-alert");
+    if (accountEmail) {
+      if (badge) badge.remove();
+      return;
+    }
+    if (!badge) {
+      badge = document.createElement("span");
+      badge.className = "nav-alert";
+      badge.textContent = "!";
+      badge.setAttribute("aria-hidden", "true");
+      more.prepend(badge);
+    }
   }
 
   function accountSection() {
     if (accountEmail) {
-      return `<section class="more-section"><h2>Аккаунт</h2><button class="more-row" type="button" data-web-auth="open-login"><span>${esc(accountEmail)}</span><span>Аккаунт ›</span></button></section>`;
+      return `<section class="more-section" id="accountAnchor"><h2>Аккаунт</h2><button class="more-row" type="button" data-web-auth="open-login"><span>${esc(accountEmail)}</span><span>Аккаунт ›</span></button></section>`;
     }
-    return `<section class="more-section"><h2>Аккаунт</h2><div class="web-auth-actions"><button class="primary" type="button" data-web-auth="open-login">Войти</button><button class="soft-button" type="button" data-web-auth="open-signup">Зарегистрироваться</button></div></section>`;
+    return `<section class="more-section" id="accountAnchor"><h2>Аккаунт</h2><p class="muted">Зарегистрируйтесь, чтобы питомец и дневник открывались на любом устройстве.</p><div class="web-auth-actions"><button class="primary" type="button" data-web-auth="open-signup">Зарегистрироваться</button><button class="soft-button" type="button" data-web-auth="open-login">Войти</button></div></section>`;
+  }
+
+  function accountPointer() {
+    if (accountEmail) return "";
+    return `<div class="account-pointer"><b>↓</b><span>Зарегистрируйтесь внизу экрана</span></div>`;
   }
 
   if (typeof viewMore === 'function') {
     const previousViewMore = viewMore;
-    viewMore = function () { return previousViewMore() + accountSection(); };
+    viewMore = function () { return accountPointer() + previousViewMore() + accountSection(); };
   }
 
   function note(text, isError) {
@@ -336,7 +361,7 @@
     note('Отправляем код…');
     const { error } = await client.auth.signInWithOtp({
       email,
-      options: { shouldCreateUser: createUser, emailRedirectTo: REDIRECT_URL },
+      options: { shouldCreateUser: createUser },
     });
     if (error) {
       const lower = String(error.message || error).toLowerCase();
@@ -452,6 +477,7 @@
         return;
       }
       renderBeforeAccount();
+      markAccountNav();
       if (typeof activePet === "function" && !activePet()) {
         const nav = document.querySelector(".bottom-nav");
         if (nav) {
