@@ -89,6 +89,8 @@
       diaryDay: state.diaryDay || null,
       reminders: state.reminders || null,
       savedAt: state.savedAt || null,
+      pro: Boolean(state.pro),
+      proPlan: state.pro ? (state.proPlan || 'account') : null,
     };
   }
 
@@ -106,7 +108,7 @@
     return [...map.values()];
   }
 
-  function mergeStates(local, remote, email) {
+  function mergeStates(local, remote, email, proOnAccount) {
     const localPets = Array.isArray(local && local.pets) ? local.pets : [];
     const remotePets = Array.isArray(remote && remote.pets) ? remote.pets : [];
     const byId = new Map();
@@ -121,6 +123,8 @@
     const owner = Object.assign({ name: '', email: '', privacyConsent: false }, (remote && remote.owner) || {}, (local && local.owner) || {});
     if (!(local && local.owner && local.owner.name) && remote && remote.owner && remote.owner.name) owner.name = remote.owner.name;
     if (email) owner.email = email;
+    const pro = Boolean(proOnAccount || (remote && remote.pro) || (local && local.pro));
+    const proPlan = pro ? ((local && local.pro) ? (local.proPlan || 'account') : ((remote && remote.proPlan) || 'account')) : null;
     const state = {
       pets,
       activePetId: (local && local.activePetId) || (remote && remote.activePetId) || (pets[0] && pets[0].id) || null,
@@ -132,6 +136,8 @@
       diaryDay: (local && local.diaryDay) || (remote && remote.diaryDay) || null,
       reminders: Object.assign({}, (remote && remote.reminders) || {}, (local && local.reminders) || {}),
       savedAt: new Date().toISOString(),
+      pro,
+      proPlan,
     };
     const before = JSON.stringify(slim(remote));
     const after = JSON.stringify(slim(state));
@@ -146,7 +152,7 @@
     if (accountEmail) payload.owner.email = accountEmail;
     const serial = JSON.stringify(payload);
     if (serial === lastPayload) return;
-    const { error } = await client.auth.updateUser({ data: { nutripate: payload } });
+    const { error } = await client.auth.updateUser({ data: { nutripate: payload, nutripate_pro: Boolean(payload.pro) } });
     if (error) {
       console.warn(error.message);
       return;
@@ -172,9 +178,10 @@
       }
       accountEmail = data.user.email || '';
       const remote = data.user.user_metadata && data.user.user_metadata.nutripate;
+      const proOnAccount = Boolean(data.user.user_metadata && data.user.user_metadata.nutripate_pro);
       lastPayload = JSON.stringify(slim(remote || {}));
       if (typeof window.nutripateReadState !== 'function' || typeof window.nutripateReplaceState !== 'function') return;
-      const merged = mergeStates(window.nutripateReadState(), remote || {}, accountEmail);
+      const merged = mergeStates(window.nutripateReadState(), remote || {}, accountEmail, proOnAccount);
       window.nutripateReplaceState(merged.state);
       syncing = false;
       if (merged.changed) await pushAccount();
@@ -256,4 +263,24 @@
     if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') pullAccount().catch(() => {});
     if (event === 'SIGNED_OUT') accountEmail = '';
   });
+
+  if (typeof window.enablePro === 'function' && !window.enablePro.nutripateAccount) {
+    const originalEnablePro = window.enablePro;
+    const accountEnablePro = function (plan) {
+      client.auth.getSession().then(({ data }) => {
+        if (!data || !data.session) {
+          if (typeof toast === 'function') toast('Сначала войдите по почте. Pro запишется на неё и включится на телефоне, в Windows и в веб-версии.');
+          if (typeof modal !== 'undefined' && modal && typeof modal.close === 'function') modal.close();
+          const main = document.getElementById('appMain');
+          if (main) main.innerHTML = loginScreen();
+          return;
+        }
+        originalEnablePro(plan);
+      }).catch(() => {});
+    };
+    accountEnablePro.nutripateAccount = true;
+    window.enablePro = accountEnablePro;
+  }
+
+  if (typeof render === 'function') render();
 })();
