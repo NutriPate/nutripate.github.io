@@ -294,18 +294,18 @@ body { overflow-x: hidden; }
   margin: 8px 20px 36px;
   padding: 28px 22px 32px;
   border-radius: 32px;
-  background: #0b7c7a;
-  color: white;
+  background: #e7f4f1;
+  color: #07383a;
 }
-.about .eyebrow { color: #e7fffc; }
-.about h2, .about b { color: white; }
-.about p { color: #f4fffd; }
+.about .eyebrow { color: #0b7c7a; }
+.about h2, .about b { color: #07383a; }
+.about p { color: #53716f; }
 .about ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
 .about li {
   padding: 16px 18px;
   border: 0;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.16);
+  background: #ffffff;
   font-size: 17px;
 }
 .about li b { display: block; margin-bottom: 4px; font-size: 20px; }
