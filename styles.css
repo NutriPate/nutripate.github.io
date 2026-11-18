@@ -249,7 +249,7 @@ body { overflow-x: hidden; }
 .tiers ul, .benefits { margin: 0 0 18px; padding-left: 18px; }
 .tiers li + li, .benefits li + li { margin-top: 6px; }
 .tier-name { margin: 0 0 8px; font-size: clamp(42px, 6vw, 64px); font-weight: 700; letter-spacing: -0.04em; line-height: 1; text-transform: none; color: var(--brand-dark); }
-.tiers ul { width: 100%; padding-left: 0; list-style: none; text-align: center; }
+.tiers ul { align-self: stretch; width: 100%; margin-left: 0; padding-left: 1.2em; list-style: disc; text-align: left; }
 .price { margin: 4px 0 8px; font-family: Montserrat, sans-serif; font-size: 40px; }
 .price small { font-family: Montserrat, sans-serif; font-size: 16px; color: var(--muted); }
 .tiers article.tier-pro { background: #07383a; color: white; border-color: #07383a; }
