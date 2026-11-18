@@ -47,6 +47,9 @@
     .account-pointer b{font-size:32px;line-height:1;font-weight:700}
     .account-pointer span{color:#53716f;font-size:14px}
     .nav-item[data-tab="more"] .nav-alert{width:16px;height:16px;border-radius:50%;background:#B42318;color:#fff;font:700 11px/16px Montserrat,sans-serif;text-align:center;pointer-events:none}
+    .web-own-name{display:grid;gap:6px;color:#53716f;font:14px Montserrat,sans-serif}
+    .web-own-name input{width:100%;box-sizing:border-box;border:1px solid #d8e5e1;border-radius:14px;padding:14px 15px;background:#fff;color:#07383a;font:16px Montserrat,sans-serif}
+    #accountAnchor .primary,#accountAnchor .soft-button{width:100%;min-height:48px;margin-top:8px}
   `;
   document.head.appendChild(style);
 
@@ -54,15 +57,22 @@
   if (oldBar) oldBar.remove();
   document.body.classList.remove('has-email-suggest');
 
+  function htmlEscape(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  }
+
   function ownerName() {
     if (typeof state !== 'undefined' && state.owner && state.owner.name) return state.owner.name;
     return '';
   }
 
+  function ownNameForm() {
+    return `<label class="web-own-name">Ваше имя<input id="webOwnName" type="text" maxlength="80" autocomplete="name" value="${htmlEscape(ownerName())}" placeholder="Как к вам обращаться"></label><button class="primary full" type="button" data-web-auth="rename">Сохранить имя</button>`;
+  }
+
   const authScreen = () => {
     if (accountEmail) {
-      const name = ownerName();
-      return `<section class="web-auth-screen"><button class="web-auth-back" type="button" data-web-auth="back">‹ Назад</button><h1>Аккаунт</h1><p>Имя, питомцы и дневник открываются на любом устройстве, где вы войдёте по этой почте.</p><div class="web-auth-form">${name ? `<p>Имя <b>${esc(name)}</b></p>` : ''}<p>Почта <b>${esc(accountEmail)}</b></p><button class="soft-button full" type="button" data-web-auth="logout">Выйти</button></div></section>`;
+      return `<section class="web-auth-screen"><button class="web-auth-back" type="button" data-web-auth="back">‹ Назад</button><h1>Аккаунт</h1><p>Имя, питомцы и дневник открываются на любом устройстве, где вы войдёте по этой почте.</p><div class="web-auth-form">${ownNameForm()}<p>Почта <b>${htmlEscape(accountEmail)}</b></p><button class="soft-button full" type="button" data-web-auth="logout">Выйти</button></div></section>`;
     }
     if (authMode === 'signup') {
       return `<section class="web-auth-screen"><button class="web-auth-back" type="button" data-web-auth="back">‹ Назад</button><h1>Регистрация</h1><p>Аккаунт создаётся только на почту, которую вы укажете. Код придёт письмом.</p><div class="web-auth-form"><label>Имя<input id="webAuthName" type="text" autocomplete="name" placeholder="Как к вам обращаться"></label><label>Почта<input id="webAuthEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Одноразовый код<input id="webAuthCode" class="web-auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><div class="web-auth-consent"><input id="webAuthConsent" type="checkbox"><span>Я согласен(на) на <a href="privacy-policy.pdf" target="_blank" rel="noopener">обработку персональных данных</a></span></div><button class="soft-button full" type="button" data-web-auth="signup">Получить код</button><button class="primary full" type="button" data-web-auth="create">Создать аккаунт</button><button class="soft-button full" type="button" data-web-auth="show-login">Уже есть аккаунт — войти</button></div><p class="web-auth-note" id="webAuthNote">Сначала имя и почта, затем код из письма, и после этого согласие.</p></section>`;
@@ -121,7 +131,7 @@
 
   function accountSection() {
     if (accountEmail) {
-      return `<section class="more-section" id="accountAnchor"><h2>Аккаунт</h2><button class="more-row" type="button" data-web-auth="open-login"><span>${esc(accountEmail)}</span><span>Аккаунт ›</span></button></section>`;
+      return `<section class="more-section" id="accountAnchor"><h2>Аккаунт</h2><p class="muted">Почта ${htmlEscape(accountEmail)}</p>${ownNameForm()}<button class="soft-button full" type="button" data-web-auth="logout">Выйти</button></section>`;
     }
     return `<section class="more-section" id="accountAnchor"><h2>Аккаунт</h2><p class="muted">Зарегистрируйтесь, чтобы питомец и дневник открывались на любом устройстве.</p><div class="web-auth-actions"><button class="primary" type="button" data-web-auth="open-signup">Зарегистрироваться</button><button class="soft-button" type="button" data-web-auth="open-login">Войти</button></div></section>`;
   }
@@ -284,12 +294,13 @@
       console.warn(saved.error.message);
       return;
     }
-    await client.from('profiles').upsert({
+    const profile = {
       user_id: user.id,
       display_name: (payload.owner && payload.owner.name) || '',
       email: user.email || accountEmail,
-      privacy_consent_at: payload.owner && payload.owner.privacyConsent ? now : null,
-    }, { onConflict: 'user_id' });
+    };
+    if (payload.owner && payload.owner.privacyConsent) profile.privacy_consent_at = now;
+    await client.from('profiles').upsert(profile, { onConflict: 'user_id' });
     lastPayload = serial;
   }
 
@@ -392,6 +403,33 @@
     if (typeof render === 'function') render();
   }
 
+  async function saveOwnName(explicit) {
+    const input = document.getElementById('webOwnName');
+    const raw = explicit != null ? explicit : (input && input.value);
+    const name = String(raw || '').replace(/\s+/g, ' ').trim();
+    const fail = (text) => {
+      if (document.getElementById('webAuthNote')) note(text, true);
+      else if (typeof toast === 'function') toast(text);
+    };
+    if (name.length < 2) return fail('Напишите имя — хотя бы 2 буквы.');
+    const { data } = await client.auth.getSession();
+    if (!data.session) return fail('Сначала войдите, чтобы имя сохранилось в аккаунте.');
+    if (typeof window.nutripateReadState === 'function' && typeof window.nutripateReplaceState === 'function') {
+      const current = window.nutripateReadState() || {};
+      const owner = Object.assign({}, current.owner, { name, email: accountEmail || (current.owner && current.owner.email) || '' });
+      window.nutripateReplaceState(Object.assign({}, current, { owner }));
+    } else if (typeof state !== 'undefined') {
+      state.owner = Object.assign({}, state.owner, { name });
+      if (typeof save === 'function') save();
+    }
+    lastPayload = '';
+    await pushAccount();
+    const updated = await client.auth.updateUser({ data: { display_name: name } });
+    if (updated.error) return fail('Имя записано в дневнике. На сервере пока не обновилось — попробуйте ещё раз.');
+    if (typeof toast === 'function') toast('Имя сохранено');
+    if (typeof render === 'function') render();
+  }
+
   async function logout() {
     await client.auth.signOut();
     accountEmail = '';
@@ -422,8 +460,23 @@
     if (action === 'signup') { sendCode(true).catch((error) => note(explain(error), true)); return; }
     if (action === 'login') { sendCode(false).catch((error) => note(explain(error), true)); return; }
     if (action === 'enter' || action === 'create' || action === 'verify') { verifyCode().catch((error) => note(explain(error), true)); return; }
-    if (action === 'logout') { logout().catch((error) => note(explain(error), true)); }
+    if (action === 'logout') { logout().catch((error) => note(explain(error), true)); return; }
+    if (action === 'rename') { saveOwnName().catch((error) => note(explain(error), true)); }
   });
+
+  if (typeof window.saveOwner === 'function' && !window.saveOwner.nutripateName) {
+    const previousSaveOwner = window.saveOwner;
+    const saveOwnerWithName = function () {
+      const field = document.getElementById('ownerInputName');
+      const typed = field ? field.value.replace(/\s+/g, ' ').trim() : '';
+      previousSaveOwner();
+      const saved = typeof state !== 'undefined' && state.owner ? state.owner.name : '';
+      if (!accountEmail || typed.length < 2 || saved !== typed) return;
+      saveOwnName(typed).catch(() => {});
+    };
+    saveOwnerWithName.nutripateName = true;
+    window.saveOwner = saveOwnerWithName;
+  }
 
   client.auth.onAuthStateChange((event) => {
     if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') pullAccount().catch(() => {});
