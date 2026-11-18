@@ -312,18 +312,18 @@ body { overflow-x: hidden; }
   margin: 8px 20px 36px;
   padding: 28px 22px 32px;
   border-radius: 32px;
-  background: var(--ink);
+  background: #0b7c7a;
   color: white;
 }
-.about .eyebrow { color: #8fd9d4; }
+.about .eyebrow { color: #e7fffc; }
 .about h2, .about b { color: white; }
-.about p { color: #d7efeb; }
+.about p { color: #f4fffd; }
 .about ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
 .about li {
   padding: 16px 18px;
   border: 0;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.16);
   font-size: 17px;
 }
 .about li b { display: block; margin-bottom: 4px; font-size: 20px; }
