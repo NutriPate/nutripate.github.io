@@ -34,11 +34,26 @@
     .web-auth-code{letter-spacing:.24em}
     .web-auth-note{font-size:12px;color:#53716f;margin-top:14px}
     .web-auth-error{color:#9b3b3b}
-    .email-suggest{position:fixed;left:50%;transform:translateX(-50%);bottom:84px;z-index:25;width:min(420px,calc(100% - 28px));min-height:46px;border:1px solid #b7e3de;border-radius:16px;background:#e7f6f3;color:#07383a;font:700 15px Montserrat,sans-serif;cursor:pointer}
+    .email-suggest{position:fixed;left:50%;transform:translateX(-50%);z-index:8;width:min(420px,calc(100% - 28px));min-height:46px;border:1px solid #b7e3de;border-radius:16px;background:#e7f6f3;color:#07383a;font:700 15px Montserrat,sans-serif;cursor:pointer}
+    body.has-email-suggest .app-shell{padding-bottom:156px}
   `;
   document.head.appendChild(style);
 
   const loginScreen = () => `<section class="web-auth-screen"><button class="web-auth-back" type="button" data-web-auth="back">‹ Назад</button><h1>${accountEmail ? 'Вы уже вошли' : 'Аккаунт'}</h1><p>${accountEmail ? 'Имя, питомцы и дневник этого аккаунта подтягиваются на любое устройство.' : 'Аккаунт создаётся только по кнопке «Создать аккаунт» и только на почту, которую вы введёте. Если аккаунт уже есть, нажмите «Войти».'}</p><div class="web-auth-form">${accountEmail ? `<p>Почта <b>${esc(accountEmail)}</b></p><button class="soft-button full" type="button" data-web-auth="logout">Выйти</button>` : `<label>Почта<input id="webAuthEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Одноразовый код<input id="webAuthCode" class="web-auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><button class="primary full" type="button" data-web-auth="signup">Создать аккаунт</button><button class="soft-button full" type="button" data-web-auth="login">Войти</button><button class="soft-button full" type="button" data-web-auth="verify">Подтвердить код</button>`}</div><p class="web-auth-note" id="webAuthNote">Код приходит письмом от NutriPate. Если в письме есть ссылка, откройте её в этом же браузере.</p><p class="web-auth-note"><a href="privacy-policy.pdf" target="_blank" rel="noopener">Политика обработки персональных данных</a></p></section>`;
+
+  function placeEmailBar() {
+    const bar = document.getElementById('emailSuggest');
+    if (!bar) return;
+    const nav = document.querySelector('.bottom-nav');
+    const style = nav ? getComputedStyle(nav) : null;
+    const visible = nav && style.display !== 'none' && style.visibility !== 'hidden' && nav.getClientRects().length;
+    if (!visible) {
+      bar.style.bottom = '16px';
+      return;
+    }
+    const gap = 12;
+    bar.style.bottom = Math.round(window.innerHeight - nav.getBoundingClientRect().top + gap) + 'px';
+  }
 
   function ensureEmailBar() {
     const main = document.getElementById('appMain');
@@ -46,6 +61,7 @@
     let bar = document.getElementById('emailSuggest');
     if (accountEmail || onAuth) {
       if (bar) bar.remove();
+      document.body.classList.remove('has-email-suggest');
       return;
     }
     if (!bar) {
@@ -57,7 +73,11 @@
       bar.textContent = 'или войти по почте';
       document.body.appendChild(bar);
     }
+    document.body.classList.add('has-email-suggest');
+    placeEmailBar();
   }
+
+  window.addEventListener('resize', placeEmailBar);
 
   const welcomeScreen = () => `<section class="welcome-screen"><div class="welcome-brand">Nutri<span>Pate</span></div><h1>Добро пожаловать!</h1><img class="welcome-art" src="assets/welcome_pets.png" alt="Питомцы рядом"><h2>Здесь будет день<br>вашего питомца</h2><p class="welcome-lead">Всего один профиль — и важное всегда под рукой: корм, порция и время кормления.</p><button class="primary" data-action="start-onboarding">Добавить первого питомца</button><div class="welcome-example"><b>Что понадобится</b><p>Возраст, вес, активность и особенности здоровья.</p></div><button class="soft-button full web-auth-login" type="button" data-web-auth="open">${accountEmail ? 'Аккаунт: ' + esc(accountEmail) : 'или войти по почте'}</button><p class="welcome-note">Один питомец и основной дневник — бесплатно.</p></section>`;
 
