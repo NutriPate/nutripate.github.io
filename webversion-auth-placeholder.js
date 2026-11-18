@@ -41,7 +41,7 @@
     .web-auth-consent{display:flex;align-items:flex-start;gap:10px;color:#07383a;font:14px Montserrat,sans-serif}
     .web-auth-consent input{width:18px;height:18px;margin-top:2px;accent-color:#12b6b8;flex:none}
     .web-auth-consent a{color:#0a8f8c}
-    .web-auth-start{margin:0 0 18px;padding:14px;border:1px solid #d8e5e1;border-radius:16px;background:#f3fffd}
+    .web-auth-start{margin:18px 0 0;padding:14px;border:1px solid #d8e5e1;border-radius:16px;background:#f3fffd}
     .web-auth-start-title{margin:0 0 10px;text-align:center;color:#07383a;font:600 16px Montserrat,sans-serif}
     .account-pointer{display:grid;justify-items:center;gap:2px;margin:4px 0 18px;color:#0a8f8c;text-align:center}
     .account-pointer b{font-size:32px;line-height:1;font-weight:700}
@@ -103,13 +103,13 @@
 
   function decorateWelcome() {
     const main = document.getElementById("appMain");
-    if (!main || accountEmail) return;
+    if (!main) return;
     const section = main.querySelector(".welcome-screen");
     if (!section || section.querySelector("[data-web-auth='open-signup']")) return;
     const box = document.createElement("div");
     box.className = "web-auth-start";
-    box.innerHTML = `<p class="web-auth-start-title">Зарегистрируйтесь</p><div class="web-auth-actions">${accountButtons()}</div><p class="welcome-note">Имя, почта, код из письма и согласие на обработку данных.</p>`;
-    section.prepend(box);
+    box.innerHTML = `<p class="web-auth-start-title">Войдите или зарегистрируйтесь</p><div class="web-auth-actions"><button class="primary" type="button" data-web-auth="open-login">Войти</button><button class="soft-button" type="button" data-web-auth="open-signup">Зарегистрироваться</button></div><p class="welcome-note">Почта и код из письма. Тогда питомец и дневник откроются на другом компьютере.</p>`;
+    section.append(box);
   }
 
   function markAccountNav() {
@@ -243,18 +243,26 @@
     return [...map.values()];
   }
 
+  function stampOf(value) {
+    const text = value && (value.updatedAt || value.savedAt) || "";
+    const time = Date.parse(text);
+    return Number.isFinite(time) ? time : 0;
+  }
+
   function mergeStates(local, remote, email, proOnAccount) {
     const localPets = Array.isArray(local && local.pets) ? local.pets : [];
     const remotePets = Array.isArray(remote && remote.pets) ? remote.pets : [];
+    const remoteWins = stampOf(remote) > 0 && stampOf(remote) >= stampOf(local);
+    const chosen = remoteWins ? remotePets : localPets;
     const byId = new Map();
-    for (const pet of remotePets) if (pet && pet.id) byId.set(pet.id, pet);
-    for (const pet of localPets) {
+    for (const pet of chosen) {
       if (!pet || !pet.id) continue;
       const previous = byId.get(pet.id);
       if (!previous) byId.set(pet.id, pet);
       else byId.set(pet.id, Object.assign({}, previous, pet, { photo: pet.photo || previous.photo || null }));
     }
     const pets = [...byId.values()];
+    const petIds = new Set(pets.map((pet) => pet.id));
     const owner = Object.assign({ name: '', email: '', privacyConsent: false }, (remote && remote.owner) || {}, (local && local.owner) || {});
     if (!(local && local.owner && local.owner.name) && remote && remote.owner && remote.owner.name) owner.name = remote.owner.name;
     if (email) owner.email = email;
@@ -262,15 +270,16 @@
     const proPlan = pro ? ((local && local.pro) ? (local.proPlan || 'account') : ((remote && remote.proPlan) || 'account')) : null;
     const state = {
       pets,
-      activePetId: (local && local.activePetId) || (remote && remote.activePetId) || (pets[0] && pets[0].id) || null,
+      activePetId: pets.some((pet) => pet.id === (remoteWins ? remote && remote.activePetId : local && local.activePetId)) ? (remoteWins ? remote.activePetId : local.activePetId) : ((pets[0] && pets[0].id) || null),
+      onboardingDone: pets.length > 0,
       owner,
       selectedFoods: Object.assign({}, (remote && remote.selectedFoods) || {}, (local && local.selectedFoods) || {}),
       favorites: [...new Set([...((remote && remote.favorites) || []), ...((local && local.favorites) || [])])],
-      feedEntries: union(local && local.feedEntries, remote && remote.feedEntries),
-      weights: union(local && local.weights, remote && remote.weights),
+      feedEntries: union(local && local.feedEntries, remote && remote.feedEntries).filter((item) => item && petIds.has(item.petId)),
+      weights: union(local && local.weights, remote && remote.weights).filter((item) => item && petIds.has(item.petId)),
       diaryDay: (local && local.diaryDay) || (remote && remote.diaryDay) || null,
       reminders: Object.assign({}, (remote && remote.reminders) || {}, (local && local.reminders) || {}),
-      savedAt: new Date().toISOString(),
+      savedAt: remoteWins ? ((remote && (remote.updatedAt || remote.savedAt)) || new Date().toISOString()) : new Date().toISOString(),
       pro,
       proPlan,
     };
@@ -476,6 +485,24 @@
     };
     saveOwnerWithName.nutripateName = true;
     window.saveOwner = saveOwnerWithName;
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") pullAccount().catch(() => {});
+  });
+
+  if (typeof window.deletePetWeb === "function" && !window.deletePetWeb.nutripateSync) {
+    const previousDelete = window.deletePetWeb;
+    const deleteAndSync = function (id) {
+      previousDelete(id);
+      if (typeof state !== "undefined" && (!state.pets || !state.pets.length)) {
+        state.onboardingDone = false;
+        if (typeof save === "function") save();
+        if (typeof render === "function") render();
+      }
+    };
+    deleteAndSync.nutripateSync = true;
+    window.deletePetWeb = deleteAndSync;
   }
 
   client.auth.onAuthStateChange((event) => {
