@@ -13860,8 +13860,8 @@
       "indoor": false,
       "highEnergy": true,
       "tags": [
-        "healthy",
-        "medical:hepatic"
+        "medical:hepatic",
+        "medical:liver"
       ],
       "proteinPer100g": 26,
       "fatPer100g": 22,
@@ -26685,8 +26685,8 @@
       "indoor": false,
       "highEnergy": false,
       "tags": [
-        "healthy",
-        "medical:hepatic"
+        "medical:hepatic",
+        "medical:liver"
       ],
       "proteinPer100g": 16,
       "fatPer100g": 16,
