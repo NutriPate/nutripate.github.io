@@ -243,6 +243,40 @@
     return [...map.values()];
   }
 
+  function catalogBreeds(species) {
+    const key = species === "dog" ? "dogs" : "cats";
+    const data = typeof breedCatalogData !== "undefined" && breedCatalogData[key];
+    if (Array.isArray(data) && data.length) return data.map((item) => ({ id: item.id, name: item.name }));
+    if (typeof breedEntries === "function") {
+      return breedEntries(species === "dog" ? "dog" : "cat").map((item) => ({ id: item.id, name: item.name }));
+    }
+    return [];
+  }
+
+  function alignBreed(pet) {
+    if (!pet || typeof pet !== "object") return pet;
+    const list = catalogBreeds(pet.species);
+    const id = String(pet.breedId || "");
+    const label = String(pet.breedLabel || pet.breed || "").trim();
+    const found = list.find((item) => item.id === id) || list.find((item) => item.name === label || item.name === String(pet.breed || "").trim());
+    if (!found) return pet;
+    pet.breedId = found.id;
+    pet.breed = found.name;
+    pet.breedLabel = found.name;
+    return pet;
+  }
+
+  function alignAllBreeds() {
+    if (typeof state === "undefined" || !Array.isArray(state.pets)) return false;
+    let changed = false;
+    state.pets.forEach((pet) => {
+      const before = [pet.breedId, pet.breed, pet.breedLabel].join("|");
+      alignBreed(pet);
+      if ([pet.breedId, pet.breed, pet.breedLabel].join("|") !== before) changed = true;
+    });
+    return changed;
+  }
+
   function stampOf(value) {
     const text = value && (value.updatedAt || value.savedAt) || "";
     const time = Date.parse(text);
@@ -261,7 +295,7 @@
       if (!previous) byId.set(pet.id, pet);
       else byId.set(pet.id, Object.assign({}, previous, pet, { photo: pet.photo || previous.photo || null }));
     }
-    const pets = [...byId.values()];
+    const pets = [...byId.values()].map(alignBreed);
     const petIds = new Set(pets.map((pet) => pet.id));
     const owner = Object.assign({ name: '', email: '', privacyConsent: false }, (remote && remote.owner) || {}, (local && local.owner) || {});
     if (!(local && local.owner && local.owner.name) && remote && remote.owner && remote.owner.name) owner.name = remote.owner.name;
@@ -491,6 +525,17 @@
     if (document.visibilityState === "visible") pullAccount().catch(() => {});
   });
 
+  if (typeof window.savePet === "function" && !window.savePet.nutripateBreed) {
+    const previousSavePet = window.savePet;
+    const savePetWithBreed = function (id) {
+      const result = previousSavePet.apply(this, arguments);
+      if (alignAllBreeds() && typeof save === "function") save();
+      return result;
+    };
+    savePetWithBreed.nutripateBreed = true;
+    window.savePet = savePetWithBreed;
+  }
+
   if (typeof window.deletePetWeb === "function" && !window.deletePetWeb.nutripateSync) {
     const previousDelete = window.deletePetWeb;
     const deleteAndSync = function (id) {
@@ -546,6 +591,7 @@
   if (typeof render === "function") {
     const renderBeforeAccount = render;
     render = function () {
+      if (alignAllBreeds() && !syncing && typeof save === "function") save();
       if (state.authScreen) {
         const nav = document.querySelector(".bottom-nav");
         if (nav) {
