@@ -204,7 +204,7 @@ const savePetWithoutDemoFood=window.savePet;window.savePet=function(id){const is
 const viewTodayReferenceOriginal=viewToday;viewToday=function(){const p=activePet();if(!p||chosenFood())return viewTodayReferenceOriginal();const day=new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});const date=day.charAt(0).toUpperCase()+day.slice(1);return `${title('', 'Сегодня', date)}<section class="card mint-card hero-card"><h2>Выберите корм для питомца</h2><p class="muted">Нажмите кнопку ниже — приложение подберёт варианты по профилю питомца.</p><button class="primary full" data-tab-go="foods">Выбрать корм</button></section><button class="kv" data-action="weight"><span>Взвешивание</span><strong>${lastWeightLabel()}</strong><span>›</span></button><button class="kv" data-action="stock"><span>Запас корма</span><strong>Нет корма</strong><span>›</span></button><div class="card norm"><strong>Норма ${dailyGrams()||'—'} ккал / день</strong><button class="link-button" data-action="calc">Как рассчитана порция <span>→</span></button></div><button class="kv" data-action="reminders"><span>Напоминания о кормлении</span><span>→</span></button>`};
 const renderTodayReferenceOriginal=render;render=function(){renderTodayReferenceOriginal();if(activePet()&&!chosenFood()&&tab==='today')document.querySelector('.meal-bar')?.remove()};render();
 const viewTodayNoFoodFinal=viewToday;viewToday=function(){const p=activePet();if(!p||chosenFood())return viewTodayNoFoodFinal();const day=new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'}),date=day.charAt(0).toUpperCase()+day.slice(1);return `${title('','Сегодня',date)}<section class="card mint-card hero-card"><h2>Выберите корм для питомца</h2><p class="muted">Нажмите кнопку ниже — приложение подберёт варианты по профилю питомца.</p><button class="primary full" data-tab-go="foods">Выбрать корм</button></section><button class="kv" data-action="weight"><span>Взвешивание</span><strong>${lastWeightLabel()}</strong><span>›</span></button><button class="kv" data-action="stock"><span>Запас корма</span><strong>Нет корма</strong><span>›</span></button><div class="card norm"><strong>Норма ${kcalNeed(p)} ккал / день</strong><button class="link-button" data-action="calc">Как рассчитана порция <span>→</span></button></div><button class="kv" data-action="reminders"><span>Напоминания о кормлении</span><span>→</span></button>`};render();
-state.foodChoiceConfirmed=state.foodChoiceConfirmed&&typeof state.foodChoiceConfirmed==='object'?state.foodChoiceConfirmed:{};Object.keys(state.selectedFoods||{}).forEach(id=>{if(state.selectedFoods[id]&&state.selectedFoods[id]!=='__not_selected__'&&!state.foodChoiceConfirmed[id])state.selectedFoods[id]='__not_selected__'});save();
+state.foodChoiceConfirmed=state.foodChoiceConfirmed&&typeof state.foodChoiceConfirmed==='object'?state.foodChoiceConfirmed:{};Object.keys(state.selectedFoods||{}).forEach(id=>{if(state.selectedFoods[id]&&state.selectedFoods[id]!=='__not_selected__')state.foodChoiceConfirmed[id]=state.selectedFoods[id]});
 const selectFoodConfirm=window.selectFood;window.selectFood=function(id){const p=activePet();if(p){state.foodChoiceConfirmed[p.id]=true;save()}return selectFoodConfirm(id)};
 const foodDetailsNoPrimaryFix=foodDetails;foodDetails=function(id){const noPrimary=!chosenFood();foodDetailsNoPrimaryFix(id);if(noPrimary){const button=document.querySelector('#modalContent .primary');if(button){button.textContent='Добавить в рацион';button.onclick=()=>window.selectFood(id)}}};
 const foodDetailsNoPrimaryFinal=foodDetails;foodDetails=function(id){const noPrimary=!chosenFood();foodDetailsNoPrimaryFinal(id);if(noPrimary){const button=document.querySelector('#modalContent .primary');if(button){button.textContent=foodRecommendation(foodById(id),activePet())?'Добавить в рацион':'Проверить этикетку';button.onclick=()=>window.selectFood(id)}}};
@@ -224,12 +224,8 @@ weightChartSvg=weightChartSvgDaily;
 state.foodChoiceConfirmed=state.foodChoiceConfirmed&&typeof state.foodChoiceConfirmed==='object'?state.foodChoiceConfirmed:{};
 Object.keys(state.selectedFoods||{}).forEach(petId=>{
   const selected=state.selectedFoods[petId];
-  if(selected&&selected!=='__not_selected__'&&state.foodChoiceConfirmed[petId]!==selected){
-    state.selectedFoods[petId]='__not_selected__';
-    delete state.foodChoiceConfirmed[petId];
-  }
+  if(selected&&selected!=='__not_selected__')state.foodChoiceConfirmed[petId]=selected;
 });
-save();
 const selectFoodExactFinal=window.selectFood;
 window.selectFood=function(id){
   const result=selectFoodExactFinal(id);
@@ -360,6 +356,92 @@ weightChartSvg=function(rows,period=weightPeriod){
   if(!pts.length)return '<div class="chart chart-empty">Нет записей за этот период</div>';
   const w=360,h=250,l=52,r=18,t=18,b=38,lo=Math.min(...pts.map(x=>x.kg)),hi=Math.max(...pts.map(x=>x.kg)),pad=Math.max(.15,(hi-lo)*.3),min=lo-pad,max=hi+pad,start=cutoff||pts[0].base,end=days?today:pts[pts.length-1].base,range=Math.max(86400000,end-start),pw=w-l-r,ph=h-t-b,x=i=>pts.length===1?l+pw/2:Math.max(l,Math.min(w-r,l+(pts[i].plot-start)/range*pw)),y=v=>t+(max-v)/(max-min)*ph,points=pts.map((p,i)=>`${x(i).toFixed(1)},${y(p.kg).toFixed(1)}`).join(' '),grid=[0,1,2,3,4].map(i=>{const yy=t+i*ph/4,val=max-(max-min)*i/4;return `<line x1="${l}" y1="${yy}" x2="${w-r}" y2="${yy}"/><text x="2" y="${yy+5}">${val.toFixed(1).replace('.',',')}</text>`}).join(''),labels=pts.length===1?`<text x="${l}" y="${h-8}">${esc(pts[0].date)}</text>`:`<text x="${l}" y="${h-8}">${esc(pts[0].date)}</text><text x="${w-r-58}" y="${h-8}">${esc(pts[pts.length-1].date)}</text>`,dots=pts.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.kg)}" r="5"/>`).join('');
   return `<div class="chart chart-svg"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="График веса">${grid}<polyline points="${points}"/>${dots}<text class="last-value" x="${Math.min(w-r-45,Math.max(l,x(pts.length-1)-12))}" y="${Math.max(14,y(pts[pts.length-1].kg)-12)}">${pts[pts.length-1].kg.toFixed(1).replace('.',',')} кг</text>${labels}</svg></div>`;
+};
+
+function currentFavorites(){
+  const pet=activePet();
+  const stored=pet&&state.favoritesByPet&&state.favoritesByPet[pet.id];
+  if(Array.isArray(stored))return stored;
+  return Array.isArray(state.favorites)?state.favorites:[];
+}
+function setCurrentFavorites(list){
+  const pet=activePet();
+  if(!pet)return;
+  state.favoritesByPet=state.favoritesByPet||{};
+  state.favoritesByPet[pet.id]=list;
+  state.favorites=list.slice();
+}
+function dayCostLabel(food){
+  const grams=dailyGrams(activePet(),food);
+  const price=Number(food&&food.pricePerKg);
+  if(!grams||!Number.isFinite(price)||price<=0)return '—';
+  return '≈ '+Math.round(grams*price/1000)+' ₽';
+}
+window.selectFood=function(id){
+  const pet=activePet(),food=foodById(id);
+  if(!pet)return toast('Сначала добавьте питомца');
+  if(!food)return toast('Корм не найден');
+  state.selectedFoods=state.selectedFoods||{};
+  state.selectedFoods[pet.id]=id;
+  state.foodChoiceConfirmed=state.foodChoiceConfirmed||{};
+  state.foodChoiceConfirmed[pet.id]=id;
+  if(state.ration?.[pet.id]?.secondaryId===id){state.ration[pet.id].secondaryId=null;state.ration[pet.id].share=100}
+  save();
+  document.getElementById('modal')?.close();
+  tab='today';
+  toast('Корм добавлен в рацион');
+  render();
+};
+const foodDetailsChoose=foodDetails;
+foodDetails=function(id){
+  foodDetailsChoose(id);
+  const button=document.querySelector('#modalContent button.primary');
+  if(!button)return;
+  const label=button.textContent.trim();
+  if(label==='Проверить этикетку'||label==='Добавить в рацион'){
+    button.textContent='Добавить в рацион';
+    button.onclick=()=>window.selectFood(id);
+  }
+};
+window.toggleFoodFavoriteWeb=id=>{
+  const list=currentFavorites();
+  setCurrentFavorites(list.includes(id)?list.filter(x=>x!==id):[...list,id]);
+  save();
+  if(document.getElementById('modal')?.open)foodDetails(id);else render();
+};
+function compareModalFixed(){
+  const foods=currentFavorites().map(foodById).filter(Boolean).slice(0,3);
+  if(foods.length<2)return toast('Добавьте в избранное хотя бы два корма');
+  const cell=(value)=>`<b>${value}</b>`;
+  const row=(label,values)=>`<div class="compare-metric" style="grid-template-columns:minmax(88px,1.1fr) repeat(${foods.length},minmax(0,1fr))"><span>${label}</span>${values.map(cell).join('')}</div>`;
+  const verified=food=>food.custom?'вручную':(food.verifiedAt?esc(String(food.verifiedAt).slice(0,7)):'—');
+  openModal(`<div class="compare-parity"><div class="pet-menu-back" onclick="modal.close();tab='foods';render()">‹ <span>NutriPate</span></div><h2>Сравнить избранные корма</h2><p class="muted">${foods.length} корма · одна и та же порция по профилю</p><div class="compare-foods" style="grid-template-columns:repeat(${foods.length},minmax(0,1fr))">${foods.map(f=>`<article><div class="compare-food-image">${foodImage(f)?`<img src="${esc(foodImage(f))}" alt="">`:'🥫'}</div><h3>${esc(f.name)}</h3><p>${esc(f.brand)}</p></article>`).join('')}</div>${row('Белок',foods.map(f=>f.proteinPer100g!=null?esc(f.proteinPer100g)+'%':'—'))}${row('Жир',foods.map(f=>f.fatPer100g!=null?esc(f.fatPer100g)+'%':'—'))}${row('Ккал / 100 г',foods.map(f=>f.kcalPer100g!=null?esc(f.kcalPer100g):'—'))}${row('День питания',foods.map(dayCostLabel))}${row('Состав сверен',foods.map(verified))}<div class="card mint-card compare-note"><b>Цена не ставит корм выше</b><p>Порядок в подборе зависит от профиля. Здесь только сравнение избранных кормов.</p></div><button class="primary full" onclick="modal.close()">Готово</button><button class="soft-button full food-back-lower" onclick="modal.close();tab='foods';render()">Назад к кормам</button></div>`);
+}
+compareModal=compareModalFixed;
+const bindFavorites=bind;
+bind=function(){
+  bindFavorites();
+  document.querySelectorAll('[data-fav]').forEach(button=>{
+    button.onclick=event=>{
+      event.stopPropagation();
+      const id=button.dataset.fav;
+      const list=currentFavorites();
+      setCurrentFavorites(list.includes(id)?list.filter(x=>x!==id):[...list,id]);
+      save();
+      render();
+    };
+  });
+  document.querySelectorAll('.food-card').forEach(card=>{
+    const opener=card.querySelector('[data-food]');
+    if(!opener)return;
+    card.onclick=event=>{if(event.target.closest('button'))return;foodDetails(opener.dataset.food)};
+  });
+};
+const renderFavoriteSync=render;
+render=function(){
+  const pet=typeof activePet==='function'?activePet():null;
+  if(pet&&state.favoritesByPet&&Array.isArray(state.favoritesByPet[pet.id]))state.favorites=state.favoritesByPet[pet.id].slice();
+  return renderFavoriteSync();
 };
 
 (function(){

@@ -12,6 +12,9 @@
     } else {
       detail.appendChild(stack);
     }
+    const primary = [...detail.querySelectorAll('button.primary')].pop();
+    if (primary && primary.parentElement === detail) detail.insertBefore(stack, primary.nextSibling);
+    else detail.appendChild(stack);
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'soft-button full food-detail-back';

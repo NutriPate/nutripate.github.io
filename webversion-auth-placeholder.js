@@ -303,21 +303,29 @@
     if (email) owner.email = email;
     const pro = Boolean(proOnAccount || (remote && remote.pro) || (local && local.pro));
     const proPlan = pro ? ((local && local.pro) ? (local.proPlan || 'account') : ((remote && remote.proPlan) || 'account')) : null;
+    const source = remoteWins ? (remote || {}) : (local || {});
     const state = {
       pets,
-      activePetId: pets.some((pet) => pet.id === (remoteWins ? remote && remote.activePetId : local && local.activePetId)) ? (remoteWins ? remote.activePetId : local.activePetId) : ((pets[0] && pets[0].id) || null),
+      activePetId: pets.some((pet) => pet.id === source.activePetId) ? source.activePetId : ((pets[0] && pets[0].id) || null),
       onboardingDone: pets.length > 0,
       owner,
-      selectedFoods: Object.assign({}, (remote && remote.selectedFoods) || {}, (local && local.selectedFoods) || {}),
-      favorites: [...new Set([...((remote && remote.favorites) || []), ...((local && local.favorites) || [])])],
-      feedEntries: union(local && local.feedEntries, remote && remote.feedEntries).filter((item) => item && petIds.has(item.petId)),
-      weights: union(local && local.weights, remote && remote.weights).filter((item) => item && petIds.has(item.petId)),
-      diaryDay: (local && local.diaryDay) || (remote && remote.diaryDay) || null,
-      reminders: Object.assign({}, (remote && remote.reminders) || {}, (local && local.reminders) || {}),
-      savedAt: remoteWins ? ((remote && (remote.updatedAt || remote.savedAt)) || new Date().toISOString()) : new Date().toISOString(),
+      selectedFoods: Object.assign({}, source.selectedFoods || {}),
+      ration: Object.assign({}, source.ration || {}),
+      favoritesByPet: Object.assign({}, source.favoritesByPet || {}),
+      favorites: Array.isArray(source.favorites) ? source.favorites.slice() : [],
+      feedEntries: (Array.isArray(source.feedEntries) ? source.feedEntries : []).filter((item) => item && petIds.has(item.petId)),
+      weights: (Array.isArray(source.weights) ? source.weights : []).filter((item) => item && petIds.has(item.petId)),
+      feedDiary: Object.assign({}, source.feedDiary || {}),
+      weightDiary: Object.assign({}, source.weightDiary || {}),
+      diaryDay: source.diaryDay || null,
+      reminders: Object.assign({}, source.reminders || {}),
+      savedAt: remoteWins ? ((remote && (remote.updatedAt || remote.savedAt)) || new Date().toISOString()) : ((local && local.savedAt) || new Date().toISOString()),
       pro,
       proPlan,
     };
+    ["selectedFoods", "ration", "favoritesByPet", "feedDiary", "weightDiary"].forEach((key) => {
+      Object.keys(state[key] || {}).forEach((id) => { if (!petIds.has(id)) delete state[key][id]; });
+    });
     const before = JSON.stringify(slim(remote));
     const after = JSON.stringify(slim(state));
     return { state, changed: before !== after };
