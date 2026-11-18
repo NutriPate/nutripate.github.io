@@ -110,7 +110,7 @@ html,body,button,input,select,textarea{font-family:"Times New Roman",Times,serif
 .breed-detail-image{height:auto!important;aspect-ratio:auto!important;padding:0!important;overflow:visible!important;background:var(--mint)}.breed-detail-image img{position:static!important;display:block!important;width:100%!important;height:auto!important;max-width:none!important;max-height:none!important;object-fit:contain!important}
 .breed-detail-image{height:clamp(320px,72vw,430px)!important;min-height:320px!important;padding:24px!important;overflow:hidden!important;display:grid!important;place-items:center!important;box-sizing:border-box!important}.breed-detail-image img{display:block!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;object-position:center!important}
 :root{--ink:#000;--muted:#000}
-.chart-svg{height:auto;min-height:250px;padding:12px 10px 4px;background:linear-gradient(180deg,#fff,var(--soft))}.chart-svg svg{display:block;width:100%;height:250px;overflow:visible}.chart-svg line{stroke:var(--line);stroke-width:1.3;stroke-dasharray:4 4}.chart-svg polyline{fill:none;stroke:var(--teal);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.chart-svg circle{fill:#fff;stroke:var(--teal);stroke-width:3;r:5}.chart-svg .last-guide{stroke:var(--teal);stroke-dasharray:2 5;opacity:.55}.chart-svg text{fill:var(--muted);font:14px MontserratLocal,Arial,sans-serif}.chart-svg .last-value{fill:var(--ink);font-weight:700}.chart-empty{display:flex;align-items:center;justify-content:center;min-height:250px}
+.chart-svg{height:auto;min-height:176px;padding:8px 8px 2px;background:linear-gradient(180deg,#fff,var(--soft))}.chart-svg svg{display:block;width:100%;height:176px;overflow:visible}.chart-svg line{stroke:var(--line);stroke-width:1;stroke-dasharray:4 4}.chart-svg polyline{fill:none;stroke:var(--teal);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.chart-svg circle{fill:#fff;stroke:var(--teal);stroke-width:2}.chart-svg .last-guide{stroke:var(--teal);stroke-dasharray:2 5;opacity:.55}.chart-svg text{fill:var(--muted);font:11px MontserratLocal,Arial,sans-serif}.chart-svg .last-value{fill:var(--ink);font-weight:600}.chart-empty{display:flex;align-items:center;justify-content:center}
 .report-options{margin:14px 0}.report-options label{display:flex;align-items:center;gap:9px;color:var(--ink)!important;font-size:14px!important}.report-options input{width:18px!important;height:18px!important}.report-paper{margin:14px 0;padding:18px;border:1px solid var(--line);border-radius:16px;background:#fff}.report-paper>b{font-size:13px;color:var(--teal)}.report-paper h3{margin:8px 0 2px;font-size:22px}.report-paper h4{margin:15px 0 4px;font-size:14px}.report-paper p{margin:4px 0;font-size:13px}.report-paper small{display:block;margin-top:18px;color:var(--muted);font-size:11px}
 .app-logo .logo-nutri{color:var(--teal)}
 .food-detail-hero{display:flex;align-items:center;justify-content:center;min-height:180px;margin:12px 0 16px;border-radius:16px;background:var(--mint);overflow:hidden}.food-detail-hero img{display:block;max-width:100%;max-height:260px;width:auto;height:auto;object-fit:contain}.food-detail-rows{display:grid;gap:0;margin:14px 0}.food-detail-rows>div{display:flex;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}.food-detail-rows span{color:var(--muted)}.warning-card{border:1px solid #efadb3;background:#fff1f2;color:#ad2934}.warning-card p{color:#ad2934}
@@ -171,47 +171,8 @@ p,.muted,.eyebrow,.screen-title p,.food-card p,.pet-card p,.form label,.form-hin
 .grams{font-size:var(--type-heading)!important}.grams small{font-size:var(--type-secondary)!important}.nav-icon{font-size:var(--type-body)!important}.food-favorite-chip{font-size:var(--type-body)!important}.chevron{font-size:var(--type-secondary)!important}
 body h1,body h2,body h3,body h4,body h1 *,body h2 *,body h3 *,body h4 *{font-family:Montserrat,Arial,sans-serif!important;font-size:var(--type-heading)!important;line-height:1.2!important}
 body .screen-title h1,body .food-parity .screen-title h1,body .diary-parity .screen-title h1,body .app-logo,body .welcome-brand{font-family:Montserrat,Arial,sans-serif!important}
- .today-clear-instruction{display:grid;gap:4px;margin:-2px 0 14px;padding:12px 14px;border-radius:16px;background:#fff;border:1px solid rgba(6,54,55,.12);color:#063637}
- .today-clear-instruction strong{font-size:15px}
- .today-clear-instruction span{font-size:13px;line-height:1.35}
-.screen-title + .tabs + .chips button:not(:last-child){display:none!important}
-.chart-svg{overflow:hidden!important}
-.chart-svg svg{overflow:hidden!important}
- .weight-goal{margin:8px 0 -8px;text-align:right;color:var(--muted);font-size:12px}
-.food-page-link{display:flex;justify-content:space-between;align-items:center;width:100%;margin:14px 0;padding:4px 0;color:var(--teal);text-decoration:none;font-size:17px}.food-page-link b{font-size:23px;font-weight:400}
-.food-detail .form-actions{display:grid!important;grid-template-columns:1fr!important;gap:10px!important;margin-top:14px!important}.food-detail .form-actions>*{width:100%!important}.food-detail>.soft-button,.food-detail>.primary,.food-detail>.food-detail-back{display:flex!important;width:100%!important;margin-top:10px!important}.food-detail>.food-detail-back{margin-top:24px!important;display:flex!important}.food-detail .food-page-link{margin-top:14px!important;margin-bottom:4px!important}
-.food-action-stack{display:grid!important;gap:16px!important;width:100%!important;margin-top:10px!important}.food-action-stack>*{width:100%!important;margin:0!important}
-.food-thumb img,.hero-food-photo{object-fit:contain!important;object-position:center!important;background:#fff}
-html,body,body *,body *::before,body *::after{font-family:Montserrat,Arial,sans-serif!important}
-.reminders-screen{padding:2px 0 14px;color:#294e50}
-.reminders-heading h2{margin:0 0 20px;font:400 24px/1.2 Georgia,"Times New Roman",serif!important;letter-spacing:0!important;color:#294e50}
-.reminder-time-block{margin:0 0 24px}
-.reminder-time-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 0 12px;border-bottom:1px solid #d7e4df;font:400 15px/1.3 Georgia,"Times New Roman",serif;color:#53716f}
-.reminder-time-row strong{font:400 15px/1.3 Georgia,"Times New Roman",serif;color:#294e50}
-.reminder-time-input{width:100%;height:48px;margin-top:15px;padding:0 15px;border:1px solid #d7e4df;border-radius:16px;background:#fff;color:#294e50;font:400 16px/1 Georgia,"Times New Roman",serif;outline:0}
-.reminder-time-input:focus{border-color:#13b5b5;box-shadow:0 0 0 3px rgba(19,181,181,.12)}
-.reminder-section-title{margin:8px 0 28px;font:400 20px/1.2 Georgia,"Times New Roman",serif;color:#294e50}
-.reminder-weight-block{margin-bottom:18px}
-.reminder-status-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.reminder-pill{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border-radius:16px;background:#d9f8f5;color:#53716f;font:400 13px/1 Georgia,"Times New Roman",serif;cursor:pointer}
-.reminder-pill input{position:absolute;opacity:0;pointer-events:none}
-.reminder-pill:has(input:not(:checked)){background:#f2f6f4;color:#879795}
-.reminder-note{margin:18px 0 16px;font:400 12px/1.4 Georgia,"Times New Roman",serif;color:#53716f!important}
-.reminder-permission-box{display:grid;gap:6px;margin-top:12px}
-.reminder-permission-box .soft-button{min-height:44px;border-radius:16px!important;font:600 14px/1 Georgia,"Times New Roman",serif!important}
-.reminder-permission-box small{font:400 11px/1.35 Georgia,"Times New Roman",serif;color:#53716f}
-.reminders-save-button{min-height:52px;border-radius:16px!important;font:600 15px/1 Georgia,"Times New Roman",serif!important}
-.pet-reminders-entry{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:16px;padding:16px;border:1px solid #d7e4df;border-radius:16px;background:#fff;color:#294e50;text-align:left;cursor:pointer}
-.pet-reminders-entry span{display:grid;gap:3px}
-.pet-reminders-entry b{font:600 15px/1.25 Georgia,"Times New Roman",serif}
-.pet-reminders-entry small{font:400 12px/1.3 Georgia,"Times New Roman",serif;color:#53716f}
-.pet-reminders-entry strong{font:400 24px/1 Georgia,"Times New Roman",serif;color:#13b5b5}
-.pet-add-entry{display:block;width:100%;margin:10px 0 0;padding:15px 0;border:0;border-bottom:1px solid #d7e4df;background:transparent;color:#294e50;text-align:left;font:400 15px/1.3 Georgia,"Times New Roman",serif;cursor:pointer}
-.pet-disclaimer{margin:18px 0 0!important;color:#53716f!important;font:400 12px/1.45 Georgia,"Times New Roman",serif!important}
-.nav-paw-image img{background:transparent!important;mix-blend-mode:multiply!important;border-radius:50%!important}
-.nav-item,.nav-item:focus,.nav-item:focus-visible{outline:none!important;box-shadow:none!important}
-.more-parity .channel .brand i{background-color:transparent!important;background-image:url('/assets/social/telegram.png')!important;background-position:center!important;background-repeat:no-repeat!important;background-size:contain!important;font-size:0!important}
-.more-parity .channel .brand.max i{background-image:url('/assets/social/max.png')!important}
-.more-parity .channel .brand i::before{content:none!important}
-.more-parity .credits span:first-child,.more-parity .credits span:last-child{display:flex;align-items:center;gap:6px}
-.more-parity .credits span::before{content:none!important;display:none!important}
+/* Food catalog: the package must be visible, not a tiny icon. */
+.food-parity-section .food-card{grid-template-columns:128px minmax(0,1fr)!important;align-items:start!important}
+.food-parity-section .food-thumb{width:128px!important;height:158px!important;background:#fff!important;border:1px solid var(--line)!important}
+.food-parity-section .food-thumb img{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:contain!important}
+@media(max-width:520px){.food-parity-section .food-card{grid-template-columns:112px minmax(0,1fr)!important}.food-parity-section .food-thumb{width:112px!important;height:142px!important}}
