@@ -178,14 +178,14 @@
         <article>
           <p class="platform">Android</p>
           <h3>Файл APK</h3>
-          <p>Ссылка на установку появится здесь.</p>
-          <span class="button button-light" aria-disabled="true">Скоро</span>
+          <p>Тот же аккаунт: питомец и история сохраняются.</p>
+          <a class="button button-brand" href="https://github.com/NutriPate/nutripate.github.io/releases/download/app-1/NutriPate.apk">Скачать</a>
         </article>
         <article>
           <p class="platform">Windows</p>
           <h3>Файл EXE</h3>
-          <p>Программа для компьютера ещё готовится.</p>
-          <span class="button button-light" aria-disabled="true">Позже</span>
+          <p>Тот же аккаунт: питомец и история сохраняются.</p>
+          <a class="button button-brand" href="https://github.com/NutriPate/nutripate.github.io/releases/download/app-1/NutriPate.exe">Скачать</a>
         </article>
       </div>
     </section>
@@ -202,64 +202,3 @@
         <li><b>Справка, не приём.</b> Приложение помогает выбрать. Лечение остаётся у врача.</li>
       </ul>
     </section>
-
-    <section class="legal" id="legal">
-      <div class="section-head">
-        <p class="eyebrow">Юридическая информация</p>
-        <h2>Обработка персональных данных.</h2>
-      </div>
-      <div class="legal-grid">
-        <article>
-          <h3>Информация об ИП</h3>
-          <p><b>Оператор:</b> индивидуальный предприниматель Шелепов Алексей Александрович</p>
-          <p><b>ИНН:</b> 442400715765</p>
-          <p><b>ОГРНИП:</b> 321762700020702</p>
-          <p><b>Адрес:</b> 150025, г. Ярославль, ул. Авиаторов, д. 31</p>
-          <p><b>Email:</b> <a href="mailto:et9069826@gmail.com">et9069826@gmail.com</a></p>
-        </article>
-        <article id="privacy">
-          <h3>Обработка персональных данных</h3>
-          <p>Политика действует для приложения NutriPate и этого сайта. Оператор обрабатывает данные только для работы сервиса, обратной связи и улучшения продукта.</p>
-          <p>Обрабатываться могут имя, email, сведения о питомцах, дневник, настройки и технические данные. Данные не продаются третьим лицам. Уточнить, удалить или прекратить обработку можно по адресу et9069826@gmail.com. Политика подготовлена с учётом Федерального закона № 152-ФЗ «О персональных данных».</p>
-          <p class="fine">Дата утверждения политики: 18 ноября 2026 г.</p>
-          <a class="button button-light" href="privacy-policy.pdf">Открыть политику, PDF</a>
-        </article>
-      </div>
-    </section>
-  </main>
-
-  <footer class="footer">
-    <a class="brand" href="#top">
-      <img src="assets/nutripate-icon.jpg" alt="" width="32" height="32">
-      <span>Nutri<em>Pate</em></span>
-    </a>
-    <p>Справочное приложение. Не заменяет ветеринарную консультацию.</p>
-    <p class="social">
-      <a href="https://t.me/+g45PsNWQkEFkZDYy" target="_blank" rel="noopener">Telegram</a>
-      <a href="https://max.ru/join/lbwPKHyH_R50mcqUWg0puk74fedXOD7EryfXYNhnOB8" target="_blank" rel="noopener">MAX</a>
-      <a href="#privacy">Персональные данные</a>
-    </p>
-  </footer>
-
-  <script>
-    const menu = document.querySelector('.menu');
-    const nav = document.getElementById('nav');
-    menu.addEventListener('click', () => {
-      const open = nav.classList.toggle('open');
-      menu.setAttribute('aria-expanded', open ? 'true' : 'false');
-      menu.textContent = open ? 'Закрыть' : 'Меню';
-    });
-    nav.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => {
-      nav.classList.remove('open');
-      menu.setAttribute('aria-expanded', 'false');
-      menu.textContent = 'Меню';
-    }));
-    const chosen = document.getElementById('chosen');
-    document.querySelectorAll('input[name="plan"]').forEach((input) => {
-      input.addEventListener('change', () => {
-        if (input.checked) chosen.textContent = input.value + ' · ' + input.dataset.sum + ' · ' + input.dataset.note;
-      });
-    });
-  </script>
-</body>
-</html>
