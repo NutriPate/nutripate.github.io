@@ -8,7 +8,7 @@ let catalog=[]; let tab='today'; let diaryTab='feed'; let weightPeriod='week'; l
 const $=id=>document.getElementById(id);
 const loadState=()=>{try{return JSON.parse(localStorage.getItem(stateKey))||{}}catch{return {}}};
 let state=Object.assign({pets:[],activePetId:null,owner:{name:'',email:'',privacyConsent:false},selectedFoods:{},favorites:[],feedEntries:[],weights:[],diaryDay:null},loadState());state.pets=Array.isArray(state.pets)?state.pets:[];state.feedEntries=Array.isArray(state.feedEntries)?state.feedEntries:[];state.weights=Array.isArray(state.weights)?state.weights:[];state.favorites=Array.isArray(state.favorites)?state.favorites:[];state.selectedFoods=state.selectedFoods&&typeof state.selectedFoods==='object'?state.selectedFoods:{};
-function normalizePet(p){const q=petDefaults(p);q.weight=Number(p?.weight??p?.weightKg??q.weight)||4.2;q.targetWeight=p?.targetWeight??p?.targetWeightKg??null;q.ageMonths=Number(p?.ageMonths??q.ageMonths??24);q.diagnoses=q.diagnoses?.length?q.diagnoses:['healthy'];q.allergens=q.allergens||[];q.activity=q.activity||'medium';q.sterilized=q.sterilized!==false;return q}
+function normalizePet(p){const q=petDefaults(p);q.weight=Number(p?.weightKg??p?.weight??q.weight)||4.2;q.weightKg=q.weight;q.targetWeight=p?.targetWeightKg??p?.targetWeight??null;q.targetWeightKg=q.targetWeight;q.ageMonths=Number(p?.ageMonths??q.ageMonths??24);q.diagnoses=q.diagnoses?.length?q.diagnoses:['healthy'];q.allergens=q.allergens||[];q.activity=q.activity||'medium';q.sterilized=q.sterilized!==false;return q}
 state.pets=(state.pets||[]).map(normalizePet);state.owner=Object.assign({name:'',email:'',privacyConsent:false},state.owner||{});if(state.pets.length===1&&state.pets[0].id==='luna'&&state.pets[0].name==='Луна'&&!state.feedEntries.length&&!state.weights.length){state.pets=[];state.activePetId=null;localStorage.setItem(stateKey,JSON.stringify(state));}
 const save=()=>{const screen=state.authScreen;delete state.authScreen;localStorage.setItem(stateKey,JSON.stringify(state));if(screen)state.authScreen=screen;if(window.nutripateAfterSave)window.nutripateAfterSave()};
 const activePet=()=>state.pets.find(p=>p.id===state.activePetId)||state.pets[0];
@@ -411,6 +411,9 @@ render();
       item.weight = weight;
       item.weightKg = weight;
     }
+    const target = item.targetWeightKg != null ? item.targetWeightKg : item.targetWeight;
+    item.targetWeight = target;
+    item.targetWeightKg = target;
     return item;
   }
 
@@ -810,7 +813,7 @@ render();
       const existing = id ? state.pets.find(x => x.id === id) : null;
       const normalized = {
         name, species, breedId: entry.id, breed: entry.name, breedLabel: entry.name,
-        sex, ageMonths: Math.round(age), weight, targetWeight: target,
+        sex, ageMonths: Math.round(age), weight, weightKg: weight, targetWeight: target, targetWeightKg: target,
         sterilized, activity, diagnoses, allergens
       };
       const hasUploadedPhoto = typeof petPhotoDraft === 'string' && /^data:image\//i.test(petPhotoDraft);
