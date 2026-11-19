@@ -61,7 +61,7 @@ function kcalNeed(p){if(!p)return 0;const w=petWeight(p),goal=goalWeight(p),base
 function foodBudgetKcal(p){const need=kcalNeed(p),treats=(state.feedEntries||[]).filter(x=>x.petId===p?.id&&x.date===todayKey()&&x.kind==='treat').reduce((s,x)=>s+Number(x.kcal||0),0);return pyRound(Math.max(need*.75,need-treats))}
 function dailyGrams(p=activePet(),food=chosenFood()){if(!p||!food)return 0;const raw=foodBudgetKcal(p)/(Number(food.kcalPer100g)||370)*100;return Math.max(0,pyRound(raw/5)*5)}
 function mealRows(){const total=dailyGrams(),one=pyRound(total/3),two=pyRound(total/3),three=Math.max(0,total-one-two),r=state.reminders||{};return [{name:'Утро',time:r.morning||'08:00',grams:one},{name:'День',time:r.day||'13:00',grams:two},{name:'Вечер',time:r.evening||'19:00',grams:three}]}
-function loggedToday(){return state.feedEntries.filter(x=>x.petId===activePet()?.id&&x.date===todayKey())}
+function loggedToday(){return state.feedEntries.filter(x=>x.petId===activePet()?.id&&x.date===todayKey()&&(x.kind||'feed')==='feed')}
 function startOnboarding(){petForm();}
 function viewWelcome(){return `<section class="welcome-screen"><div class="welcome-brand">Nutri<span>Pate</span></div><h1>Добро пожаловать!</h1><img class="welcome-art" src="assets/welcome_pets.png" alt="Питомцы рядом"><h2>Здесь будет день<br>вашего питомца</h2><p class="welcome-lead">Всего один профиль — и важное всегда под рукой: корм, порция и время кормления.</p><button class="primary" data-action="start-onboarding">Добавить первого питомца</button><div class="welcome-example"><b>Что понадобится</b><p>Возраст, вес, активность и особенности здоровья.</p></div><p class="welcome-note">Один питомец и основной дневник — бесплатно.</p></section>`}
 function mealBar(){const p=activePet(),rows=mealRows(),next=rows[loggedToday().length]||rows[2];return `<div class="meal-bar"><span>${next.name} порция · ${next.grams} г · ${next.time}</span><button type="button" onclick="tab='today';render()">Открыть</button></div>`}
@@ -90,7 +90,7 @@ window.saveOwner=()=>{const name=$('ownerInputName').value.trim();const email=$(
 function viewMore(){const owner=state.owner||{};return `${title('ПРОЧЕЕ','Подписка и справки.')}<button class="kv" data-action="owner"><span>Профиль владельца</span><strong>${esc(owner.name||'Настроить')}</strong><span>›</span></button><section class="card mint-card more-pro"><b>NutriPate Pro</b><p>Несколько питомцев и подбор корма без лимита</p><ul><li>Сканер упаковки и свой корм</li><li>График веса и отчёт ветеринару</li><li>Напоминания и расчёт запаса</li></ul><button class="primary" data-action="pro">Подробнее</button></section><section class="more-section"><h2>О корме</h2>${guideData.slice(0,6).map(g=>`<details class="guide-card"><summary>${esc(g[0])}</summary><p>${esc(g[1])}</p></details>`).join('')}</section><section class="more-section"><h2>О приложении</h2><details class="guide-card" open><summary>${esc(guideData[6][0])}</summary><p>${esc(guideData[6][1])}</p></details></section><section class="credits-card"><b>NutriPate</b><span>made in Russia · НИУ ВШЭ</span></section><p class="muted more-disclaimer">NutriPate считает норму и подбирает корм по открытым формулам. Состав на пачке может измениться — сверяйте его перед покупкой.</p>`}
 function openModal(html){$('modalContent').innerHTML=html;$('modal').showModal()}
 function bind(){document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;render()});document.querySelectorAll('[data-tab-go]').forEach(b=>b.onclick=()=>{tab=b.dataset.tabGo;render()});document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{foodFilter=b.dataset.filter;render()});document.querySelectorAll('[data-diary]').forEach(b=>b.onclick=()=>{diaryTab=b.dataset.diary;render()});document.querySelectorAll('[data-weight-period]').forEach(b=>b.onclick=()=>{weightPeriod=b.dataset.weightPeriod;render()});const s=$('foodSearch');if(s)s.oninput=e=>{query=e.target.value;render()};document.querySelectorAll('[data-food]').forEach(b=>b.onclick=()=>foodDetails(b.dataset.food));document.querySelectorAll('[data-fav]').forEach(b=>b.onclick=()=>{const id=b.dataset.fav;state.favorites=state.favorites.includes(id)?state.favorites.filter(x=>x!==id):[...state.favorites,id];save();render()});document.querySelectorAll('[data-edit-pet]').forEach(b=>b.onclick=()=>petForm(state.pets.find(p=>p.id===b.dataset.editPet)));document.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>actions(b.dataset.action));document.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>shiftDiary(Number(b.dataset.day)))}
-function actions(a){if(a==='start-onboarding'){startOnboarding()}if(a==='owner'){ownerForm()}if(a==='treat'){treatForm()}if(a==='note'){noteForm()}if(a==='feed'){const f=chosenFood();if(!f){toast('Сначала выберите корм');tab='foods';render();return}const r=mealRows()[loggedToday().length]||mealRows()[2];state.feedEntries.push({petId:activePet().id,date:todayKey(),meal:r.name,grams:r.grams,foodName:`${f.brand} · ${f.name}`});save();toast('Порция отмечена');render()}if(a==='add-weight')weightForm();if(a==='add-pet')petForm();if(a==='weight'){diaryTab='weight';tab='diary';render()}if(a==='stock')toast('Запас считается по текущему расходу');if(a==='calc')toast('Расчёт: вес питомца, активность и калорийность корма');if(a==='backup'){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='nutripate-backup.json';a.click()}if(a==='privacy')window.open('privacy-policy.pdf','_blank');if(a==='about'||a==='pro')toast('Раздел будет расширяться в следующей версии')}
+function actions(a){if(a==='start-onboarding'){startOnboarding()}if(a==='owner'){ownerForm()}if(a==='treat'){treatForm()}if(a==='note'){noteForm()}if(a==='feed'){const f=chosenFood(),logged=loggedToday();if(!f){toast('Сначала выберите корм');tab='foods';render();return}if(logged.length>=3){toast('Все три кормления уже записаны');return}const r=mealRows()[logged.length];state.feedEntries.push({id:'feed-'+Date.now(),batch:'batch-'+Date.now(),petId:activePet().id,date:todayKey(),kind:'feed',meal:r.name,grams:r.grams,foodName:`${f.brand} · ${f.name}`});save();toast('Порция отмечена');render()}if(a==='add-weight')weightForm();if(a==='add-pet')petForm();if(a==='weight'){diaryTab='weight';tab='diary';render()}if(a==='stock')toast('Запас считается по текущему расходу');if(a==='calc')toast('Расчёт: вес питомца, активность и калорийность корма');if(a==='backup'){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='nutripate-backup.json';a.click()}if(a==='privacy')window.open('privacy-policy.pdf','_blank');if(a==='about'||a==='pro')toast('Раздел будет расширяться в следующей версии')}
 function foodDetails(id){const f=foodById(id);if(!f)return;openModal(`<h2>${esc(f.name)}</h2><p class="muted">${esc(f.brand)} · ${f.form==='wet'?'Влажный':'Сухой'} корм</p><p>${esc(f.composition||'Состав пока не внесён.')}</p><p><b>${f.proteinPer100g||'—'}%</b> белка · <b>${f.fatPer100g||'—'}%</b> жира · <b>${f.kcalPer100g||'—'}</b> ккал / 100 г</p><div class="form-actions"><button class="soft-button" onclick="modal.close()">Закрыть</button><button class="primary" onclick="selectFood('${f.id}')">В рацион</button></div>`)}
 window.selectFood=id=>{const p=activePet();state.selectedFoods[p.id]=id;save();$('modal').close();tab='today';toast('Корм добавлен в рацион');render()}
 function weightForm(){openModal(`<h2>Новое измерение</h2><div class="form"><label>Вес, кг<input id="weightInput" inputmode="decimal" value="${activePet()?.weight||''}"></label><div class="form-actions"><button class="soft-button" onclick="modal.close()">Отмена</button><button class="primary" onclick="saveWeight()">Сохранить</button></div></div>`)}
@@ -840,6 +840,35 @@ render();
       console.error('savePet failed', error);
       formError('Не удалось сохранить профиль. Попробуйте ещё раз.');
     }
+  };
+  // Keep the native app's three-meal limit and undo action in the web UI.
+  const viewTodayFeedGuard = viewToday;
+  viewToday = function () {
+    let html = viewTodayFeedGuard();
+    const feeds = loggedToday();
+    if (feeds.length >= 3) {
+      html = html.replace(/<button class="primary full" data-action="feed">Покормил<\/button>/g, '<div class="card mint-card"><b>Все три кормления уже записаны</b><p class="muted">Чтобы изменить последнюю запись, отмените её ниже.</p></div>');
+    }
+    if (feeds.length && !html.includes('data-action="undo-feed"')) {
+      html = html.replace(/(<button class="kv" data-action="weight">)/, '<button class="kv danger-row" data-action="undo-feed"><span>Отменить последнее кормление</span><span>›</span></button>$1');
+    }
+    return html;
+  };
+  const actionsFeedGuard = actions;
+  actions = function (name) {
+    if (name === 'feed' && loggedToday().length >= 3) { toast('Все три кормления уже записаны'); return; }
+    if (name === 'undo-feed') {
+      const feeds = loggedToday();
+      const last = feeds[feeds.length - 1];
+      if (!last) { toast('Сегодня ещё нет кормлений'); return; }
+      const index = state.feedEntries.indexOf(last);
+      if (index >= 0) state.feedEntries.splice(index, 1);
+      save();
+      toast('Последнее кормление отменено');
+      render();
+      return;
+    }
+    return actionsFeedGuard(name);
   };
   startCloudSync();
 })();
