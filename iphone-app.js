@@ -58,8 +58,9 @@ function isSenior(p){const m=ageMonths(p),w=petWeight(p);return p?.species==='ca
 function derFactor(p){const m=ageMonths(p),w=petWeight(p),cat=p?.species==='cat',d=p?.diagnoses||[],a=p?.activity||'medium',losing=isLosing(p);let f;if(cat){if(m<4)f=2.5;else if(m<8)f=2;else if(m<12)f=1.8;else if(losing)f=.8;else if(d.includes('overweight'))f=1;else if(p?.sterilized)f=1.2;else f=1.4;if(!losing){if(a==='high')f+=.1;else if(a==='very_high')f+=.2}}else{if(m<4)f=3;else if(m<12)f=2;else if(losing)f=1;else if(d.includes('overweight'))f=1.2;else if(p?.sterilized)f=1.4;else f=1.6;if(!losing){if(a==='high')f+=.15;else if(a==='very_high')f+=.3}if(m>=12&&w>40)f*=.95}if(m>=12&&!losing&&isSenior(p))f*=cat?(m>=144?1.05:.95):.9;return f}
 function kcalAdjust(p){const n=pyRound(Number(p?.kcalAdjust)||0);return Math.max(-30,Math.min(30,n))}
 function kcalNeed(p){if(!p)return 0;const w=petWeight(p),goal=goalWeight(p),baseWeight=goal!==null&&ageMonths(p)>=12?goal:w;let kcal=70*Math.pow(Math.max(baseWeight,.3),.75)*derFactor(p);if(isLosing(p))kcal=Math.max(kcal,.6*rer(p));return pyRound(kcal*(1+kcalAdjust(p)/100))}
-function dailyGrams(p=activePet(),food=chosenFood()){if(!p||!food)return 0;const raw=kcalNeed(p)/(Number(food.kcalPer100g)||370)*100;return Math.max(0,pyRound(raw/5)*5)}
-function mealRows(){const total=dailyGrams(),one=Math.round(total/3/5)*5,two=one,three=Math.max(0,total-one-two),r=state.reminders||{};return [{name:'Утро',time:r.morning||'08:00',grams:one},{name:'День',time:r.day||'13:00',grams:two},{name:'Вечер',time:r.evening||'19:00',grams:three}]}
+function foodBudgetKcal(p){const need=kcalNeed(p),treats=(state.feedEntries||[]).filter(x=>x.petId===p?.id&&x.date===todayKey()&&x.kind==='treat').reduce((s,x)=>s+Number(x.kcal||0),0);return pyRound(Math.max(need*.75,need-treats))}
+function dailyGrams(p=activePet(),food=chosenFood()){if(!p||!food)return 0;const raw=foodBudgetKcal(p)/(Number(food.kcalPer100g)||370)*100;return Math.max(0,pyRound(raw/5)*5)}
+function mealRows(){const total=dailyGrams(),one=pyRound(total/3),two=pyRound(total/3),three=Math.max(0,total-one-two),r=state.reminders||{};return [{name:'Утро',time:r.morning||'08:00',grams:one},{name:'День',time:r.day||'13:00',grams:two},{name:'Вечер',time:r.evening||'19:00',grams:three}]}
 function loggedToday(){return state.feedEntries.filter(x=>x.petId===activePet()?.id&&x.date===todayKey())}
 function startOnboarding(){petForm();}
 function viewWelcome(){return `<section class="welcome-screen"><div class="welcome-brand">Nutri<span>Pate</span></div><h1>Добро пожаловать!</h1><img class="welcome-art" src="assets/welcome_pets.png" alt="Питомцы рядом"><h2>Здесь будет день<br>вашего питомца</h2><p class="welcome-lead">Всего один профиль — и важное всегда под рукой: корм, порция и время кормления.</p><button class="primary" data-action="start-onboarding">Добавить первого питомца</button><div class="welcome-example"><b>Что понадобится</b><p>Возраст, вес, активность и особенности здоровья.</p></div><p class="welcome-note">Один питомец и основной дневник — бесплатно.</p></section>`}
@@ -358,9 +359,10 @@ async function syncCanonicalEngine(p=activePet()){
   canonicalRequestKey=key;
   try{
     const entry=breedData({id:p.breedId,name:p.breed});
+    const canonicalPet=Object.assign({},p,{weightKg:petWeight(p),targetWeightKg:petTargetWeight(p),ageMonths:ageMonths(p)});
     const controller=new AbortController();
     const timeout=setTimeout(()=>controller.abort(),1500);
-    const response=await fetch(`${window.NUTRIPATE_API_BASE}/v1/calculate`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pet:p,breed:entry,selected_food_id:selectedId,treats_kcal:treats}),signal:controller.signal}).finally(()=>clearTimeout(timeout));
+    const response=await fetch(`${window.NUTRIPATE_API_BASE}/v1/calculate`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pet:canonicalPet,breed:entry,selected_food_id:selectedId,treats_kcal:treats}),signal:controller.signal}).finally(()=>clearTimeout(timeout));
     if(!response.ok)throw new Error(`backend ${response.status}`);
     canonicalCalculation=await response.json();
     window.nutripateCanonicalCalculation=canonicalCalculation;
