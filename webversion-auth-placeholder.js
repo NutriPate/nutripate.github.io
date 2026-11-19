@@ -169,13 +169,32 @@
     return ['date', 'time', 'at', 'kind', 'grams', 'kcal', 'text', 'name', 'weightKg', 'kg'].every((key) => left[key] === right[key]);
   }
 
-  function mirrorHistory(source) {
+  function mealCode(value) {
+    const text = String(value || '').trim().toLowerCase();
+    if (text === 'morning' || text.startsWith('утр')) return 'morning';
+    if (text === 'day' || text.startsWith('дн')) return 'day';
+    if (text === 'evening' || text.startsWith('веч')) return 'evening';
+    return String(value || '');
+  }
+
+  function mirrorHistory(source, prefer) {
     const state = Object.assign({}, source || {});
     const feedDiary = Object.assign({}, state.feedDiary || {});
-    const entries = Array.isArray(state.feedEntries) ? state.feedEntries.slice() : [];
+    let entries = Array.isArray(state.feedEntries) ? state.feedEntries.slice() : [];
+    const diaryCount = Object.keys(feedDiary).reduce((sum, key) => sum + ((feedDiary[key] || []).length), 0);
+    if (prefer === 'diary' || (!prefer && diaryCount && !entries.length)) entries = [];
+    else if (prefer === 'entries' || (!prefer && entries.length && !diaryCount)) {
+      Object.keys(feedDiary).forEach((key) => delete feedDiary[key]);
+    } else if (!prefer && diaryCount && entries.length) {
+      Object.keys(feedDiary).forEach((key) => (feedDiary[key] || []).forEach((row) => { if (row && (row.kind || 'feed') === 'feed') row.meal = mealCode(row.meal); }));
+      entries.forEach((entry) => { if (entry && (entry.kind || 'feed') === 'feed') entry.meal = mealCode(entry.meal); });
+      state.feedDiary = feedDiary;
+      state.feedEntries = entries;
+      return mirrorWeights(state);
+    }
     entries.forEach((entry) => {
       if (!entry || !entry.petId) return;
-      const row = { id: entry.id, date: entry.date, at: entry.at || entry.time || '', kind: entry.kind || 'feed', meal: entry.meal || entry.kind || 'feed', name: entry.name || entry.foodName || '', grams: entry.grams, kcal: entry.kcal, text: entry.text || '' };
+      const row = { id: entry.id, date: entry.date, at: entry.at || entry.time || '', kind: entry.kind || 'feed', meal: (entry.kind || 'feed') === 'feed' ? mealCode(entry.meal) : (entry.meal || entry.kind || 'feed'), name: entry.name || entry.foodName || '', grams: entry.grams, kcal: entry.kcal, text: entry.text || '' };
       const bucket = (feedDiary[entry.petId] || []).slice();
       if (!bucket.some((item) => item && sameRow(item, row))) bucket.push(row);
       feedDiary[entry.petId] = bucket;
@@ -185,6 +204,7 @@
     Object.keys(feedDiary).forEach((petId) => {
       (feedDiary[petId] || []).forEach((row) => {
         if (!row) return;
+        if ((row.kind || 'feed') === 'feed') row.meal = mealCode(row.meal);
         const entry = { id: row.id, petId, date: row.date, time: row.at || row.time || '', kind: row.kind || 'feed', meal: row.meal || '', name: row.name || row.text || '', foodName: row.name || '', grams: row.grams, kcal: row.kcal, text: row.text || '' };
         const marker = [petId, entry.date, entry.time, entry.kind, entry.grams, entry.text].join('|');
         if (seen.has(marker)) return;
@@ -194,6 +214,10 @@
     });
     state.feedDiary = feedDiary;
     state.feedEntries = mergedEntries;
+    return mirrorWeights(state);
+  }
+
+  function mirrorWeights(state) {
     const weightDiary = Object.assign({}, state.weightDiary || {});
     (Array.isArray(state.weights) ? state.weights : []).forEach((item) => {
       if (!item || !item.petId) return;
@@ -229,7 +253,7 @@
       return copy;
     });
     state.owner = Object.assign({ name: '', email: '', privacyConsent: false }, state.owner || {});
-    return mirrorHistory(state);
+    return mirrorHistory(state, 'entries');
   }
 
   function entryKey(item) {

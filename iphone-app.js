@@ -223,9 +223,8 @@ const foodDetailsAppParity=foodDetails;foodDetails=function(id){
   const p=activePet(),ok=Boolean(foodRecommendation(f,p)),image=foodImage(f),tags=f.tags||[];
   const audience=tags.includes('sterilised')?'Для стерилизованных':tags.includes('kitten')?'Для котят':tags.includes('puppy')?'Для щенков':tags.includes('senior')?'Для пожилых питомцев':'Для взрослых питомцев';
   const nutrition=[f.proteinPer100g!=null?`белок ${f.proteinPer100g}%`:null,f.fatPer100g!=null?`жир ${f.fatPer100g}%`:null,f.kcalPer100g!=null?`${f.kcalPer100g} ккал / 100 г`:null,f.fiberPer100g!=null?`клетчатка ${f.fiberPer100g}%`:null].filter(Boolean).join(', ');
-  const breed=p?.breed||'вашего питомца';
   const primaryId=p&&state.selectedFoods?.[p.id],primary=foodById(primaryId),secondaryId=p&&state.ration?.[p.id]?.secondaryId,isPrimary=primaryId===f.id,isSecondary=secondaryId===f.id;
-  openModal(`<div class="food-detail app-parity-food"><h2>${esc(f.name)}</h2><div class="food-detail-hero">${image?`<img src="${esc(image)}" alt="${esc(f.name)}">`:'<div class="food-placeholder">🥫</div>'}</div><p class="eyebrow">${esc(audience)}</p><p class="muted">${f.form==='wet'?'Влажный корм':'Сухой корм'}</p><div class="food-detail-rows"><div><span>Ориентир цены</span><b>${f.pricePerKg?'≈ '+esc(f.pricePerKg)+' ₽ / кг':'Не указана'}</b></div><div><span>Стоимость дня</span><b>${p&&f.kcalPer100g?'≈ '+dailyGrams(p,f)+' ₽':'Нужны данные'}</b></div></div>${ok?`<div class="mint-card card"><h3>Подойдёт ли ${p?.species==='cat'?'вашей кошке':'вашему питомцу'}?</h3><p>Подходит породе «${esc(breed)}»</p></div>`:`<div class="warning-card card"><h3>Состав требует проверки</h3><p>Сверьте состав корма с ограничениями питомца.</p></div>`}<h3>Состав и питательные показатели</h3><p class="food-nutrition">${esc(nutrition||'Данные не указаны')}</p><p>${esc(f.composition||'Состав пока не внесён.')}</p><p class="muted">Обновление состава: ноябрь 2026.</p><div class="form-actions"><button class="soft-button" onclick="compareFoodWeb('${esc(f.id)}')">Сравнить</button></div>${isPrimary?`<button class="soft-button full" onclick="removePrimaryFoodWeb()">Убрать из рациона</button>`:isSecondary?`<button class="soft-button full" onclick="removeSecondaryFood()">Убрать второй корм</button>`:`<button class="primary full" onclick="${p&&primary&&f.form!==primary.form?`addSecondaryFoodWeb('${esc(f.id)}')`:`selectFood('${esc(f.id)}')`}" >${p&&primary&&f.form!==primary.form?'Добавить вторым кормом':ok?'Добавить в рацион':'Проверить этикетку'}</button>`}<button class="soft-button full food-label-button" type="button" onclick="openFoodLabel('${esc(f.id)}')">Этикетка</button></div>`)
+  openModal(`<div class="food-detail app-parity-food"><h2>${esc(f.name)}</h2><div class="food-detail-hero">${image?`<img src="${esc(image)}" alt="${esc(f.name)}">`:'<div class="food-placeholder">🥫</div>'}</div><p class="eyebrow">${esc(audience)}</p><p class="muted">${f.form==='wet'?'Влажный корм':'Сухой корм'}</p><div class="food-detail-rows"><div><span>Ориентир цены</span><b>${f.pricePerKg?'≈ '+esc(f.pricePerKg)+' ₽ / кг':'Не указана'}</b></div><div><span>Стоимость дня</span><b>${p&&f.kcalPer100g?'≈ '+dailyGrams(p,f)+' ₽':'Нужны данные'}</b></div></div>${ok?'':`<div class="warning-card card"><h3>Состав требует проверки</h3><p>Сверьте состав корма с ограничениями питомца.</p></div>`}<h3>Состав и питательные показатели</h3><p class="food-nutrition">${esc(nutrition||'Данные не указаны')}</p><p>${esc(f.composition||'Состав пока не внесён.')}</p><p class="muted">Обновление состава: ноябрь 2026.</p><div class="form-actions"><button class="soft-button" onclick="compareFoodWeb('${esc(f.id)}')">Сравнить</button></div>${isPrimary?`<button class="soft-button full" onclick="removePrimaryFoodWeb()">Убрать из рациона</button>`:isSecondary?`<button class="soft-button full" onclick="removeSecondaryFood()">Убрать второй корм</button>`:`<button class="primary full" onclick="${p&&primary&&f.form!==primary.form?`addSecondaryFoodWeb('${esc(f.id)}')`:`selectFood('${esc(f.id)}')`}" >${p&&primary&&f.form!==primary.form?'Добавить вторым кормом':ok?'Добавить в рацион':'Проверить этикетку'}</button>`}<button class="soft-button full food-label-button" type="button" onclick="openFoodLabel('${esc(f.id)}')">Этикетка</button></div>`)
 };
 // A food is considered selected only after the user explicitly confirms that exact food.
 // This also clears stale selections left by older builds or demo data.
@@ -445,17 +444,78 @@ bind=function(){
     card.onclick=event=>{if(event.target.closest('button'))return;foodDetails(opener.dataset.food)};
   });
 };
+function mealCodeWeb(value){
+  const text=String(value||'').trim().toLowerCase();
+  if(text==='morning'||text.startsWith('утр'))return 'morning';
+  if(text==='day'||text.startsWith('дн'))return 'day';
+  if(text==='evening'||text.startsWith('веч'))return 'evening';
+  return '';
+}
+function feedsTodayWeb(){
+  const pet=activePet();
+  return (state.feedEntries||[]).filter(x=>pet&&x.petId===pet.id&&x.date===todayKey()&&(x.kind||'feed')==='feed');
+}
+function nextMealSlot(){
+  const rows=mealRows();
+  const done=new Set(feedsTodayWeb().map(x=>mealCodeWeb(x.meal)).filter(Boolean));
+  let index=done.size?['morning','day','evening'].findIndex(code=>!done.has(code)):Math.min(feedsTodayWeb().length,3);
+  if(index<0)index=3;
+  return {index,row:rows[index]||null};
+}
 const actionsFeedGap=actions;
 actions=function(a){
+  if(a==='open-diary'){tab='diary';render();return}
   if(a==='feed'){
     const left=Math.ceil((30000-(Date.now()-(window.__feedAt||0)))/1000);
     if(window.__feedAt&&left>0){toast('Вы сможете повторно запустить корм через '+left+' секунд');return}
-    const before=(state.feedEntries||[]).length;
-    const result=actionsFeedGap(a);
-    if((state.feedEntries||[]).length>before)window.__feedAt=Date.now();
-    return result;
+    const slot=nextMealSlot();
+    const food=chosenFood();
+    if(!food){toast('Сначала выберите корм');tab='foods';render();return}
+    if(!slot.row){toast('На сегодня порции уже записаны');return}
+    const code=['morning','day','evening'][slot.index];
+    state.feedEntries.push({id:'f'+Math.random().toString(16).slice(2,10),petId:activePet().id,date:todayKey(),meal:code,kind:'feed',grams:slot.row.grams,time:new Date().toTimeString().slice(0,5),foodName:food.brand+' · '+food.name,name:food.name});
+    save();
+    window.__feedAt=Date.now();
+    toast('Порция записана');
+    render();
+    return;
+  }
+  if(a==='undo-feed'){
+    const rows=feedsTodayWeb();
+    const last=rows[rows.length-1];
+    if(!last){toast('Сегодня ещё нет порций');return}
+    const code=mealCodeWeb(last.meal);
+    state.feedEntries=state.feedEntries.filter(row=>{
+      if(!row||row.petId!==last.petId||row.date!==last.date||(row.kind||'feed')!=='feed')return true;
+      if(code)return mealCodeWeb(row.meal)!==code;
+      return row!==last;
+    });
+    save();
+    toast('Последняя порция убрана');
+    render();
+    return;
   }
   return actionsFeedGap(a);
+};
+const viewTodayFeedSync=viewToday;
+viewToday=function(){
+  let html=viewTodayFeedSync();
+  const slot=nextMealSlot();
+  const pet=activePet(),food=chosenFood();
+  if(!pet||!food)return html;
+  if(!slot.row){
+    html=html.replace(/<div class="meal-top">[^<]*<\/div>/,'<div class="meal-top">ВСЕ ТРИ ПОРЦИИ ЗАПИСАНЫ</div>');
+    html=html.replace(/<h2>[^<]*<\/h2>/,'<h2>На сегодня всё</h2>');
+    html=html.replace(/(<div class="grams">)\d+/,'$10');
+    html=html.replace('data-action="feed">Покормил','data-action="open-diary">Открыть дневник');
+  }else{
+    html=html.replace(/<div class="meal-top">[^<]*<\/div>/,'<div class="meal-top">СЛЕДУЮЩЕЕ · '+slot.row.time+'</div>');
+    html=html.replace(/<h2>[^<]*<\/h2>/,'<h2>'+slot.row.name+'</h2>');
+    html=html.replace(/(<div class="grams">)\d+/,'$1'+slot.row.grams);
+  }
+  html=html.replace(/Дать сегодня: <b>\d+ г<\/b>/,'Дать сегодня: <b>'+(slot.row?slot.row.grams:0)+' г</b>');
+  if(!feedsTodayWeb().length)html=html.replace(/<button class="kv danger-row" data-action="undo-feed">[\s\S]*?<\/button>/,'');
+  return html;
 };
 const renderFavoriteSync=render;
 render=function(){
