@@ -535,7 +535,7 @@ viewToday=function(){
     html=html.replace(/<h2>[^<]*<\/h2>/,'<h2>'+slot.row.name+'</h2>');
     html=html.replace(/(<div class="grams">)\d+/,'$1'+slot.row.grams);
   }
-  html=html.replace(/Дать сегодня: <b>\d+ г<\/b>/,'Дать сегодня: <b>'+(slot.row?slot.row.grams:0)+' г</b>');
+  html=html.replace(/Дать сегодня: <b>\d+ г<\/b>/,'Норма '+dailyGrams()+' г / день · эта порция <b>'+(slot.row?slot.row.grams:0)+' г</b>');
   if(!feedsTodayWeb().length)html=html.replace(/<button[^>]*data-action="undo-feed"[\s\S]*?<\/button>/,'');
   else if(!html.includes('data-action="undo-feed"'))html+='<button type="button" class="kv danger-row" data-action="undo-feed"><span>Отменить последнюю порцию</span><span>›</span></button>';
   return html;
@@ -563,10 +563,35 @@ const dailyGramsSame=dailyGrams;
 dailyGrams=function(p=activePet(),food=chosenFood()){
   p=canonPet(p);
   if(!p||!food)return 0;
-  const per=Number(food.kcalPer100g)||0;
+  const per=Number(food.kcalPer100g!=null?food.kcalPer100g:food.kcal_per_100g)||0;
   if(!per)return 0;
-  const kcal=Math.max(kcalNeed(p)*0.75,kcalNeed(p));
-  return Math.max(0,Math.round(kcal/per*100/5)*5);
+  const need=kcalNeed(p);
+  const budget=Math.max(need*0.75,need);
+  const ration=(state.ration&&state.ration[p.id])||{};
+  const secondary=foodById(ration.secondaryId);
+  const primary=chosenFood();
+  let part=1;
+  if(secondary&&primary){
+    const share=Math.max(0,Math.min(100,Number(ration.share)||70))/100;
+    if(food.id===primary.id)part=share;
+    else if(food.id===secondary.id)part=1-share;
+  }
+  return Math.max(0,Math.round(budget*part/per*100/5)*5);
+};
+petPhoto=function(p){
+  if(p&&p.photo)return p.photo;
+  const names=[p&&p.breedLabel,p&&p.breed,p&&p.breedId].filter(Boolean).map(String);
+  const options=[...(breedOptionsRequired.cat||[]),...(breedOptionsRequired.dog||[])];
+  for(const name of names){
+    if(breedAssetByName[name])return 'assets/breeds/'+breedAssetByName[name]+'.png';
+    const pair=options.find(([value,label])=>value===name||label===name);
+    if(pair&&breedAssetByName[pair[1]])return 'assets/breeds/'+breedAssetByName[pair[1]]+'.png';
+  }
+  const blob=names.join(' ').toLowerCase().replaceAll('ё','е');
+  if(blob.includes('британ')||blob.includes('british'))return 'assets/breeds/cat-01.png';
+  if(blob.includes('шотланд')&&blob.includes('вислоух')||blob.includes('scottish fold'))return 'assets/breeds/cat-02.png';
+  if(blob.includes('шотланд')||blob.includes('scottish straight'))return 'assets/breeds/cat-03.png';
+  return p&&p.species==='dog'?'assets/dachshund.png':'assets/report_cat.jpg';
 };
 const kcalNeedSame=kcalNeed;
 kcalNeed=function(p){return kcalNeedSame(canonPet(p))};
