@@ -13,7 +13,9 @@
       detail.appendChild(stack);
     }
     const primary = [...detail.querySelectorAll('button.primary')].pop();
-    if (primary && primary.parentElement === detail) detail.insertBefore(stack, primary.nextSibling);
+    const label = detail.querySelector('.food-label-button');
+    const anchor = (label && label.parentElement === detail) ? label : primary;
+    if (anchor && anchor.parentElement === detail) detail.insertBefore(stack, anchor.nextSibling);
     else detail.appendChild(stack);
     const button = document.createElement('button');
     button.type = 'button';
