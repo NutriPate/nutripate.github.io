@@ -20,7 +20,7 @@
     }
     [...detail.querySelectorAll('button')].forEach((button) => {
       const label = button.textContent.trim();
-      if (label === 'Сравнить' || label === 'Этикетка') button.remove();
+      if (label === 'Сравнить') button.remove();
       if (label === 'Убрать из рациона' && !button.dataset.fixed) {
         button.dataset.fixed = '1';
         button.onclick = () => {
@@ -35,6 +35,9 @@
         };
       }
     });
+    const labelButton = [...detail.querySelectorAll('button')].find((button) => button.textContent.trim() === 'Этикетка');
+    const primary = [...detail.querySelectorAll('button.primary')].pop();
+    if (labelButton && primary && primary.nextElementSibling !== labelButton) primary.after(labelButton);
   }
   new MutationObserver(fixFoodControls).observe(document.documentElement, {subtree: true, childList: true, attributes: true, attributeFilter: ['open']});
   setTimeout(fixFoodControls, 0);
