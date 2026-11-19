@@ -8,7 +8,7 @@
   <title>NutriPate — корм по норме питомца</title>
   <link rel="icon" href="assets/nutripate-icon.png?v=icon-2">
   <link rel="apple-touch-icon" href="assets/nutripate-icon.png?v=icon-2">
-  <link rel="stylesheet" href="styles.css?v=legal-1">
+  <link rel="stylesheet" href="styles.css?v=menu-1">
 </head>
 <body>
   <header class="header">
@@ -23,7 +23,7 @@
       <a href="#about">О нас</a>
     </nav>
     <a class="button button-brand header-cta" href="/webversion/">Открыть</a>
-    <button class="menu" type="button" aria-expanded="false" aria-controls="nav">Меню</button>
+    <button class="menu" type="button" aria-expanded="false" aria-controls="nav" aria-label="Меню"><span></span><span></span><span></span></button>
   </header>
 
   <main id="top">
@@ -227,5 +227,21 @@
     <p>ИП Шелепов Алексей Александрович · ИНН 442400715765 · ОГРНИП 321762700020702</p>
     <p>150025, г. Ярославль, ул. Авиаторов, д. 31 · <a href="mailto:et9069826@gmail.com">et9069826@gmail.com</a> · <a href="mailto:NutriPate@yandex.ru">NutriPate@yandex.ru</a></p>
   </footer>
+  <script>
+    const menuButton = document.querySelector(".menu");
+    const siteNav = document.getElementById("nav");
+    if (menuButton && siteNav) {
+      menuButton.addEventListener("click", () => {
+        const open = siteNav.classList.toggle("open");
+        menuButton.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+      siteNav.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", () => {
+          siteNav.classList.remove("open");
+          menuButton.setAttribute("aria-expanded", "false");
+        });
+      });
+    }
+  </script>
 </body>
 </html>
