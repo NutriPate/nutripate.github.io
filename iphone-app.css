@@ -181,4 +181,5 @@ body .screen-title h1,body .food-parity .screen-title h1,body .diary-parity .scr
 @media(max-width:520px){.food-parity-section .food-card{grid-template-columns:112px minmax(0,1fr)!important}.food-parity-section .food-thumb{width:112px!important;height:142px!important}}
 .food-thumb,.pack,.food-detail-hero,.compare-food-image{overflow:visible!important}
 a.food-buy{display:flex;align-items:center;justify-content:center;margin-top:16px;text-decoration:none}
+.food-label-button{display:flex!important;width:100%!important;justify-content:center;margin-top:8px}
 .food-thumb img,.hero-food-photo,.food-detail-hero img,.compare-food-image img{object-fit:contain!important;object-position:center!important}
