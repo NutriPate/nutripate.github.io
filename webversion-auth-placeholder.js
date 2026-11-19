@@ -289,7 +289,10 @@
   function mergeStates(local, remote, email, proOnAccount) {
     const localPets = Array.isArray(local && local.pets) ? local.pets : [];
     const remotePets = Array.isArray(remote && remote.pets) ? remote.pets : [];
-    const remoteWins = stampOf(remote) > 0 && stampOf(remote) >= stampOf(local);
+    const localEmail = String(local && local.owner && local.owner.email || '').trim().toLowerCase();
+    const sessionEmail = String(email || '').trim().toLowerCase();
+    const otherPerson = Boolean(localEmail && sessionEmail && localEmail !== sessionEmail);
+    const remoteWins = otherPerson || Boolean(local && local.sessionClosed && stampOf(remote) > 0) || (stampOf(remote) > 0 && stampOf(remote) >= stampOf(local));
     const chosen = remoteWins ? remotePets : localPets;
     const byId = new Map();
     for (const pet of chosen) {
@@ -300,7 +303,7 @@
     }
     const pets = [...byId.values()].map(alignBreed);
     const petIds = new Set(pets.map((pet) => pet.id));
-    const owner = Object.assign({ name: '', email: '', privacyConsent: false }, (remote && remote.owner) || {}, (local && local.owner) || {});
+    const owner = Object.assign({ name: '', email: '', privacyConsent: false }, (remote && remote.owner) || {}, otherPerson ? {} : ((local && local.owner) || {}));
     if (!(local && local.owner && local.owner.name) && remote && remote.owner && remote.owner.name) owner.name = remote.owner.name;
     if (email) owner.email = email;
     const pro = Boolean(proOnAccount || (remote && remote.pro) || (local && local.pro));
@@ -322,6 +325,7 @@
       diaryDay: source.diaryDay || null,
       reminders: Object.assign({}, source.reminders || {}),
       savedAt: remoteWins ? ((remote && (remote.updatedAt || remote.savedAt)) || new Date().toISOString()) : ((local && local.savedAt) || new Date().toISOString()),
+      sessionClosed: false,
       pro,
       proPlan,
     };
@@ -511,6 +515,7 @@
         feedEntries: [],
         weights: [],
         diaryDay: null,
+        sessionClosed: true,
       });
     } else if (typeof render === 'function') render();
     if (typeof toast === 'function') toast('Вы вышли. Данные остались в аккаунте.');
