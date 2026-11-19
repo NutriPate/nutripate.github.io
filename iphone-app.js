@@ -48,9 +48,9 @@ function toast(text){const el=$('toast');el.textContent=text;el.classList.add('s
 function foodById(id){return catalog.find(f=>f.id===id)}
 function chosenFood(){const p=activePet();return foodById(state.selectedFoods?.[p?.id])}
 function pyRound(value){const n=Number(value)||0;if(!Number.isFinite(n))return 0;const sign=n<0?-1:1,x=Math.abs(n),floor=Math.floor(x),fraction=x-floor;if(fraction<.5)return sign*floor;if(fraction>.5)return sign*(floor+1);return sign*(floor%2===0?floor:floor+1)}
-function petWeight(p){return Number(p?.weight??p?.weightKg)||4}
-function petTargetWeight(p){const raw=p?.targetWeight??p?.targetWeightKg;if(raw===null||raw===undefined||raw==='')return null;const n=Number(raw);return Number.isFinite(n)?n:null}
-function ageMonths(p){if(p?.ageMonths!==null&&p?.ageMonths!==undefined&&p?.ageMonths!=='')return pyRound(Number(p.ageMonths));const raw=String(p?.birthDate||'').slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(raw))return 24;const born=new Date(`${raw}T00:00:00`),now=new Date();let months=(now.getFullYear()-born.getFullYear())*12+now.getMonth()-born.getMonth();if(now.getDate()<born.getDate())months-=1;return Math.max(0,months)}
+function petWeight(p){return Number(p?.weightKg??p?.weight)||4}
+function petTargetWeight(p){const raw=p?.targetWeightKg??p?.targetWeight;if(raw===null||raw===undefined||raw==='')return null;const n=Number(raw);return Number.isFinite(n)?n:null}
+function ageMonths(p){if(p?.ageMonths!==null&&p?.ageMonths!==undefined&&p?.ageMonths!=='')return Math.max(0,Math.trunc(Number(p.ageMonths)));const raw=String(p?.birthDate||'').slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(raw))return 24;const born=new Date(`${raw}T00:00:00`),now=new Date();let months=(now.getFullYear()-born.getFullYear())*12+now.getMonth()-born.getMonth();if(now.getDate()<born.getDate())months-=1;return Math.max(0,months)}
 function rer(p){return 70*Math.pow(Math.max(petWeight(p),.3),.75)}
 function goalWeight(p){const w=petWeight(p),target=petTargetWeight(p);return target!==null&&target>0&&target<w*.95?Math.round(target*100)/100:null}
 function isLosing(p){return goalWeight(p)!==null&&ageMonths(p)>=12}
