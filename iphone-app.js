@@ -1,3 +1,6 @@
+// Safety switch: accounts and OTP login stay enabled, but account state never
+// leaves this device and cloud state is never pulled while this is true.
+const SYNC_FROZEN=true;
 const stateKey='nutripate-web-state-v1';
 const fallbackFoods=[
  {id:'demo-1',name:'Sterilised 37',brand:'Royal Canin',species:'cat',form:'dry',kcalPer100g:367,proteinPer100g:37,fatPer100g:12,tier:'premium',image:'assets/foods_white/catalog-rcat-ajo01.jpg',composition:'Белок, рис, кукуруза, жиры и функциональные добавки.'},
@@ -570,7 +573,7 @@ render();
     return Number.isFinite(time) ? time : 0;
   };
   async function pullCloudState() {
-    if (!state.account?.token || state._applyingCloud || cloudSyncBusy) return;
+    if (SYNC_FROZEN || !state.account?.token || state._applyingCloud || cloudSyncBusy) return;
     cloudSyncBusy = true;
     try {
       const remote = await api("/api/me/state");
@@ -597,12 +600,12 @@ render();
   }
   function startCloudSync() {
     clearInterval(cloudSyncTimer);
-    if (!state.account?.token) return;
+    if (SYNC_FROZEN || !state.account?.token) return;
     cloudSyncTimer = setInterval(pullCloudState, 4000);
     pullCloudState();
   }
   window.nutripateAfterSave = function () {
-    if (!state.account.token || state._applyingCloud) return;
+    if (SYNC_FROZEN || !state.account.token || state._applyingCloud) return;
     clearTimeout(pushTimer);
     pushTimer = setTimeout(async () => {
       if (cloudSyncBusy) return;
@@ -715,7 +718,7 @@ render();
         }),
       });
       state.account = { token: data.token, email: data.user.email, name: data.user.name || "" };
-      const remote = await api("/api/me/state");
+      const remote = SYNC_FROZEN ? { state: JSON.parse(JSON.stringify(localDraft)) } : await api("/api/me/state");
       const cloud = (remote && remote.state) || {};
       const hasCloudData = Boolean(cloud.updatedAt || cloud.savedAt || (cloud.pets || []).length || cloud.owner?.email);
       // Only a brand-new registration may claim the anonymous onboarding draft.
@@ -736,7 +739,7 @@ render();
       state.authHint = "";
       save();
       startCloudSync();
-      toast(state.pets.length ? "Аккаунт открыт, питомцы подтянулись" : (purpose === "register" ? "Аккаунт сохранён" : "Вы вошли"));
+      toast(SYNC_FROZEN ? "Аккаунт открыт · синхронизация приостановлена" : (state.pets.length ? "Аккаунт открыт, питомцы подтянулись" : (purpose === "register" ? "Аккаунт сохранён" : "Вы вошли")));
     } catch (error) {
       state.authError = error.message;
     }
