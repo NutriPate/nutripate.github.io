@@ -157,10 +157,12 @@
   function explain(error) {
     const message = String(error && (error.message || error) || '');
     const lower = message.toLowerCase();
-    if (lower.includes('rate') || lower.includes('once every')) return 'Подождите минуту и запросите код ещё раз.';
-    if (lower.includes('otp') || lower.includes('token') || lower.includes('invalid')) return 'Код не подошёл или уже устарел. Запросите новый.';
+    const seconds = message.match(/(\d+)\s*second/i);
+    if (lower.includes('rate') || lower.includes('once every') || lower.includes('security purposes')) return 'Вы сможете повторно запросить код через ' + (seconds ? seconds[1] : '60') + ' секунд.';
+    if (lower.includes('otp') || lower.includes('token') || lower.includes('invalid') || lower.includes('expired')) return 'Введите правильный код для прохождения верификации.';
     if (lower.includes('email')) return 'Проверьте адрес почты.';
-    return message || 'Не получилось связаться с аккаунтом.';
+    if (/[А-Яа-яЁё]/.test(message)) return message;
+    return 'Не получилось. Попробуйте ещё раз.';
   }
 
   function sameRow(left, right) {
@@ -429,6 +431,8 @@
 
   async function sendCode(createUser) {
     const email = (document.getElementById('webAuthEmail').value || '').trim().toLowerCase();
+    const again = Math.ceil(60 - (Date.now() - (window.__codeSentAt || 0)) / 1000);
+    if (window.__codeSentAt && again > 0) return note('Вы сможете повторно запросить код через ' + again + ' секунд.', true);
     if (!email.includes('@') || !email.includes('.')) return note('Проверьте адрес почты.', true);
     if (createUser && !signupName()) return;
     note('Отправляем код…');
@@ -443,6 +447,7 @@
       }
       return note(explain(error), true);
     }
+    window.__codeSentAt = Date.now();
     pendingEmail = email;
     pendingMode = createUser ? 'signup' : 'login';
     if (createUser) note('Код отправлен на ' + email + '. Аккаунт будет создан только для этой почты. Введите код.');
@@ -456,7 +461,7 @@
     if (authMode === 'signup') pendingMode = 'signup';
     if (!email.includes('@')) return note('Сначала укажите почту.', true);
     if (pendingEmail && email !== pendingEmail) return note('Код запрошен для ' + pendingEmail, true);
-    if (!/^\d{6,10}$/.test(token)) return note('Введите код из письма.', true);
+    if (!/^\d{6}$/.test(token)) return note('Введите правильный код для прохождения верификации.', true);
     note('Проверяем код…');
     const { error } = await client.auth.verifyOtp({ email, token, type: 'email' });
     if (error) return note(explain(error), true);

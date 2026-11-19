@@ -436,6 +436,18 @@ bind=function(){
     card.onclick=event=>{if(event.target.closest('button'))return;foodDetails(opener.dataset.food)};
   });
 };
+const actionsFeedGap=actions;
+actions=function(a){
+  if(a==='feed'){
+    const left=Math.ceil((30000-(Date.now()-(window.__feedAt||0)))/1000);
+    if(window.__feedAt&&left>0){toast('Вы сможете повторно запустить корм через '+left+' секунд');return}
+    const before=(state.feedEntries||[]).length;
+    const result=actionsFeedGap(a);
+    if((state.feedEntries||[]).length>before)window.__feedAt=Date.now();
+    return result;
+  }
+  return actionsFeedGap(a);
+};
 const renderFavoriteSync=render;
 render=function(){
   const pet=typeof activePet==='function'?activePet():null;
