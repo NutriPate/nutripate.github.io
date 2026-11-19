@@ -392,6 +392,9 @@ window.selectFood=function(id){
   state.selectedFoods[pet.id]=id;
   state.foodChoiceConfirmed=state.foodChoiceConfirmed||{};
   state.foodChoiceConfirmed[pet.id]=id;
+  state.foodSetAt=state.foodSetAt||{};
+  state.foodSetAt[pet.id]=new Date().toISOString();
+  if(state.foodClearedAt)delete state.foodClearedAt[pet.id];
   if(state.ration?.[pet.id]?.secondaryId===id){state.ration[pet.id].secondaryId=null;state.ration[pet.id].share=100}
   save();
   document.getElementById('modal')?.close();
@@ -484,7 +487,7 @@ actions=function(a){
     if(!food){toast('Сначала выберите корм');tab='foods';render();return}
     if(!slot.row){toast('На сегодня порции уже записаны');return}
     const code=['morning','day','evening'][slot.index];
-    state.feedEntries.push({id:'f'+Math.random().toString(16).slice(2,10),petId:activePet().id,date:todayKey(),meal:code,kind:'feed',grams:slot.row.grams,time:new Date().toTimeString().slice(0,5),foodName:food.brand+' · '+food.name,name:food.name});
+    state.feedEntries.push({id:'f'+Math.random().toString(16).slice(2,10),petId:activePet().id,date:todayKey(),meal:code,kind:'feed',grams:slot.row.grams,time:new Date().toTimeString().slice(0,5),foodId:food.id,foodName:food.brand+' · '+food.name,name:food.name});
     save();
     window.__feedAt=Date.now();
     toast('Порция записана');
@@ -503,6 +506,7 @@ actions=function(a){
       if(drop){
         const key=String(row.id||[row.petId,row.date,row.time||'',row.kind||'feed',row.meal||'',row.grams||'',row.text||''].join('|'));
         removed.add(key);
+        removed.add([row.petId,row.date,'feed',mealCodeWeb(row.meal),row.foodId||row.name||''].join('|'));
       }
       return !drop;
     });
@@ -517,6 +521,7 @@ actions=function(a){
 const viewTodayFeedSync=viewToday;
 viewToday=function(){
   let html=viewTodayFeedSync();
+  if(feedsTodayWeb().length && !html.includes('data-action="undo-feed"'))html+='<button type="button" class="kv danger-row" data-action="undo-feed"><span>Отменить последнюю порцию</span><span>›</span></button>';
   const slot=nextMealSlot();
   const pet=activePet(),food=chosenFood();
   if(!pet||!food)return html;
@@ -531,10 +536,19 @@ viewToday=function(){
     html=html.replace(/(<div class="grams">)\d+/,'$1'+slot.row.grams);
   }
   html=html.replace(/Дать сегодня: <b>\d+ г<\/b>/,'Дать сегодня: <b>'+(slot.row?slot.row.grams:0)+' г</b>');
-  if(!feedsTodayWeb().length)html=html.replace(/<button class="kv danger-row" data-action="undo-feed">[\s\S]*?<\/button>/,'');
-  else if(!html.includes('undo-feed'))html=html.replace('data-action="weight"','data-action="undo-feed"><span>Отменить последнюю порцию</span><span>›</span></button><button class="kv" data-action="weight"');
+  if(!feedsTodayWeb().length)html=html.replace(/<button[^>]*data-action="undo-feed"[\s\S]*?<\/button>/,'');
+  else if(!html.includes('data-action="undo-feed"'))html+='<button type="button" class="kv danger-row" data-action="undo-feed"><span>Отменить последнюю порцию</span><span>›</span></button>';
   return html;
 };
+const savePetStamp=window.savePet;
+window.savePet=function(id){
+  const result=savePetStamp.apply(this, arguments);
+  const pet=id?state.pets.find(x=>x.id===id):state.pets[state.pets.length-1];
+  if(pet){pet.updatedAt=new Date().toISOString();pet.weightKg=Number(pet.weightKg||pet.weight)||pet.weightKg;state.activePetAt=pet.updatedAt;save()}
+  return result;
+};
+const choosePetStamp=window.choosePet;
+window.choosePet=function(id){state.activePetAt=new Date().toISOString();return choosePetStamp(id)};
 function canonPet(p){
   if(!p)return p;
   const w=Number(p.weightKg!=null?p.weightKg:p.weight);

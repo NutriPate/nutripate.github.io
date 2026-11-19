@@ -19,6 +19,7 @@
   let lastPayload = '';
   let lastRemoteAt = '';
   let syncing = false;
+  let localRev = 0;
   let pendingEmail = '';
   let pendingMode = '';
   let pendingName = '';
@@ -312,6 +313,11 @@
     return Number.isFinite(time) ? time : 0;
   }
 
+  function realFood(value) {
+    const text = String(value || '').trim();
+    return text && text !== '__not_selected__' ? text : '';
+  }
+
   function laterStamp(left, right) {
     return String(left || '') >= String(right || '') ? String(left || '') : String(right || '');
   }
@@ -326,13 +332,28 @@
     const isolated = otherPerson || closed;
     const remoteWins = isolated || (stampOf(remote) > 0 && stampOf(remote) >= stampOf(local));
     const removedPets = new Set([...(local.removedPetIds || []), ...(remote.removedPetIds || [])].map(String));
-    const petSource = isolated ? (remote.pets || []) : [...(stampOf(remote) >= stampOf(local) ? (remote.pets || []) : (local.pets || [])), ...(stampOf(remote) >= stampOf(local) ? (local.pets || []) : (remote.pets || []))];
+    const petSource = isolated ? [[remote, remote.savedAt || remote.updatedAt || '']] : [[local, local.savedAt || local.updatedAt || ''], [remote, remote.savedAt || remote.updatedAt || '']];
     const byId = new Map();
-    for (const pet of petSource) {
-      if (!pet || !pet.id || removedPets.has(String(pet.id))) continue;
-      const previous = byId.get(pet.id);
-      if (!previous) byId.set(pet.id, pet);
-      else byId.set(pet.id, Object.assign({}, previous, pet, { photo: pet.photo || previous.photo || null }));
+    const petSide = new Map();
+    for (const pair of petSource) {
+      const side = pair[0] || {};
+      const sideSaved = pair[1] || '';
+      for (const pet of side.pets || []) {
+        if (!pet || !pet.id || removedPets.has(String(pet.id))) continue;
+        const previous = byId.get(pet.id);
+        if (!previous) {
+          byId.set(pet.id, Object.assign({}, pet));
+          petSide.set(pet.id, sideSaved);
+          continue;
+        }
+        const previousStamp = String(previous.updatedAt || '');
+        const incomingStamp = String(pet.updatedAt || '');
+        const takeIncoming = incomingStamp !== previousStamp ? incomingStamp > previousStamp : sideSaved >= (petSide.get(pet.id) || '');
+        const winner = takeIncoming ? pet : previous;
+        const other = takeIncoming ? previous : pet;
+        byId.set(pet.id, Object.assign({}, winner, { photo: winner.photo || other.photo || null }));
+        if (takeIncoming) petSide.set(pet.id, sideSaved);
+      }
     }
     const pets = [...byId.values()].map(alignBreed);
     const petIds = new Set(pets.map((pet) => pet.id));
@@ -366,10 +387,10 @@
     const foodPets = new Set([...petIds, ...Object.keys(local.selectedFoods || {}), ...Object.keys(remote.selectedFoods || {}), ...Object.keys(local.ration || {}), ...Object.keys(remote.ration || {})]);
     foodPets.forEach((petId) => {
       if (!petIds.has(petId)) return;
-      const localFood = (local.selectedFoods || {})[petId];
-      const remoteFood = (remote.selectedFoods || {})[petId];
-      const localSet = ((local.foodSetAt || {})[petId]) || '';
-      const remoteSet = ((remote.foodSetAt || {})[petId]) || '';
+      const localFood = realFood((local.selectedFoods || {})[petId]);
+      const remoteFood = realFood((remote.selectedFoods || {})[petId]);
+      const localSet = ((local.foodSetAt || {})[petId]) || (localFood ? localSaved : '');
+      const remoteSet = ((remote.foodSetAt || {})[petId]) || (remoteFood ? remoteSaved : '');
       const clearAt = laterStamp((local.foodClearedAt || {})[petId], (remote.foodClearedAt || {})[petId]);
       let chosen = null;
       let chosenAt = '';
@@ -425,7 +446,8 @@
     }
     const state = {
       pets,
-      activePetId: pets.some((pet) => pet.id === source.activePetId) ? source.activePetId : ((pets[0] && pets[0].id) || null),
+      activePetId: pets.some((pet) => pet.id === ((String(local.activePetAt || '') >= String(remote.activePetAt || '')) ? local.activePetId : remote.activePetId)) ? ((String(local.activePetAt || '') >= String(remote.activePetAt || '')) ? local.activePetId : remote.activePetId) : (pets.some((pet) => pet.id === source.activePetId) ? source.activePetId : ((pets[0] && pets[0].id) || null)),
+      activePetAt: String(local.activePetAt || '') >= String(remote.activePetAt || '') ? (local.activePetAt || '') : (remote.activePetAt || ''),
       onboardingDone: pets.length > 0,
       owner,
       selectedFoods,
@@ -463,13 +485,10 @@
     const { data } = await client.auth.getSession();
     if (!data.session) return;
     if (!lastRemoteAt) return;
+    const rev = localRev;
     const fresh = await client.from('app_states').select('state, updated_at').limit(1);
     const serverRow = fresh.data && fresh.data[0];
     const serverAt = serverRow && serverRow.updated_at;
-    if (serverAt && stampOf({ updatedAt: serverAt }) > stampOf({ updatedAt: lastRemoteAt })) {
-      await pullAccount();
-      return;
-    }
     const serverState = mirrorHistory((serverRow && serverRow.state) || {});
     if (serverAt) serverState.updatedAt = serverAt;
     const payload = slim(mergeStates(window.nutripateReadState(), serverState, accountEmail, false).state);
@@ -491,12 +510,15 @@
     if (payload.owner && payload.owner.privacyConsent) profile.privacy_consent_at = now;
     await client.from('profiles').upsert(profile, { onConflict: 'user_id' });
     lastPayload = serial;
+    lastRemoteAt = now;
+    if (localRev !== rev) schedulePush();
   }
 
   function schedulePush() {
+    localRev += 1;
     if (syncing) return;
     clearTimeout(pushTimer);
-    pushTimer = setTimeout(() => { pushAccount().catch(() => {}); }, 1200);
+    pushTimer = setTimeout(() => { pushAccount().catch(() => {}); }, 400);
   }
 
   window.nutripateAfterSave = schedulePush;
@@ -510,15 +532,16 @@
         return;
       }
       accountEmail = data.user.email || '';
+      const rev = localRev;
       const stored = await client.from('app_states').select('state, updated_at').limit(1);
       const row = stored.data && stored.data[0];
       const remote = mirrorHistory((row && row.state) || (data.user.user_metadata && data.user.user_metadata.nutripate) || {});
       if (row && row.updated_at) remote.updatedAt = row.updated_at;
       lastRemoteAt = remote.updatedAt || remote.savedAt || new Date().toISOString();
       const proOnAccount = Boolean((remote && remote.pro) || (data.user.user_metadata && data.user.user_metadata.nutripate_pro));
-      lastPayload = JSON.stringify(slim(remote || {}));
       if (typeof window.nutripateReadState !== 'function' || typeof window.nutripateReplaceState !== 'function') return;
-      const merged = mergeStates(window.nutripateReadState(), remote || {}, accountEmail, proOnAccount);
+      let merged = mergeStates(window.nutripateReadState(), remote || {}, accountEmail, proOnAccount);
+      if (localRev !== rev) merged = mergeStates(window.nutripateReadState(), remote || {}, accountEmail, proOnAccount);
       if (pendingMode === 'signup' && pendingName) {
         merged.state.owner = Object.assign({}, merged.state.owner, {
           name: pendingName,
