@@ -171,7 +171,7 @@ downloadReport=function(){const p=activePet();if(!p)return;const Pdf=window.jspd
 calcModal=calcModalDetailed;
 const petFormWithDelete=petForm;petForm=function(raw){petFormWithDelete(raw);if(!raw?.id)return;const actionsBox=document.querySelector('#modalContent .form-actions');if(actionsBox)actionsBox.insertAdjacentHTML('afterend','<button type="button" class="danger-button" onclick="deletePetWeb(\''+esc(raw.id)+'\')">Удалить питомца</button>')};
 const petFormWithTopSpecies=petForm;petForm=function(raw){petFormWithTopSpecies(raw);const content=document.querySelector('#modalContent');const first=content?.querySelector('.form-section');if(!content||!first)return;first.querySelector('.pet-photo-field')?.remove();const title=content.querySelector(':scope > h2');if(title&&!content.querySelector('.pet-form-header'))title.insertAdjacentHTML('beforebegin','<div class="pet-form-header"><button type="button" class="back-button" onclick="modal.close()">‹</button><span>NutriPate</span></div>');const chips=first.querySelector('.pet-species-chips');if(chips){first.insertBefore(chips,first.firstElementChild);if(!first.querySelector('.pet-photo-row'))chips.insertAdjacentHTML('afterend','<div class="pet-photo-row"><span class="pet-paw-placeholder" aria-hidden="true"><svg class="pet-paw-mark" viewBox="0 0 24 24"><ellipse cx="7.1" cy="8.1" rx="1.65" ry="2.25" transform="rotate(-28 7.1 8.1)"/><ellipse cx="10.4" cy="5.9" rx="1.65" ry="2.25" transform="rotate(-9 10.4 5.9)"/><ellipse cx="13.6" cy="5.9" rx="1.65" ry="2.25" transform="rotate(9 13.6 5.9)"/><ellipse cx="16.9" cy="8.1" rx="1.65" ry="2.25" transform="rotate(28 16.9 8.1)"/><path d="M12 10c-1.8 0-3.3 1.5-4.2 2.7-.8 1.1-2.7 2.6-2.7 4.7 0 2.2 1.7 3.2 3.6 3.2 1.3 0 2.4-.6 3.3-.6.9 0 2 .6 3.3.6 1.9 0 3.6-1 3.6-3.2 0-2.1-1.9-3.6-2.7-4.7C15.3 11.5 13.8 10 12 10Z"/></svg></span><button type="button" class="link-button">Фото</button></div>')}};
-window.deletePetWeb=id=>{const p=state.pets.find(x=>x.id===id);if(!p||!confirm(`Удалить профиль «${p.name||'Питомец'}» и его дневник?`))return;state.pets=state.pets.filter(x=>x.id!==id);state.feedEntries=state.feedEntries.filter(x=>x.petId!==id);state.weights=state.weights.filter(x=>x.petId!==id);delete state.selectedFoods[id];if(state.activePetId===id)state.activePetId=state.pets[0]?.id||null;save();modal.close();toast('Питомец удалён');render()};
+window.deletePetWeb=id=>{const p=state.pets.find(x=>x.id===id);if(!p||!confirm(`Удалить профиль «${p.name||'Питомец'}» и его дневник?`))return;state.removedPetIds=Array.from(new Set([...(state.removedPetIds||[]),id]));state.pets=state.pets.filter(x=>x.id!==id);state.feedEntries=state.feedEntries.filter(x=>x.petId!==id);state.weights=state.weights.filter(x=>x.petId!==id);delete state.selectedFoods[id];if(state.activePetId===id)state.activePetId=state.pets[0]?.id||null;save();modal.close();toast('Питомец удалён');render()};
 let petPhotoDraft=null;let petFormDraftId='';
 function handlePetPhoto(file){if(!file)return;const reader=new FileReader();reader.onload=()=>{petPhotoDraft=String(reader.result||'');const preview=$('petPhotoPreview');if(preview)preview.src=petPhotoDraft};reader.readAsDataURL(file)}
 const petFormWithPhoto=petForm;petForm=function(raw){petFormDraftId=raw?.id||'';petPhotoDraft=raw?.photo||null;petFormWithPhoto(raw);const first=document.querySelector('#modalContent .form-section');if(!first)return;first.insertAdjacentHTML('afterbegin',`<div class="pet-photo-field"><img id="petPhotoPreview" src="${esc(petPhotoDraft||'')}" alt="Фото питомца"><label class="soft-button photo-upload">Фото питомца<input id="petPhotoInput" type="file" accept="image/*" hidden></label><button type="button" class="link-button photo-clear" onclick="petPhotoDraft=null;document.querySelector('#petPhotoPreview').src='';document.querySelector('#petPhotoInput').value=''">Убрать фото</button></div>`);const input=$('petPhotoInput');if(input)input.onchange=()=>handlePetPhoto(input.files?.[0])};
@@ -181,7 +181,7 @@ const savePetWithPhoto=window.savePet;window.savePet=function(id){savePetWithPho
 const actionsWithTodayParity=actions;actions=function(a){if(a==='undo-feed'){const rows=loggedToday();const last=rows[rows.length-1];if(last){const i=state.feedEntries.indexOf(last);if(i>=0)state.feedEntries.splice(i,1);save();toast('Последняя порция отменена');render()}return}return actionsWithTodayParity(a)};
 window.toggleFoodFavoriteWeb=id=>{state.favorites=state.favorites.includes(id)?state.favorites.filter(x=>x!==id):[...state.favorites,id];save();if($('modal')?.open)foodDetails(id);else render()};
 window.compareFoodWeb=id=>{if(!state.favorites.includes(id)){if(state.favorites.length>=3)return toast('В сравнении может быть до трёх кормов');state.favorites=[...state.favorites,id];save()}if($('modal')?.open)modal.close();compareModal()};
-window.removePrimaryFoodWeb=()=>{const p=activePet();if(!p)return;delete state.selectedFoods[p.id];if(state.ration?.[p.id])delete state.ration[p.id];save();modal.close();toast('Корм убран из рациона');render()};
+window.removePrimaryFoodWeb=()=>{const p=activePet();if(!p)return;delete state.selectedFoods[p.id];if(state.ration?.[p.id])delete state.ration[p.id];state.foodClearedAt=state.foodClearedAt||{};state.foodClearedAt[p.id]=new Date().toISOString();save();modal.close();toast('Корм убран из рациона');render()};
 window.addSecondaryFoodWeb=id=>{const p=activePet(),f=foodById(id);if(!p||!f)return;if(!foodRecommendation(f,p))return toast('Проверьте состав на упаковке');state.ration=state.ration||{};state.ration[p.id]={secondaryId:id,share:70};save();modal.close();toast('Второй корм добавлен');render()};
 const foodDetailsDesktopParity=foodDetails;foodDetails=function(id){const f=foodById(id);if(!f)return;const p=activePet(),ok=Boolean(foodRecommendation(f,p)),image=foodImage(f),primaryId=p&&state.selectedFoods?.[p.id],secondaryId=p&&state.ration?.[p.id]?.secondaryId,isPrimary=primaryId===f.id,isSecondary=secondaryId===f.id;openModal(`<div class="food-detail"><div class="row-between"><h2>${esc(f.name)}</h2><button class="heart" onclick="toggleFoodFavoriteWeb('${esc(f.id)}')">${state.favorites.includes(f.id)?'♥':'♡'}</button></div><div class="food-detail-hero">${image?`<img src="${esc(image)}" alt="${esc(f.name)}">`:'<div class="food-placeholder">🥫</div>'}</div><p class="eyebrow">${esc(f.brand)} · производитель ${esc(f.brand)}</p><h3>${f.form==='wet'?'Влажный корм':'Сухой корм'}</h3><p class="muted">${f.form==='wet'?'Влажный':'Сухой'} · упаковка с этикетки</p><div class="food-detail-rows"><div><span>Стоимость упаковки</span><b>${f.price?'≈ '+esc(f.price)+' ₽':'Не указана'}</b></div><div><span>Стоимость дня</span><b>${p&&f.kcalPer100g?'≈ '+dailyGrams(p,f)+' г / день':'Нужны данные'}</b></div></div>${ok?`<div class="mint-card card"><h3>Подойдёт ли ${esc(p?.name||'питомцу')}?</h3><p>Подходит по выбранному профилю. Не заменяет назначение ветеринара.</p></div>`:`<div class="warning-card card"><h3>Состав требует проверки</h3><p>Совместимость корма ещё не подтверждена. Сверьте состав и ограничения питомца.</p></div>`}<h3>Состав и питательные показатели</h3><p class="muted">Белки: ${f.proteinPer100g||'—'}% · жиры: ${f.fatPer100g||'—'}% · калорийность: ${f.kcalPer100g||'—'} ккал / 100 г</p><p>${esc(f.composition||'Состав пока не внесён.')}</p><div class="form-actions"><button class="soft-button" onclick="compareFoodWeb('${esc(f.id)}')">Сравнить</button></div>${isPrimary?`<button class="soft-button full" onclick="removePrimaryFoodWeb()">Убрать из рациона</button>`:isSecondary?`<button class="soft-button full" onclick="removeSecondaryFood()">Убрать второй корм</button>`:`<button class="primary full" onclick="${p&&primaryId&&f.form!==foodById(primaryId)?.form?`addSecondaryFoodWeb('${esc(f.id)}')`:`selectFood('${esc(f.id)}')`}">${p&&primaryId&&f.form!==foodById(primaryId)?.form?'Добавить вторым кормом':ok?'Добавить в рацион':'Проверить этикетку'}</button>`}</div>`) };
 window.showMoreFoodsWeb=()=>{foodLimitWeb+=8;render()};
@@ -237,7 +237,7 @@ const selectFoodExactFinal=window.selectFood;
 window.selectFood=function(id){
   const result=selectFoodExactFinal(id);
   const p=activePet();
-  if(p&&chosenFood()?.id===id){state.foodChoiceConfirmed[p.id]=id;save()}
+  if(p&&chosenFood()?.id===id){state.foodChoiceConfirmed[p.id]=id;state.foodSetAt=state.foodSetAt||{};state.foodSetAt[p.id]=new Date().toISOString();if(state.foodClearedAt)delete state.foodClearedAt[p.id];save()}
   return result
 };
 let parityFilterDraft={form:'all',budget:'all',brand:''};
@@ -412,7 +412,18 @@ foodDetails=function(id){
 };
 window.toggleFoodFavoriteWeb=id=>{
   const list=currentFavorites();
-  setCurrentFavorites(list.includes(id)?list.filter(x=>x!==id):[...list,id]);
+  const pet=activePet();
+  const on=list.includes(id);
+  setCurrentFavorites(on?list.filter(x=>x!==id):[...list,id]);
+  if(pet){
+    const now=new Date().toISOString();
+    state.favoriteOnAt=state.favoriteOnAt||{};
+    state.removedFavorites=state.removedFavorites||{};
+    state.favoriteOnAt[pet.id]=state.favoriteOnAt[pet.id]||{};
+    state.removedFavorites[pet.id]=state.removedFavorites[pet.id]||{};
+    if(on){state.removedFavorites[pet.id][id]=now;delete state.favoriteOnAt[pet.id][id];}
+    else{state.favoriteOnAt[pet.id][id]=now;delete state.removedFavorites[pet.id][id];}
+  }
   save();
   if(document.getElementById('modal')?.open)foodDetails(id);else render();
 };
@@ -485,11 +496,17 @@ actions=function(a){
     const last=rows[rows.length-1];
     if(!last){toast('Сегодня ещё нет порций');return}
     const code=mealCodeWeb(last.meal);
+    const removed=new Set(state.removedFeedIds||[]);
     state.feedEntries=state.feedEntries.filter(row=>{
       if(!row||row.petId!==last.petId||row.date!==last.date||(row.kind||'feed')!=='feed')return true;
-      if(code)return mealCodeWeb(row.meal)!==code;
-      return row!==last;
+      const drop=code?mealCodeWeb(row.meal)===code:row===last;
+      if(drop){
+        const key=String(row.id||[row.petId,row.date,row.time||'',row.kind||'feed',row.meal||'',row.grams||'',row.text||''].join('|'));
+        removed.add(key);
+      }
+      return !drop;
     });
+    state.removedFeedIds=[...removed];
     save();
     toast('Последняя порция убрана');
     render();

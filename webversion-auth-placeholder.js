@@ -181,20 +181,12 @@
     const state = Object.assign({}, source || {});
     const feedDiary = Object.assign({}, state.feedDiary || {});
     let entries = Array.isArray(state.feedEntries) ? state.feedEntries.slice() : [];
-    const diaryCount = Object.keys(feedDiary).reduce((sum, key) => sum + ((feedDiary[key] || []).length), 0);
-    if (prefer === 'diary' || (!prefer && diaryCount && !entries.length)) entries = [];
-    else if (prefer === 'entries' || (!prefer && entries.length && !diaryCount)) {
-      Object.keys(feedDiary).forEach((key) => delete feedDiary[key]);
-    } else if (!prefer && diaryCount && entries.length) {
-      Object.keys(feedDiary).forEach((key) => (feedDiary[key] || []).forEach((row) => { if (row && (row.kind || 'feed') === 'feed') row.meal = mealCode(row.meal); }));
-      entries.forEach((entry) => { if (entry && (entry.kind || 'feed') === 'feed') entry.meal = mealCode(entry.meal); });
-      state.feedDiary = feedDiary;
-      state.feedEntries = entries;
-      return mirrorWeights(state);
-    }
+    const removed = new Set((state.removedFeedIds || []).map(String));
+    void prefer;
     entries.forEach((entry) => {
       if (!entry || !entry.petId) return;
-      const row = { id: entry.id, date: entry.date, at: entry.at || entry.time || '', kind: entry.kind || 'feed', meal: (entry.kind || 'feed') === 'feed' ? mealCode(entry.meal) : (entry.meal || entry.kind || 'feed'), name: entry.name || entry.foodName || '', grams: entry.grams, kcal: entry.kcal, text: entry.text || '' };
+      const row = { id: entry.id || [entry.petId, entry.date, entry.time || entry.at || '', entry.kind || 'feed', entry.meal || '', entry.grams || '', entry.text || ''].join('|'), date: entry.date, at: entry.at || entry.time || '', kind: entry.kind || 'feed', meal: (entry.kind || 'feed') === 'feed' ? mealCode(entry.meal) : (entry.meal || entry.kind || 'feed'), name: entry.name || entry.foodName || '', grams: entry.grams, kcal: entry.kcal, text: entry.text || '', foodId: entry.foodId, batch: entry.batch };
+      if (removed.has(String(row.id))) return;
       const bucket = (feedDiary[entry.petId] || []).slice();
       if (!bucket.some((item) => item && sameRow(item, row))) bucket.push(row);
       feedDiary[entry.petId] = bucket;
@@ -205,12 +197,18 @@
       (feedDiary[petId] || []).forEach((row) => {
         if (!row) return;
         if ((row.kind || 'feed') === 'feed') row.meal = mealCode(row.meal);
-        const entry = { id: row.id, petId, date: row.date, time: row.at || row.time || '', kind: row.kind || 'feed', meal: row.meal || '', name: row.name || row.text || '', foodName: row.name || '', grams: row.grams, kcal: row.kcal, text: row.text || '' };
+        if (!row.id) row.id = [petId, row.date, row.at || row.time || '', row.kind || 'feed', row.meal || '', row.grams || '', row.text || ''].join('|');
+        if (removed.has(String(row.id))) return;
+        const entry = { id: row.id, petId, date: row.date, time: row.at || row.time || '', kind: row.kind || 'feed', meal: row.meal || '', name: row.name || row.text || '', foodName: row.name || '', grams: row.grams, kcal: row.kcal, text: row.text || '', foodId: row.foodId, batch: row.batch };
         const marker = [petId, entry.date, entry.time, entry.kind, entry.grams, entry.text].join('|');
         if (seen.has(marker)) return;
         seen.add(marker);
         mergedEntries.push(entry);
       });
+    });
+    Object.keys(feedDiary).forEach((petId) => {
+      feedDiary[petId] = (feedDiary[petId] || []).filter((row) => row && !removed.has(String(row.id || '')));
+      if (!feedDiary[petId].length) delete feedDiary[petId];
     });
     state.feedDiary = feedDiary;
     state.feedEntries = mergedEntries;
@@ -253,7 +251,7 @@
       return copy;
     });
     state.owner = Object.assign({ name: '', email: '', privacyConsent: false }, state.owner || {});
-    return mirrorHistory(state, 'entries');
+    return mirrorHistory(state);
   }
 
   function entryKey(item) {
@@ -310,50 +308,145 @@
     return Number.isFinite(time) ? time : 0;
   }
 
+  function laterStamp(left, right) {
+    return String(left || '') >= String(right || '') ? String(left || '') : String(right || '');
+  }
+
   function mergeStates(local, remote, email, proOnAccount) {
-    const localPets = Array.isArray(local && local.pets) ? local.pets : [];
-    const remotePets = Array.isArray(remote && remote.pets) ? remote.pets : [];
-    const localEmail = String(local && local.owner && local.owner.email || '').trim().toLowerCase();
+    local = local || {};
+    remote = remote || {};
+    const localEmail = String(local.owner && local.owner.email || '').trim().toLowerCase();
     const sessionEmail = String(email || '').trim().toLowerCase();
     const otherPerson = Boolean(localEmail && sessionEmail && localEmail !== sessionEmail);
-    const remoteWins = otherPerson || Boolean(local && local.sessionClosed && stampOf(remote) > 0) || (stampOf(remote) > 0 && stampOf(remote) >= stampOf(local));
-    const chosen = remoteWins ? remotePets : localPets;
+    const closed = Boolean(local.sessionClosed && stampOf(remote) > 0);
+    const isolated = otherPerson || closed;
+    const remoteWins = isolated || (stampOf(remote) > 0 && stampOf(remote) >= stampOf(local));
+    const removedPets = new Set([...(local.removedPetIds || []), ...(remote.removedPetIds || [])].map(String));
+    const petSource = isolated ? (remote.pets || []) : [...(stampOf(remote) >= stampOf(local) ? (remote.pets || []) : (local.pets || [])), ...(stampOf(remote) >= stampOf(local) ? (local.pets || []) : (remote.pets || []))];
     const byId = new Map();
-    for (const pet of chosen) {
-      if (!pet || !pet.id) continue;
+    for (const pet of petSource) {
+      if (!pet || !pet.id || removedPets.has(String(pet.id))) continue;
       const previous = byId.get(pet.id);
       if (!previous) byId.set(pet.id, pet);
       else byId.set(pet.id, Object.assign({}, previous, pet, { photo: pet.photo || previous.photo || null }));
     }
     const pets = [...byId.values()].map(alignBreed);
     const petIds = new Set(pets.map((pet) => pet.id));
-    const owner = Object.assign({ name: '', email: '', privacyConsent: false }, (remote && remote.owner) || {}, otherPerson ? {} : ((local && local.owner) || {}));
-    if (!(local && local.owner && local.owner.name) && remote && remote.owner && remote.owner.name) owner.name = remote.owner.name;
+    const owner = Object.assign({ name: '', email: '', privacyConsent: false }, remote.owner || {}, isolated ? {} : (local.owner || {}));
+    if (!(local.owner && local.owner.name) && remote.owner && remote.owner.name) owner.name = remote.owner.name;
     if (email) owner.email = email;
-    const pro = Boolean(proOnAccount || (remote && remote.pro) || (local && local.pro));
-    const proPlan = pro ? ((local && local.pro) ? (local.proPlan || 'account') : ((remote && remote.proPlan) || 'account')) : null;
-    const source = remoteWins ? (remote || {}) : (local || {});
+    const pro = Boolean(proOnAccount || remote.pro || local.pro);
+    const proPlan = pro ? (local.pro ? (local.proPlan || 'account') : (remote.proPlan || 'account')) : null;
+    const source = remoteWins ? remote : local;
+    const localSaved = local.savedAt || local.updatedAt || '';
+    const remoteSaved = remote.savedAt || remote.updatedAt || '';
+    const feedDiary = {};
+    const weightDiary = {};
+    if (!isolated) {
+      [local, remote].forEach((side) => {
+        Object.keys(side.feedDiary || {}).forEach((id) => { feedDiary[id] = (feedDiary[id] || []).concat(side.feedDiary[id] || []); });
+        Object.keys(side.weightDiary || {}).forEach((id) => { weightDiary[id] = (weightDiary[id] || []).concat(side.weightDiary[id] || []); });
+      });
+    }
+    const history = mirrorHistory(isolated ? remote : {
+      feedDiary,
+      feedEntries: [...(local.feedEntries || []), ...(remote.feedEntries || [])],
+      weightDiary,
+      weights: [...(local.weights || []), ...(remote.weights || [])],
+      removedFeedIds: [...new Set([...(local.removedFeedIds || []), ...(remote.removedFeedIds || [])].map(String))],
+    });
+    const selectedFoods = {};
+    const foodSetAt = {};
+    const foodClearedAt = {};
+    const ration = {};
+    const foodPets = new Set([...petIds, ...Object.keys(local.selectedFoods || {}), ...Object.keys(remote.selectedFoods || {}), ...Object.keys(local.ration || {}), ...Object.keys(remote.ration || {})]);
+    foodPets.forEach((petId) => {
+      if (!petIds.has(petId)) return;
+      const localFood = (local.selectedFoods || {})[petId];
+      const remoteFood = (remote.selectedFoods || {})[petId];
+      const localSet = ((local.foodSetAt || {})[petId]) || '';
+      const remoteSet = ((remote.foodSetAt || {})[petId]) || '';
+      const clearAt = laterStamp((local.foodClearedAt || {})[petId], (remote.foodClearedAt || {})[petId]);
+      let chosen = null;
+      let chosenAt = '';
+      if (isolated) {
+        chosen = remoteFood || null;
+        chosenAt = remoteSet || remoteSaved;
+      } else if (localFood && remoteFood && localFood !== remoteFood) {
+        chosen = (remoteSet || localSet) ? (remoteSet >= localSet ? remoteFood : localFood) : (remoteSaved >= localSaved ? remoteFood : localFood);
+        chosenAt = laterStamp(laterStamp(localSet, remoteSet), remoteSaved >= localSaved ? remoteSaved : localSaved);
+      } else if (localFood || remoteFood) {
+        chosen = localFood || remoteFood;
+        chosenAt = laterStamp(localSet, remoteSet) || (localFood ? localSaved : remoteSaved);
+      }
+      if (chosen && clearAt && clearAt >= chosenAt) chosen = null;
+      if (chosen) {
+        selectedFoods[petId] = chosen;
+        if (chosenAt) foodSetAt[petId] = chosenAt;
+        const localRation = (local.ration || {})[petId];
+        const remoteRation = (remote.ration || {})[petId];
+        ration[petId] = Object.assign({}, remoteSaved >= localSaved && remoteRation ? remoteRation : (localRation || remoteRation || {}));
+      } else if (clearAt) foodClearedAt[petId] = clearAt;
+    });
+    const favoritesByPet = {};
+    const favoriteOnAt = {};
+    const removedFavorites = {};
+    if (!isolated) {
+      const favPets = new Set([...Object.keys(local.favoritesByPet || {}), ...Object.keys(remote.favoritesByPet || {}), ...Object.keys(local.favoriteOnAt || {}), ...Object.keys(remote.removedFavorites || {})]);
+      favPets.forEach((petId) => {
+        if (!petIds.has(petId)) return;
+        const ids = new Set([...(local.favoritesByPet && local.favoritesByPet[petId] || []), ...(remote.favoritesByPet && remote.favoritesByPet[petId] || [])].map(String));
+        Object.keys((local.favoriteOnAt || {})[petId] || {}).forEach((id) => ids.add(id));
+        Object.keys((remote.favoriteOnAt || {})[petId] || {}).forEach((id) => ids.add(id));
+        Object.keys((local.removedFavorites || {})[petId] || {}).forEach((id) => ids.add(id));
+        Object.keys((remote.removedFavorites || {})[petId] || {}).forEach((id) => ids.add(id));
+        const kept = [];
+        ids.forEach((foodId) => {
+          const onTime = laterStamp(((local.favoriteOnAt || {})[petId] || {})[foodId], ((remote.favoriteOnAt || {})[petId] || {})[foodId]);
+          const offTime = laterStamp(((local.removedFavorites || {})[petId] || {})[foodId], ((remote.removedFavorites || {})[petId] || {})[foodId]);
+          const presentLocal = ((local.favoritesByPet || {})[petId] || []).map(String).includes(foodId);
+          const presentRemote = ((remote.favoritesByPet || {})[petId] || []).map(String).includes(foodId);
+          const on = laterStamp(laterStamp(onTime, presentLocal ? localSaved : ''), presentRemote ? remoteSaved : '');
+          if (on && on >= offTime) {
+            kept.push(foodId);
+            favoriteOnAt[petId] = Object.assign({}, favoriteOnAt[petId], { [foodId]: on });
+          } else if (offTime) {
+            removedFavorites[petId] = Object.assign({}, removedFavorites[petId], { [foodId]: offTime });
+          }
+        });
+        if (kept.length) favoritesByPet[petId] = kept;
+      });
+    } else {
+      Object.assign(favoritesByPet, remote.favoritesByPet || {});
+    }
     const state = {
       pets,
       activePetId: pets.some((pet) => pet.id === source.activePetId) ? source.activePetId : ((pets[0] && pets[0].id) || null),
       onboardingDone: pets.length > 0,
       owner,
-      selectedFoods: Object.assign({}, source.selectedFoods || {}),
-      ration: Object.assign({}, source.ration || {}),
-      favoritesByPet: Object.assign({}, source.favoritesByPet || {}),
-      favorites: Array.isArray(source.favorites) ? source.favorites.slice() : [],
-      feedEntries: (Array.isArray(source.feedEntries) ? source.feedEntries : []).filter((item) => item && petIds.has(item.petId)),
-      weights: (Array.isArray(source.weights) ? source.weights : []).filter((item) => item && petIds.has(item.petId)),
-      feedDiary: Object.assign({}, source.feedDiary || {}),
-      weightDiary: Object.assign({}, source.weightDiary || {}),
+      selectedFoods,
+      foodSetAt,
+      foodClearedAt,
+      ration,
+      favoritesByPet,
+      favoriteOnAt,
+      removedFavorites,
+      favorites: [],
+      removedPetIds: isolated ? (remote.removedPetIds || []) : [...removedPets],
+      removedFeedIds: history.removedFeedIds || [],
+      feedEntries: (history.feedEntries || []).filter((item) => item && petIds.has(item.petId)),
+      weights: (history.weights || []).filter((item) => item && petIds.has(item.petId)),
+      feedDiary: history.feedDiary || {},
+      weightDiary: history.weightDiary || {},
       diaryDay: source.diaryDay || null,
       reminders: Object.assign({}, source.reminders || {}),
-      savedAt: remoteWins ? ((remote && (remote.updatedAt || remote.savedAt)) || new Date().toISOString()) : ((local && local.savedAt) || new Date().toISOString()),
+      stock: source.stock || {},
+      savedAt: remoteWins ? (remote.updatedAt || remote.savedAt || new Date().toISOString()) : (local.savedAt || new Date().toISOString()),
       sessionClosed: false,
       pro,
       proPlan,
     };
-    ["selectedFoods", "ration", "favoritesByPet", "feedDiary", "weightDiary"].forEach((key) => {
+    ["selectedFoods", "ration", "favoritesByPet", "feedDiary", "weightDiary", "stock"].forEach((key) => {
       Object.keys(state[key] || {}).forEach((id) => { if (!petIds.has(id)) delete state[key][id]; });
     });
     const before = JSON.stringify(slim(remote));
@@ -366,13 +459,16 @@
     const { data } = await client.auth.getSession();
     if (!data.session) return;
     if (!lastRemoteAt) return;
-    const fresh = await client.from('app_states').select('updated_at').limit(1);
-    const serverAt = fresh.data && fresh.data[0] && fresh.data[0].updated_at;
+    const fresh = await client.from('app_states').select('state, updated_at').limit(1);
+    const serverRow = fresh.data && fresh.data[0];
+    const serverAt = serverRow && serverRow.updated_at;
     if (serverAt && stampOf({ updatedAt: serverAt }) > stampOf({ updatedAt: lastRemoteAt })) {
       await pullAccount();
       return;
     }
-    const payload = slim(window.nutripateReadState());
+    const serverState = mirrorHistory((serverRow && serverRow.state) || {});
+    if (serverAt) serverState.updatedAt = serverAt;
+    const payload = slim(mergeStates(window.nutripateReadState(), serverState, accountEmail, false).state);
     if (accountEmail) payload.owner.email = accountEmail;
     const serial = JSON.stringify(payload);
     if (serial === lastPayload) return;
