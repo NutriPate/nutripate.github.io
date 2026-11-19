@@ -36,8 +36,13 @@
       }
     });
     const labelButton = [...detail.querySelectorAll('button')].find((button) => button.textContent.trim() === 'Этикетка');
-    const primary = [...detail.querySelectorAll('button.primary')].pop();
-    if (labelButton && primary && primary.nextElementSibling !== labelButton) primary.after(labelButton);
+    const action = [...detail.querySelectorAll('button')].find((button) => {
+      const text = button.textContent.trim();
+      return text === 'Добавить в рацион' || text === 'Добавить вторым кормом' || text.startsWith('Убрать');
+    }) || [...detail.querySelectorAll('button.primary')].pop();
+    if (labelButton && action && action.nextElementSibling !== labelButton) action.after(labelButton);
+    const back = detail.querySelector('.food-detail-back');
+    if (labelButton && back && labelButton.nextElementSibling !== back) labelButton.after(back);
   }
   new MutationObserver(fixFoodControls).observe(document.documentElement, {subtree: true, childList: true, attributes: true, attributeFilter: ['open']});
   setTimeout(fixFoodControls, 0);
