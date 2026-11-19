@@ -20,7 +20,7 @@ const rub=n=>new Intl.NumberFormat('ru-RU').format(Math.round(n||0));
 const todayKey=()=>new Date().toISOString().slice(0,10);state.diaryDay=state.diaryDay||todayKey();
 const petEmoji=p=>p?.species==='dog'?'Собака':'Кошка';
 const petPhoto=p=>p?.photo||(()=>{const label=String(p?.breedLabel||p?.breed||'');const id=(typeof breedAssetByName!=='undefined'&&breedAssetByName[label])||'';return id?`assets/breeds/${id}.png`:(p?.species==='dog'?'assets/dachshund.png':'assets/report_cat.jpg')})();
-const foodImage=f=>{const path=String(f?.image||'').replace(/\\/g,'/');return path.startsWith('assets/')?path+'?v=pack-1':''};
+const foodImage=f=>{const path=String(f?.image||'').replace(/\\/g,'/');return path.startsWith('assets/')?path+'?v=pack-2':''};
 function toast(text){const el=$('toast');el.textContent=text;el.classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>el.classList.remove('show'),2200)}
 function foodById(id){return catalog.find(f=>f.id===id)}
 function chosenFood(){const p=activePet();return foodById(state.selectedFoods?.[p?.id])}
