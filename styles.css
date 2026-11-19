@@ -192,7 +192,7 @@ h3 { margin-bottom: 8px; font-size: 26px; }
 }
 
 .section-head { margin-bottom: 22px; }
-.tiers, .downloads, .legal-grid, .pro-grid, .web, .about {
+.tiers, .downloads, .legal-grid, .legal, .pro-grid, .web, .about {
   display: grid;
   gap: 16px;
 }
@@ -344,7 +344,7 @@ body { overflow-x: hidden; }
   .phone { flex-basis: 250px; width: 250px; }
   .stage-cat { flex-basis: 190px; width: 190px; }
   .downloads { grid-template-columns: repeat(3, 1fr); }
-  .tiers, .pro-grid, .web, .about, .legal-grid { grid-template-columns: 1fr 1fr; gap: 28px; }
+  .tiers, .pro-grid, .web, .about, .legal, .legal-grid { grid-template-columns: 1fr 1fr; gap: 28px; }
   .plans { grid-template-columns: repeat(3, 1fr); }
   .web { margin: 0 40px 40px; padding: 40px; }
   .about { margin: 0 40px 48px; padding: 48px 44px; border-radius: 36px; }
