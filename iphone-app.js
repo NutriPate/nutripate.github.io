@@ -564,6 +564,7 @@ render();
   let pushTimer = 0;
   let cloudSyncTimer = 0;
   let cloudSyncBusy = false;
+  let cloudHydrated = false;
   const cloudMoment = value => {
     const time = Date.parse(String(value || ""));
     return Number.isFinite(time) ? time : 0;
@@ -576,7 +577,10 @@ render();
       const remoteState = remote?.state || {};
       const remoteAt = cloudMoment(remote.updatedAt || remoteState.updatedAt);
       const localAt = cloudMoment(state.updatedAt);
-      if (remoteAt > localAt) {
+      // The first successful pull after login must always replace the local
+      // demo/cache state. Otherwise a newer local timestamp can hide the
+      // account state, including the selected food and feeding norm.
+      if (!cloudHydrated || remoteAt > localAt) {
         state._applyingCloud = true;
         applyCloud(remoteState);
         state.updatedAt = remote.updatedAt || remoteState.updatedAt || new Date().toISOString();
@@ -584,6 +588,7 @@ render();
         state._applyingCloud = false;
         render();
       }
+      cloudHydrated = true;
     } catch (error) {
       // Offline is allowed; the local copy remains available until the next poll.
     } finally {
@@ -726,6 +731,7 @@ render();
         state.owner = Object.assign({}, state.owner, { name: data.user.name || state.owner.name || "", email: data.user.email, privacyConsent: true });
       }
       state.authScreen = null;
+      cloudHydrated = canClaimDraft;
       state.authCode = "";
       state.authHint = "";
       save();
@@ -759,6 +765,7 @@ render();
     if (name === "login") { state.authScreen = "login"; state.authError = ""; render(); return; }
     if (name === "register") { state.authScreen = "register"; state.authError = ""; render(); return; }
     if (name === "logout") {
+      cloudHydrated = false;
       state.account = { token: "", email: "", name: "" };
       state.pets = [];
       state.activePetId = null;
