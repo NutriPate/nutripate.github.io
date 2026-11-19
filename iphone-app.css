@@ -179,3 +179,5 @@ body .screen-title h1,body .food-parity .screen-title h1,body .diary-parity .scr
 .food-parity-section .food-thumb{width:128px!important;height:158px!important;background:#fff!important;border:1px solid var(--line)!important}
 .food-parity-section .food-thumb img{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:contain!important}
 @media(max-width:520px){.food-parity-section .food-card{grid-template-columns:112px minmax(0,1fr)!important}.food-parity-section .food-thumb{width:112px!important;height:142px!important}}
+.food-thumb,.pack,.food-detail-hero,.compare-food-image{overflow:visible!important}
+.food-thumb img,.hero-food-photo,.food-detail-hero img,.compare-food-image img{object-fit:contain!important;object-position:center!important}
