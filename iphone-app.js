@@ -560,24 +560,16 @@ function canonPet(p){
   return copy;
 }
 const dailyGramsSame=dailyGrams;
-dailyGrams=function(p=activePet(),food=chosenFood()){
+function appDayGrams(p=activePet(),food=chosenFood()){
   p=canonPet(p);
   if(!p||!food)return 0;
-  const per=Number(food.kcalPer100g!=null?food.kcalPer100g:food.kcal_per_100g)||0;
+  const per=Number(food.kcalPer100g||food.kcal100||food.kcal_per_100g||0);
   if(!per)return 0;
   const need=kcalNeed(p);
   const budget=Math.max(need*0.75,need);
-  const ration=(state.ration&&state.ration[p.id])||{};
-  const secondary=foodById(ration.secondaryId);
-  const primary=chosenFood();
-  let part=1;
-  if(secondary&&primary){
-    const share=Math.max(0,Math.min(100,Number(ration.share)||70))/100;
-    if(food.id===primary.id)part=share;
-    else if(food.id===secondary.id)part=1-share;
-  }
-  return Math.max(0,Math.round(budget*part/per*100/5)*5);
-};
+  return Math.max(0,Math.round(budget/per*100/5)*5);
+}
+dailyGrams=function(p=activePet(),food=chosenFood()){return appDayGrams(p,food)};
 petPhoto=function(p){
   if(p&&p.photo)return p.photo;
   const names=[p&&p.breedLabel,p&&p.breed,p&&p.breedId].filter(Boolean).map(String);
@@ -614,6 +606,14 @@ mealRows=function(){
     {name:'День',code:'day',time:r.day||'13:00',grams:parts.day},
     {name:'Вечер',code:'evening',time:r.evening||'19:00',grams:parts.evening},
   ];
+};
+const viewTodaySameNumber=viewToday;
+viewToday=function(){
+  let html=viewTodaySameNumber();
+  const day=appDayGrams();
+  const given=feedsTodayWeb().reduce((sum,row)=>sum+Number(row.grams||0),0);
+  html=html.replace(/(Питание сегодня<\/span><strong>)\d+ из \d+ г/,'$1'+given+' из '+day+' г');
+  return html;
 };
 const renderFavoriteSync=render;
 render=function(){
