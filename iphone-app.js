@@ -384,12 +384,14 @@ foodRecommendation=function(f,p=activePet()){
 };
 const dailyGramsBeforeCanonical=dailyGrams;
 dailyGrams=function(p=activePet(),food=chosenFood()){
+  const localValue=dailyGramsBeforeCanonical(p,food);
   const plan=canonicalCalculation?.feeding_plan;
-  if(plan&&food&&plan.food_id===food.id&&Number.isFinite(Number(plan.grams_day)))return Number(plan.grams_day);
-  return dailyGramsBeforeCanonical(p,food);
+  const remoteValue=Number(plan?.grams_day);
+  if(plan&&food&&plan.food_id===food.id&&Number.isFinite(remoteValue)&&remoteValue===localValue)return remoteValue;
+  return localValue;
 };
 const kcalNeedBeforeCanonical=kcalNeed;
-kcalNeed=function(p=activePet()){const value=Number(canonicalCalculation?.feeding_plan?.kcal_day);return Number.isFinite(value)&&value>0?value:kcalNeedBeforeCanonical(p)};
+kcalNeed=function(p=activePet()){const localValue=kcalNeedBeforeCanonical(p),value=Number(canonicalCalculation?.feeding_plan?.kcal_day);return Number.isFinite(value)&&value>0&&value===localValue?value:localValue};
 const renderBeforeCanonicalSync=render;
 render=function(){
   renderBeforeCanonicalSync();
