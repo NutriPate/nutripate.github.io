@@ -177,6 +177,12 @@
     return String(value || '');
   }
 
+  function feedIdentity(row, petId) {
+    const kind = (row && row.kind) || 'feed';
+    if (kind === 'feed') return [petId, row.date, 'feed', mealCode(row.meal), row.foodId || row.name || ''].join('|');
+    return [petId, row.date, kind, row.at || row.time || '', row.grams || '', row.text || row.name || ''].join('|');
+  }
+
   function mirrorHistory(source, prefer) {
     const state = Object.assign({}, source || {});
     const feedDiary = Object.assign({}, state.feedDiary || {});
@@ -188,27 +194,25 @@
       const row = { id: entry.id || [entry.petId, entry.date, entry.time || entry.at || '', entry.kind || 'feed', entry.meal || '', entry.grams || '', entry.text || ''].join('|'), date: entry.date, at: entry.at || entry.time || '', kind: entry.kind || 'feed', meal: (entry.kind || 'feed') === 'feed' ? mealCode(entry.meal) : (entry.meal || entry.kind || 'feed'), name: entry.name || entry.foodName || '', grams: entry.grams, kcal: entry.kcal, text: entry.text || '', foodId: entry.foodId, batch: entry.batch };
       if (removed.has(String(row.id))) return;
       const bucket = (feedDiary[entry.petId] || []).slice();
-      if (!bucket.some((item) => item && sameRow(item, row))) bucket.push(row);
+      if (!bucket.some((item) => item && feedIdentity(item, entry.petId) === feedIdentity(row, entry.petId))) bucket.push(row);
       feedDiary[entry.petId] = bucket;
     });
     const seen = new Set();
     const mergedEntries = [];
     Object.keys(feedDiary).forEach((petId) => {
+      const kept = [];
       (feedDiary[petId] || []).forEach((row) => {
         if (!row) return;
         if ((row.kind || 'feed') === 'feed') row.meal = mealCode(row.meal);
         if (!row.id) row.id = [petId, row.date, row.at || row.time || '', row.kind || 'feed', row.meal || '', row.grams || '', row.text || ''].join('|');
-        if (removed.has(String(row.id))) return;
-        const entry = { id: row.id, petId, date: row.date, time: row.at || row.time || '', kind: row.kind || 'feed', meal: row.meal || '', name: row.name || row.text || '', foodName: row.name || '', grams: row.grams, kcal: row.kcal, text: row.text || '', foodId: row.foodId, batch: row.batch };
-        const marker = [petId, entry.date, entry.time, entry.kind, entry.grams, entry.text].join('|');
-        if (seen.has(marker)) return;
-        seen.add(marker);
-        mergedEntries.push(entry);
+        const slot = feedIdentity(row, petId);
+        if (removed.has(String(row.id)) || removed.has(slot) || seen.has(slot)) return;
+        seen.add(slot);
+        kept.push(row);
+        mergedEntries.push({ id: row.id, petId, date: row.date, time: row.at || row.time || '', kind: row.kind || 'feed', meal: row.meal || '', name: row.name || row.text || '', foodName: row.name || '', grams: row.grams, kcal: row.kcal, text: row.text || '', foodId: row.foodId, batch: row.batch });
       });
-    });
-    Object.keys(feedDiary).forEach((petId) => {
-      feedDiary[petId] = (feedDiary[petId] || []).filter((row) => row && !removed.has(String(row.id || '')));
-      if (!feedDiary[petId].length) delete feedDiary[petId];
+      if (kept.length) feedDiary[petId] = kept;
+      else delete feedDiary[petId];
     });
     state.feedDiary = feedDiary;
     state.feedEntries = mergedEntries;

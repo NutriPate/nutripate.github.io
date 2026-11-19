@@ -532,7 +532,40 @@ viewToday=function(){
   }
   html=html.replace(/Дать сегодня: <b>\d+ г<\/b>/,'Дать сегодня: <b>'+(slot.row?slot.row.grams:0)+' г</b>');
   if(!feedsTodayWeb().length)html=html.replace(/<button class="kv danger-row" data-action="undo-feed">[\s\S]*?<\/button>/,'');
+  else if(!html.includes('undo-feed'))html=html.replace('data-action="weight"','data-action="undo-feed"><span>Отменить последнюю порцию</span><span>›</span></button><button class="kv" data-action="weight"');
   return html;
+};
+function canonPet(p){
+  if(!p)return p;
+  const w=Number(p.weightKg!=null?p.weightKg:p.weight);
+  const weight=Number.isFinite(w)&&w>0?w:4;
+  const copy=Object.assign({},p,{weight,weightKg:weight});
+  const raw=p.targetWeightKg!=null?p.targetWeightKg:p.targetWeight;
+  const target=Number(raw);
+  if(Number.isFinite(target)){copy.targetWeight=target;copy.targetWeightKg=target}
+  return copy;
+}
+const kcalNeedSame=kcalNeed;
+kcalNeed=function(p){return kcalNeedSame(canonPet(p))};
+const derFactorSame=derFactor;
+derFactor=function(p){return derFactorSame(canonPet(p))};
+function split3Grams(total){
+  total=Math.max(0,Number(total)||0);
+  const morning=Math.round(total/3);
+  const day=Math.round(total/3);
+  let evening=total-morning-day;
+  if(evening<0){day+=evening;evening=0}
+  return {morning,day,evening};
+}
+mealRows=function(){
+  const total=dailyGrams();
+  const parts=split3Grams(total);
+  const r=state.reminders||{};
+  return [
+    {name:'Утро',code:'morning',time:r.morning||'08:00',grams:parts.morning},
+    {name:'День',code:'day',time:r.day||'13:00',grams:parts.day},
+    {name:'Вечер',code:'evening',time:r.evening||'19:00',grams:parts.evening},
+  ];
 };
 const renderFavoriteSync=render;
 render=function(){
