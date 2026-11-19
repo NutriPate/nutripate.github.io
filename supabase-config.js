@@ -1,0 +1,1 @@
+window.NUTRIPATE_SUPABASE={url:'https://lyepelkskwdgtuxiuoeo.supabase.co',key:'sb_publishable_Cvf2I4_-w96OttIJ6FQh-Q_1AFYh44X'};

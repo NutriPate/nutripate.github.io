@@ -1,26 +1,49 @@
 const stateKey='nutripate-web-state-v1';
-document.addEventListener('DOMContentLoaded',()=>{weightChartSvg=weightChartSvgDaily;});
 const fallbackFoods=[
  {id:'demo-1',name:'Sterilised 37',brand:'Royal Canin',species:'cat',form:'dry',kcalPer100g:367,proteinPer100g:37,fatPer100g:12,tier:'premium',image:'assets/foods_white/catalog-rcat-ajo01.jpg',composition:'Белок, рис, кукуруза, жиры и функциональные добавки.'},
  {id:'demo-2',name:'Indoor 27',brand:'Royal Canin',species:'cat',form:'dry',kcalPer100g:374,proteinPer100g:27,fatPer100g:13,tier:'premium',image:'assets/foods_white/catalog-rcat-ajo-fs.jpg',composition:'Рацион для домашних кошек с умеренной активностью.'},
  {id:'demo-3',name:'Sensitive',brand:'Pro Plan',species:'cat',form:'wet',kcalPer100g:90,proteinPer100g:10,fatPer100g:5,tier:'good',image:'assets/foods_white/catalog-rcat-ajo-kt.jpg',composition:'Влажный рацион для чувствительного пищеварения.'}
 ];
-let catalog=[]; let tab='today'; let diaryTab='feed'; let weightPeriod='week'; let weightRegistrationDate=''; window.weightPeriod=weightPeriod; let query=''; let foodFilter='all'; let foodLimitWeb=8;
+let catalog=[]; let tab='today'; let diaryTab='feed'; let weightPeriod='week'; let query=''; let foodFilter='all'; let foodLimitWeb=8;
 const $=id=>document.getElementById(id);
 const loadState=()=>{try{return JSON.parse(localStorage.getItem(stateKey))||{}}catch{return {}}};
 let state=Object.assign({pets:[],activePetId:null,owner:{name:'',email:'',privacyConsent:false},selectedFoods:{},favorites:[],feedEntries:[],weights:[],diaryDay:null},loadState());state.pets=Array.isArray(state.pets)?state.pets:[];state.feedEntries=Array.isArray(state.feedEntries)?state.feedEntries:[];state.weights=Array.isArray(state.weights)?state.weights:[];state.favorites=Array.isArray(state.favorites)?state.favorites:[];state.selectedFoods=state.selectedFoods&&typeof state.selectedFoods==='object'?state.selectedFoods:{};
 function normalizePet(p){const q=petDefaults(p);q.weight=Number(p?.weight??p?.weightKg??q.weight)||4.2;q.targetWeight=p?.targetWeight??p?.targetWeightKg??null;q.ageMonths=Number(p?.ageMonths??q.ageMonths??24);q.diagnoses=q.diagnoses?.length?q.diagnoses:['healthy'];q.allergens=q.allergens||[];q.activity=q.activity||'medium';q.sterilized=q.sterilized!==false;return q}
 state.pets=(state.pets||[]).map(normalizePet);state.owner=Object.assign({name:'',email:'',privacyConsent:false},state.owner||{});if(state.pets.length===1&&state.pets[0].id==='luna'&&state.pets[0].name==='Луна'&&!state.feedEntries.length&&!state.weights.length){state.pets=[];state.activePetId=null;localStorage.setItem(stateKey,JSON.stringify(state));}
-const save=()=>{state.savedAt=new Date().toISOString();localStorage.setItem(stateKey,JSON.stringify(state));if(typeof window.nutripateAfterSave==='function')window.nutripateAfterSave()};
-window.nutripateReadState=()=>state;
-window.nutripateReplaceState=data=>{const next=data&&typeof data==='object'?data:{};state=Object.assign({pets:[],activePetId:null,owner:{name:'',email:'',privacyConsent:false},selectedFoods:{},favorites:[],feedEntries:[],weights:[],diaryDay:null},next);state.pets=Array.isArray(state.pets)?state.pets.map(normalizePet):[];state.feedEntries=Array.isArray(state.feedEntries)?state.feedEntries:[];state.weights=Array.isArray(state.weights)?state.weights:[];state.favorites=Array.isArray(state.favorites)?state.favorites:[];state.selectedFoods=state.selectedFoods&&typeof state.selectedFoods==='object'?state.selectedFoods:{};state.owner=Object.assign({name:'',email:'',privacyConsent:false},state.owner||{});state.reminders=Object.assign({enabled:false,morning:'08:00',day:'13:00',evening:'19:00',weighEnabled:false,weigh:'09:00'},state.reminders||{});localStorage.setItem(stateKey,JSON.stringify(state));if(typeof render==='function')render()};
+const save=()=>{const screen=state.authScreen;delete state.authScreen;localStorage.setItem(stateKey,JSON.stringify(state));if(screen)state.authScreen=screen;if(window.nutripateAfterSave)window.nutripateAfterSave()};
 const activePet=()=>state.pets.find(p=>p.id===state.activePetId)||state.pets[0];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const rub=n=>new Intl.NumberFormat('ru-RU').format(Math.round(n||0));
 const todayKey=()=>new Date().toISOString().slice(0,10);state.diaryDay=state.diaryDay||todayKey();
 const petEmoji=p=>p?.species==='dog'?'Собака':'Кошка';
-const petPhoto=p=>p?.photo||(()=>{const label=String(p?.breedLabel||p?.breed||'');const id=(typeof breedAssetByName!=='undefined'&&breedAssetByName[label])||'';return id?`assets/breeds/${id}.png`:(p?.species==='dog'?'assets/dachshund.png':'assets/report_cat.jpg')})();
-const foodImage=f=>{const path=String(f?.image||'').replace(/\\/g,'/');return path.startsWith('assets/')?path+'?v=pack-2':''};
+function breedPhotoId(p){
+  const direct=String(p?.breedId||'');
+  if(/^(cat|dog)-\d+$/.test(direct))return direct;
+  const normalize=value=>String(value||'').toLowerCase().replace(/ё/g,'е').replace(/[‐‑‒–—-]/g,' ').replace(/[^a-zа-я0-9]+/g,' ').trim();
+  const wanted=[p?.breedLabel,p?.breed].map(normalize).filter(Boolean);
+  if(typeof breedAssetByName!=='undefined'){
+    const found=Object.entries(breedAssetByName).find(([name])=>wanted.includes(normalize(name)));
+    if(found)return found[1];
+  }
+  try{
+    const entry=breedEntries(p?.species==='dog'?'dog':'cat').find(x=>wanted.includes(normalize(x.value))||wanted.includes(normalize(x.name)));
+    if(entry?.id)return entry.id;
+  }catch{}
+  return '';
+}
+const breedAssetExtension={
+  'dog-01':'jpg','dog-02':'jpg','dog-03':'jpg','dog-04':'jpg','dog-05':'jpg','dog-06':'jpg','dog-07':'jpg','dog-08':'jpg','dog-09':'jpg','dog-10':'png','dog-11':'jpg','dog-12':'jpg','dog-13':'png','dog-14':'jpg','dog-15':'jpg','dog-16':'jpg','dog-17':'jpg','dog-19':'jpg','dog-20':'png','dog-21':'jpg','dog-22':'png','dog-23':'jpg','dog-24':'png','dog-25':'png'
+};
+const breedAssetPath=id=>`assets/breeds/${id}.${breedAssetExtension[id]||'png'}`;
+const petPhoto=p=>{
+  // Only an explicitly uploaded image wins. Old generated asset paths must
+  // not hide the selected breed's canonical photo.
+  const uploaded=String(p?.photo||'');
+  if(uploaded.startsWith('data:'))return uploaded;
+  const id=breedPhotoId(p);
+  return id?breedAssetPath(id):(p?.species==='dog'?'assets/dachshund.png':'assets/report_cat.jpg');
+};
+const foodImage=f=>{const path=String(f?.image||'').replace(/\\/g,'/');return path.startsWith('assets/')?path:''};
 function toast(text){const el=$('toast');el.textContent=text;el.classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>el.classList.remove('show'),2200)}
 function foodById(id){return catalog.find(f=>f.id===id)}
 function chosenFood(){const p=activePet();return foodById(state.selectedFoods?.[p?.id])}
@@ -55,7 +78,7 @@ function viewWeightDiary(p){const rows=state.weights.filter(x=>x.petId===p.id);c
 function viewDiary(){const p=activePet();if(!p)return `<div class="empty">Добавьте питомца, чтобы открыть дневник.</div>`;if(diaryTab==='weight')return `${title('ДНЕВНИК',`Вес ${esc(p.name)}`,`Измерения и изменения веса`)}<div class="tabs"><button data-diary="feed">Питание</button><button class="active" data-diary="weight">Вес</button></div>${viewWeightDiary(p)}`;const day=state.diaryDay||todayKey();const entries=state.feedEntries.filter(x=>x.petId===p.id&&x.date===day);const feeds=entries.filter(x=>(x.kind||'feed')==='feed');const given=feeds.reduce((a,x)=>a+Number(x.grams||0),0);const target=dailyGrams();const mealNames=['Утро','День','Вечер'];return `${title('ДНЕВНИК','Питание',`История ${p.name}`)}<div class="tabs"><button class="active" data-diary="feed">Питание</button><button data-diary="weight">Вес</button></div><div class="day-switch"><button class="icon-button" data-day="-1">‹</button><strong>${fmtDiaryDay(day)}</strong><button class="icon-button" data-day="1">›</button></div><section class="card mint-card diary-progress"><small>Выдано сегодня</small><strong>${given} / ${target} г</strong><div class="progress"><i style="width:${target?Math.min(100,given/target*100):0}%"></i></div><small>${feeds.length} из 3 кормлений</small></section><h2 class="diary-heading">История кормлений</h2><div class="diary-list">${mealNames.map((meal,i)=>{const row=feeds.find(x=>x.meal===meal);return `<div class="diary-meal"><small>${row?.time||['08:00','13:00','19:00'][i]}</small><div><b>${row?'✓ ':''}${meal} · ${row?.grams||Math.round(target*[.28,.36,.36][i])} г</b><span>${row?esc(row.foodName||'Корм'):'Ожидается'}</span></div></div>`}).join('')}${entries.filter(x=>(x.kind||'feed')!=='feed').map(x=>`<div class="diary-meal"><small>${x.kind==='treat'?'Лакомство':'Наблюдение'}</small><div><b>${esc(x.name||x.text)}</b><span>${x.grams?esc(x.grams)+' г':''}</span></div></div>`).join('')}</div><div class="diary-actions"><button class="soft-button" data-action="treat">+ Лакомство</button><button class="soft-button" data-action="note">+ Наблюдение</button></div><button class="more-row" data-action="report"><span>Сформировать отчёт</span><span>›</span></button>`}
 function viewPets(){const p=activePet();const pets=state.pets.map(x=>`<article class="pet-card ${x.id===state.activePetId?'selected':''}"><div class="pet-avatar"><img src="${petPhoto(x)}" alt=""></div><div><h3>${esc(x.name)}</h3><p>${x.species==='dog'?'Собака':'Кошка'} · ${x.weight||'—'} кг</p></div><button class="icon-button" data-edit-pet="${x.id}">⋯</button></article>`).join('');return `${title('ПРОФИЛИ','Питомцы','У каждого свой рацион и дневник.')}<div class="pet-grid">${pets}</div>${p?`<section class="card pet-details"><div class="row-between"><h2>${esc(p.name)}</h2><button class="soft-button" data-edit-pet="${p.id}">Изменить</button></div><p class="muted">${p.species==='dog'?'Собака':'Кошка'} · ${p.breed?esc(p.breed):'Порода не указана'}</p><div class="pet-detail-grid"><span>Возраст<strong>${p.ageMonths} мес.</strong></span><span>Пол<strong>${p.sex==='male'?'Самец':'Самка'}</strong></span><span>Вес<strong>${p.weight} кг</strong></span><span>Активность<strong>${({low:'Низкая',medium:'Умеренная',high:'Высокая',very_high:'Очень высокая'})[p.activity]||'Умеренная'}</strong></span><span>Стерилизация<strong>${p.sterilized?'Да':'Нет'}</strong></span><span>Здоровье<strong>${(p.diagnoses||['healthy']).map(x=>({healthy:'Здоров',overweight:'Лишний вес',ckd:'Почки',diabetes:'Диабет',allergy:'Аллергия',heart:'Сердце',joints:'Суставы',gi:'ЖКТ',urolithiasis:'МКБ',liver:'Печень'})[x]||x).join(', ')}</strong></span></div></section>`:''}<button class="primary full" style="margin-top:14px" data-action="add-pet">Добавить питомца</button>`}
 const guideData=[['Как читать состав корма','Ингредиенты идут по убыванию доли. Смотрите на конкретные источники белка, белок, жир и клетчатку под профиль питомца.'],['Зачем считать норму','Таблица на упаковке усреднена. Приложение учитывает вес, активность, стерилизацию и диагнозы.'],['Стерилизация и обмен','После стерилизации расход энергии обычно ниже, поэтому важны умеренная калорийность и контроль веса.'],['Лишний вес','Снижать вес нужно постепенно. Резко урезать калории кошке опасно для печени.'],['Что такое лечебный корм','Лечебный рацион дают под подтверждённый диагноз и согласуют с ветеринаром.'],['Как переходить на новый корм','Заменяйте старый рацион новым постепенно, примерно за 7–10 дней.'],['Как приложение подбирает корм','Сначала убираются чужой вид, аллерген и корм не под диагноз. Затем учитываются вес, возраст, активность, стерилизация, белок и калории.']];
-function ownerForm(){const o=state.owner||{};openModal(`<h2>Профиль владельца</h2><p class="muted">Если войти по почте, имя и питомцы откроются на другом устройстве.</p><div class="form"><label>Имя<input id="ownerInputName" value="${esc(o.name||'')}" placeholder="Как к вам обращаться"></label><label>Электронная почта<input id="ownerInputEmail" type="email" value="${esc(o.email||'')}" placeholder="Необязательно"></label><label class="consent-row"><input id="ownerConsent" type="checkbox" ${o.privacyConsent?'checked':''}><span>Я согласен(на) на обработку персональных данных</span></label><a class="policy-link" href="privacy-policy.pdf" target="_blank" rel="noopener">Открыть политику обработки данных</a><p id="ownerFormError" class="form-error" role="alert"></p><div class="form-actions"><button class="soft-button" onclick="modal.close()">Отмена</button><button class="primary" onclick="saveOwner()">Сохранить</button></div></div>`)}
+function ownerForm(){const o=state.owner||{};openModal(`<h2>Профиль владельца</h2><p class="muted">Данные хранятся только на этом устройстве.</p><div class="form"><label>Имя<input id="ownerInputName" value="${esc(o.name||'')}" placeholder="Как к вам обращаться"></label><label>Электронная почта<input id="ownerInputEmail" type="email" value="${esc(o.email||'')}" placeholder="Необязательно"></label><label class="consent-row"><input id="ownerConsent" type="checkbox" ${o.privacyConsent?'checked':''}><span>Я согласен(на) на обработку персональных данных</span></label><a class="policy-link" href="privacy-policy.pdf" target="_blank" rel="noopener">Открыть политику обработки данных</a><p id="ownerFormError" class="form-error" role="alert"></p><div class="form-actions"><button class="soft-button" onclick="modal.close()">Отмена</button><button class="primary" onclick="saveOwner()">Сохранить</button></div></div>`)}
 window.saveOwner=()=>{const name=$('ownerInputName').value.trim();const email=$('ownerInputEmail').value.trim();if(email&&(!email.includes('@')||!email.includes('.')))return formError('Проверьте электронную почту.');if(!$('ownerConsent').checked)return formError('Подтвердите согласие на обработку персональных данных.');state.owner={name,email,privacyConsent:true,privacyConsentAt:new Date().toISOString()};save();$('modal').close();toast('Профиль владельца сохранён');render()}
 function viewMore(){const owner=state.owner||{};return `${title('ПРОЧЕЕ','Подписка и справки.')}<button class="kv" data-action="owner"><span>Профиль владельца</span><strong>${esc(owner.name||'Настроить')}</strong><span>›</span></button><section class="card mint-card more-pro"><b>NutriPate Pro</b><p>Несколько питомцев и подбор корма без лимита</p><ul><li>Сканер упаковки и свой корм</li><li>График веса и отчёт ветеринару</li><li>Напоминания и расчёт запаса</li></ul><button class="primary" data-action="pro">Подробнее</button></section><section class="more-section"><h2>О корме</h2>${guideData.slice(0,6).map(g=>`<details class="guide-card"><summary>${esc(g[0])}</summary><p>${esc(g[1])}</p></details>`).join('')}</section><section class="more-section"><h2>О приложении</h2><details class="guide-card" open><summary>${esc(guideData[6][0])}</summary><p>${esc(guideData[6][1])}</p></details></section><section class="credits-card"><b>NutriPate</b><span>made in Russia · НИУ ВШЭ</span></section><p class="muted more-disclaimer">NutriPate считает норму и подбирает корм по открытым формулам. Состав на пачке может измениться — сверяйте его перед покупкой.</p>`}
 function openModal(html){$('modalContent').innerHTML=html;$('modal').showModal()}
@@ -74,9 +97,9 @@ function breedChoices(species,current){const list=breedOptionsRequired[species]|
 function petForm(raw){const p=petDefaults(raw);const diag=p.diagnoses||['healthy'];const allergens=p.allergens||[];const chips=(items,selected,name)=>items.map(([value,label])=>`<label class="choice-chip"><input type="checkbox" name="${name}" value="${value}" ${selected.includes(value)?'checked':''}><span>${label}</span></label>`).join('');openModal(`<h2>${p.id?'Питомец':'Новый питомец'}</h2><div class="form pet-form"><div class="form-section"><b>Основные данные</b><label>Имя<input id="petInputName" value="${esc(p.name)}" placeholder="Например, Луна"></label><label>Вид<select id="petInputSpecies"><option value="cat" ${p.species==='cat'?'selected':''}>Кошка</option><option value="dog" ${p.species==='dog'?'selected':''}>Собака</option></select></label><label>Порода<input id="petInputBreed" value="${esc(p.breed||'')}" placeholder="Можно оставить пустым"></label><div class="form-grid"><label>Возраст, месяцев<input id="petInputAge" inputmode="numeric" value="${p.ageMonths??''}"></label><label>Пол<select id="petInputSex"><option value="female" ${p.sex!=='male'?'selected':''}>Самка</option><option value="male" ${p.sex==='male'?'selected':''}>Самец</option></select></label><label>Вес, кг<input id="petInputWeight" inputmode="decimal" value="${p.weight??''}"></label><label>Целевой вес, кг<input id="petInputTarget" inputmode="decimal" value="${p.targetWeight??''}" placeholder="Необязательно"></label></div></div><div class="form-section"><b>Активность</b><div class="choice-grid">${chips(activityOptions,[p.activity],'activity')}</div></div><div class="form-section"><b>Стерилизация</b><div class="choice-grid">${chips([['no','Нет'],['yes','Да']], [p.sterilized?'yes':'no'],'sterilized')}</div></div><div class="form-section"><b>Здоровье и аллергии</b><div class="choice-grid">${chips(diagOptions,diag,'diagnosis')}</div><p class="form-hint">Отметьте диагнозы и аллергены — они исключат несовместимые корма из рекомендаций.</p><div class="choice-grid">${chips(allergenOptions,allergens,'allergen')}</div></div><p id="petFormError" class="form-error" role="alert"></p><div class="form-actions"><button class="soft-button" onclick="modal.close()">Отмена</button><button class="primary" onclick="savePet('${p.id}')">Сохранить</button></div></div>`)}
 function readNumber(id){const raw=($(id)?.value||'').trim().replace(',','.');return raw===''?null:Number(raw)}
 function formError(message){const el=$('petFormError');if(el){el.textContent=message;el.classList.add('show')}else toast(message)}
-window.savePet=id=>{const name=$('petInputName').value.trim();const species=$('petInputSpecies').value;const age=readNumber('petInputAge');const weight=readNumber('petInputWeight');const target=readNumber('petInputTarget');const sex=$('petInputSex').value;const breed=$('petInputBreed').value.trim();const activity=document.querySelector('input[name="activity"]:checked')?.value||'medium';const sterilized=document.querySelector('input[name="sterilized"]:checked')?.value==='yes';const diagnoses=[...document.querySelectorAll('input[name="diagnosis"]:checked')].map(x=>x.value);const allergens=[...document.querySelectorAll('input[name="allergen"]:checked')].map(x=>x.value);if(diagnoses.length>1&&diagnoses.includes('healthy'))diagnoses.splice(diagnoses.indexOf('healthy'),1);if(!diagnoses.length)diagnoses.push('healthy');if(!name)return formError('Укажите имя питомца.');if(!Number.isFinite(weight)||weight<=0||weight>120)return formError('Вес должен быть от 0,1 до 120 кг.');if(!Number.isFinite(age)||age<0||age>360)return formError('Возраст должен быть от 0 до 360 месяцев.');if(target!==null&&(!Number.isFinite(target)||target<=0||target>120))return formError('Проверьте целевой вес.');if(target!==null&&Math.abs(target-weight)>80)return formError('Целевой вес слишком сильно отличается от текущего.');if(!diagnoses.length)return formError('Выберите состояние здоровья.');if(!diagnoses.includes('allergy')&&allergens.length)return formError('Чтобы указать аллерген, отметьте диагноз «Аллергия».');const breedEntry=(typeof breedEntries==='function'?breedEntries(species):[]).find(x=>x.id===breed||x.value===breed||x.name===breed);const normalized={name,species,breedId:breedEntry?.id||breed,breed:breedEntry?.name||breed,breedLabel:breedEntry?.name||breed,sex,ageMonths:Math.round(age),weight,targetWeight:target,sterilized,activity,diagnoses,allergens,breedSetAt:new Date().toISOString()};let p=id?state.pets.find(x=>x.id===id):null;if(p)Object.assign(p,normalized);else{p=Object.assign({id:'pet-'+Date.now()},normalized);state.pets.push(p);state.activePetId=p.id}save();$('modal').close();toast('Профиль сохранён');render()}
+window.savePet=id=>{const name=$('petInputName').value.trim();const species=$('petInputSpecies').value;const age=readNumber('petInputAge');const weight=readNumber('petInputWeight');const target=readNumber('petInputTarget');const sex=$('petInputSex').value;const breed=$('petInputBreed').value.trim();const activity=document.querySelector('input[name="activity"]:checked')?.value||'medium';const sterilized=document.querySelector('input[name="sterilized"]:checked')?.value==='yes';const diagnoses=[...document.querySelectorAll('input[name="diagnosis"]:checked')].map(x=>x.value);const allergens=[...document.querySelectorAll('input[name="allergen"]:checked')].map(x=>x.value);if(diagnoses.length>1&&diagnoses.includes('healthy'))diagnoses.splice(diagnoses.indexOf('healthy'),1);if(!diagnoses.length)diagnoses.push('healthy');if(!name)return formError('Укажите имя питомца.');if(!Number.isFinite(weight)||weight<=0||weight>120)return formError('Вес должен быть от 0,1 до 120 кг.');if(!Number.isFinite(age)||age<0||age>360)return formError('Возраст должен быть от 0 до 360 месяцев.');if(target!==null&&(!Number.isFinite(target)||target<=0||target>120))return formError('Проверьте целевой вес.');if(target!==null&&Math.abs(target-weight)>80)return formError('Целевой вес слишком сильно отличается от текущего.');if(!diagnoses.length)return formError('Выберите состояние здоровья.');if(!diagnoses.includes('allergy')&&allergens.length)return formError('Чтобы указать аллерген, отметьте диагноз «Аллергия».');const normalized={name,species,breedId:breed?`custom-${breed.toLowerCase().replace(/[^a-zа-я0-9]+/gi,'-')}`:'',breed,sex,ageMonths:Math.round(age),weight,targetWeight:target,sterilized,activity,diagnoses,allergens};let p=id?state.pets.find(x=>x.id===id):null;if(p)Object.assign(p,normalized);else{p=Object.assign({id:'pet-'+Date.now()},normalized);state.pets.push(p);state.activePetId=p.id}save();$('modal').close();toast('Профиль сохранён');render()}
 function petMenu(){openModal(`<h2>Выбрать питомца</h2><div class="pet-grid">${state.pets.map(p=>`<button class="more-row" onclick="choosePet('${p.id}')"><span><img class="pet-inline-photo" src="${petPhoto(p)}" alt=""> ${esc(p.name)}</span><span>${p.id===state.activePetId?'✓':'›'}</span></button>`).join('')}</div><button class="primary full" style="margin-top:12px" onclick="modal.close()">Закрыть</button>`)}
-window.choosePet=id=>{state.activePetId=id;save();$('modal').close();render()};$('petSwitcher').onclick=petMenu;document.addEventListener('DOMContentLoaded',async()=>{try{const data=await fetch('data/nutripate-catalog.json?v=composition-2').then(r=>r.json());catalog=data.foods||[]}catch{catalog=fallbackFoods}if(!catalog.length)catalog=fallbackFoods;render()});
+window.choosePet=id=>{state.activePetId=id;save();$('modal').close();render()};$('petSwitcher').onclick=petMenu;document.addEventListener('DOMContentLoaded',()=>{catalog=fallbackFoods;render();fetch('data/nutripate-catalog.json?v=composition-2').then(r=>r.json()).then(data=>{if(Array.isArray(data.foods)&&data.foods.length){catalog=data.foods;render()}}).catch(()=>{})});
 
 
 
@@ -94,24 +117,35 @@ function breedChoices(species,current){const list=breedOptions[species]||breedOp
 function petForm(raw){const p=petDefaults(raw);const diag=p.diagnoses||['healthy'];const allergens=p.allergens||[];const chips=(items,selected,name,type='checkbox')=>items.map(([value,label])=>`<label class="choice-chip"><input type="${type}" name="${name}" value="${value}" ${selected.includes(value)?'checked':''}><span>${label}</span></label>`).join('');openModal(`<h2>${p.id?'Питомец':'Новый питомец'}</h2><div class="form pet-form"><div class="form-section"><b>Основные данные</b><label>Имя<input id="petInputName" value="${esc(p.name)}" placeholder="Например, Луна"></label><label>Вид<select id="petInputSpecies"><option value="cat" ${p.species==='cat'?'selected':''}>Кошка</option><option value="dog" ${p.species==='dog'?'selected':''}>Собака</option></select></label><label>Порода<select id="petInputBreed" required>${breedChoices(p.species,p.breed||p.breedId)}</select></label><div class="form-grid"><label>Возраст, месяцев<input id="petInputAge" inputmode="numeric" value="${p.ageMonths??''}"></label><label>Пол<select id="petInputSex"><option value="female" ${p.sex!=='male'?'selected':''}>Самка</option><option value="male" ${p.sex==='male'?'selected':''}>Самец</option></select></label><label>Вес, кг<input id="petInputWeight" inputmode="decimal" value="${p.weight??''}"></label><label>Целевой вес, кг<input id="petInputTarget" inputmode="decimal" value="${p.targetWeight??''}" placeholder="Необязательно"></label></div></div><div class="form-section"><b>Активность</b><div class="choice-grid">${chips(activityOptions,[p.activity],'activity','radio')}</div></div><div class="form-section"><b>Стерилизация</b><div class="choice-grid">${chips([['no','Нет'],['yes','Да']], [p.sterilized?'yes':'no'],'sterilized','radio')}</div></div><div class="form-section"><b>Здоровье и аллергии</b><div class="choice-grid">${chips(diagOptions,diag,'diagnosis')}</div><p class="form-hint">Отметьте диагнозы и аллергены — они исключат несовместимые корма из рекомендаций.</p><div class="choice-grid">${chips(allergenOptions,allergens,'allergen')}</div></div><p id="petFormError" class="form-error" role="alert"></p><div class="form-actions"><button class="soft-button" onclick="modal.close()">Отмена</button><button class="primary" onclick="savePet('${p.id}')">Сохранить</button></div></div>`)}
 const savePetOriginal=savePet;window.savePet=id=>{if(!$('petInputBreed')?.value)return formError('Выберите породу питомца.');return savePetOriginal(id)};
 const petFormWithConditionalAllergens=petForm;petForm=function(raw){petFormWithConditionalAllergens(raw);const section=[...document.querySelectorAll('.form-section')].find(x=>x.textContent.includes('Здоровье и аллергии'));if(!section)return;const diagnosisInputs=[...section.querySelectorAll('input[name="diagnosis"]')];const allergyInput=diagnosisInputs.find(x=>x.value==='allergy');const grids=section.querySelectorAll('.choice-grid');const allergenGrid=grids[1];const hint=section.querySelector('.form-hint');const sync=()=>{const visible=Boolean(allergyInput?.checked);if(allergenGrid)allergenGrid.style.display=visible?'flex':'none';if(hint)hint.style.display=visible?'block':'none'};diagnosisInputs.forEach(input=>input.addEventListener('change',sync));sync()};
-let breedCatalogData={};let breedInfoData={};let breedDraft=null;
-fetch('data/breed-catalog.json?v=breed-photo-4').then(r=>r.json()).then(d=>{breedCatalogData=d||{};breedOptionsRequired.cat=(d.cats||[]).map(x=>[x.id,x.name]);breedOptionsRequired.dog=(d.dogs||[]).map(x=>[x.id,x.name]);if(typeof render==='function')render()}).catch(()=>{});
-fetch('data/breed-info.json?v=breed-guide1').then(r=>r.json()).then(d=>{breedInfoData=d||{} }).catch(()=>{});
-const breedAssetByName={'Абиссинская':'cat-14','Американская короткошёрстная':'cat-28','Американский кёрл':'cat-31','Бенгальская':'cat-13','Бомбейская':'cat-33','Британская короткошёрстная':'cat-01','Бурманская':'cat-21','Девон-рекс':'cat-20','Донской сфинкс':'cat-07','Европейская короткошёрстная':'cat-27','Канадский сфинкс':'cat-06','Корниш-рекс':'cat-19','Курильский бобтейл':'cat-18','Манчкин':'cat-23','Мейн-кун':'cat-04','Норвежская лесная':'cat-17','Ориентальная короткошёрстная':'cat-12','Оцикет':'cat-29','Персидская':'cat-09','Петерболд':'cat-08','Русская голубая':'cat-15','Рэгдолл':'cat-16','Саванна':'cat-24','Священная бирманская':'cat-22','Селкирк-рекс':'cat-30','Сиамская':'cat-10','Сибирская':'cat-05','Сноу-шу':'cat-35','Тайская':'cat-11','Турецкая ангора':'cat-25','Турецкий ван':'cat-26','Шартрез':'cat-32','Шотландская вислоухая':'cat-02','Шотландская прямоухая':'cat-03','Японский бобтейл':'cat-34','Аляскинский маламут':'dog-12','Американский булли':'dog-21','Английский бульдог':'dog-11','Английский кокер-спаниель':'dog-06','Бернский зенненхунд':'dog-12','Бигль':'dog-15','Боксёр':'dog-16','Бордер-колли':'dog-12','Вельш-корги пемброк':'dog-03','Джек-рассел-терьер':'dog-10','Доберман':'dog-17','Золотистый ретривер':'dog-12','Йоркширский терьер':'dog-07','Кавалер-кинг-чарльз-спаниель':'dog-06','Кавказская овчарка':'dog-09','Кане-корсо':'dog-23','Лабрадор-ретривер':'dog-08','Мальтийская болонка':'dog-06','Мопс':'dog-14','Немецкая овчарка':'dog-05','Пекинес':'dog-02','Померанский шпиц':'dog-01','Пудель':'dog-04','Ротвейлер':'dog-23','Русский той':'dog-02','Самоедская собака':'dog-12','Сибирский хаски':'dog-19','Среднеазиатская овчарка':'dog-09','Стаффордширский бультерьер':'dog-21','Такса':'dog-13','Французский бульдог':'dog-11','Цвергшнауцер':'dog-21','Чихуахуа':'dog-02','Шарпей':'dog-14','Ши-тцу':'dog-06'};
-function breedEntries(species){const list=(breedCatalogData[species==='cat'?'cats':'dogs']||[]);if(list.length)return list.map(x=>({value:x.id,name:x.name,id:x.id,image:`assets/breeds/${x.id}.png?v=breed-photo-4`}));return (breedOptionsRequired[species]||[]).map(([value,name])=>{const id=breedAssetByName[name]||value;return {value,name,id,image:`assets/breeds/${id}.png?v=breed-photo-4`}})}
+let breedCatalogData={};let breedInfoData={};let breedDraft=null;let breedCatalogPromise=null;
+function loadBreedCatalog(){
+  if(breedCatalogPromise)return breedCatalogPromise;
+  breedCatalogPromise=fetch('data/breed-catalog.json?v=breed-guide1').then(r=>r.json()).then(d=>{
+    breedCatalogData=d||{};
+    breedOptionsRequired.cat=(d.cats||[]).map(x=>[x.name,x.name]);
+    breedOptionsRequired.dog=(d.dogs||[]).map(x=>[x.name,x.name]);
+    if(!document.getElementById('modal')?.open)render();
+    return breedCatalogData;
+  }).catch(()=>({}));
+  fetch('data/breed-info.json?v=breed-guide1').then(r=>r.json()).then(d=>{breedInfoData=d||{} }).catch(()=>{});
+  return breedCatalogPromise;
+}
+setTimeout(loadBreedCatalog,1200);
+const breedAssetByName={'Абиссинская':'cat-14','Американская короткошёрстная':'cat-28','Американский кёрл':'cat-31','Бенгальская':'cat-13','Бомбейская':'cat-33','Британская':'cat-01','Британская короткошёрстная':'cat-01','Бурманская':'cat-21','Девон-рекс':'cat-20','Донской сфинкс':'cat-07','Европейская короткошёрстная':'cat-27','Канадский сфинкс':'cat-06','Корниш-рекс':'cat-19','Курильский бобтейл':'cat-18','Манчкин':'cat-23','Мейн-кун':'cat-04','Норвежская лесная':'cat-17','Ориентальная короткошёрстная':'cat-12','Оцикет':'cat-29','Персидская':'cat-09','Петерболд':'cat-08','Русская голубая':'cat-15','Рэгдолл':'cat-16','Саванна':'cat-24','Священная бирманская':'cat-22','Селкирк-рекс':'cat-30','Сиамская':'cat-10','Сибирская':'cat-05','Сноу-шу':'cat-35','Тайская':'cat-11','Турецкая ангора':'cat-25','Турецкий ван':'cat-26','Шартрез':'cat-32','Шотландская вислоухая':'cat-02','Шотландская прямоухая':'cat-03','Японский бобтейл':'cat-34','Аляскинский маламут':'dog-12','Американский булли':'dog-21','Английский бульдог':'dog-11','Английский кокер-спаниель':'dog-06','Бернский зенненхунд':'dog-12','Бигль':'dog-15','Боксёр':'dog-16','Бордер-колли':'dog-12','Вельш-корги пемброк':'dog-03','Джек-рассел-терьер':'dog-10','Доберман':'dog-17','Золотистый ретривер':'dog-12','Йоркширский терьер':'dog-07','Кавалер-кинг-чарльз-спаниель':'dog-06','Кавказская овчарка':'dog-09','Кане-корсо':'dog-23','Лабрадор-ретривер':'dog-08','Мальтийская болонка':'dog-06','Мопс':'dog-14','Немецкая овчарка':'dog-05','Пекинес':'dog-02','Померанский шпиц':'dog-01','Пудель':'dog-04','Ротвейлер':'dog-23','Русский той':'dog-02','Самоедская собака':'dog-12','Сибирский хаски':'dog-19','Среднеазиатская овчарка':'dog-09','Стаффордширский бультерьер':'dog-21','Такса':'dog-13','Французский бульдог':'dog-11','Цвергшнауцер':'dog-21','Чихуахуа':'dog-02','Шарпей':'dog-14','Ши-тцу':'dog-06'};
+function breedEntries(species){return (breedOptionsRequired[species]||[]).map(([value,name],i)=>{const source=(breedCatalogData[species==='cat'?'cats':'dogs']||[]).find(x=>x.name===name);const fallback=`${species==='cat'?'cat':'dog'}-${String(i+1).padStart(2,'0')}`;const id=breedAssetByName[name]||source?.id||fallback;return {value,name,id,image:breedAssetPath(id)}})}
 function breedData(entry){const list=entry.id.startsWith('cat-')?(breedCatalogData.cats||[]):(breedCatalogData.dogs||[]);return list.find(x=>x.id===entry.id)||list.find(x=>x.name===entry.name)||{}}
 function captureBreedDraft(){const p=petDefaults({id:petFormDraftId});p.name=$('petInputName')?.value||'';p.species=$('petInputSpecies')?.value||'cat';p.breed=$('petInputBreed')?.value||'';p.ageMonths=readNumber('petInputAge');p.sex=$('petInputSex')?.value||'female';p.weight=readNumber('petInputWeight');p.targetWeight=readNumber('petInputTarget');p.activity=document.querySelector('input[name="activity"]:checked')?.value||'medium';p.sterilized=document.querySelector('input[name="sterilized"]:checked')?.value==='yes';p.diagnoses=[...document.querySelectorAll('input[name="diagnosis"]:checked')].map(x=>x.value);p.allergens=[...document.querySelectorAll('input[name="allergen"]:checked')].map(x=>x.value);p.photo=petPhotoDraft||'';return p}
-function openBreedPicker(){breedDraft=captureBreedDraft();const entries=breedEntries(breedDraft.species);openModal(`<div class="breed-guide-head"><button class="back-button" onclick="petForm(breedDraft)">‹</button><div><h2>Порода питомца</h2><p class="muted">${breedDraft.species==='cat'?'Кошки':'Собаки'} · справочник</p></div></div><input class="search breed-search" id="breedSearch" placeholder="Поиск породы"><div class="breed-guide-list">${entries.map((e,i)=>{const d=breedData(e);return `<button class="breed-guide-card" onclick="openBreedDetail('${breedDraft.species}',${i})"><img src="${e.image}" alt=""><span><b>${e.name}</b><small>${d.coatText||'Короткая или длинная шерсть'}</small></span><strong>›</strong></button>`}).join('')}</div>`);const s=$('breedSearch');if(s)s.oninput=()=>{const q=s.value.toLowerCase();document.querySelectorAll('.breed-guide-card').forEach(card=>card.style.display=card.textContent.toLowerCase().includes(q)?'grid':'none')}}
+function openBreedPicker(){loadBreedCatalog();breedDraft=captureBreedDraft();const entries=breedEntries(breedDraft.species);openModal(`<div class="breed-guide-head"><button class="back-button" onclick="petForm(breedDraft)">‹</button><div><h2>Порода питомца</h2><p class="muted">${breedDraft.species==='cat'?'Кошки':'Собаки'} · справочник</p></div></div><input class="search breed-search" id="breedSearch" placeholder="Поиск породы"><div class="breed-guide-list">${entries.map((e,i)=>{const d=breedData(e);return `<button class="breed-guide-card" onclick="openBreedDetail('${breedDraft.species}',${i})"><img src="${e.image}" alt="" loading="lazy" decoding="async"><span><b>${e.name}</b><small>${d.coatText||'Короткая или длинная шерсть'}</small></span><strong>›</strong></button>`}).join('')}</div>`);const s=$('breedSearch');if(s)s.oninput=()=>{const q=s.value.toLowerCase();document.querySelectorAll('.breed-guide-card').forEach(card=>card.style.display=card.textContent.toLowerCase().includes(q)?'grid':'none')}}
 function openBreedDetail(species,index){const entry=breedEntries(species)[index];const d=breedData(entry);openModal(`<div class="breed-detail-head"><button class="back-button" onclick="openBreedPicker()">‹</button><span>NutriPate</span></div><h2>${entry.name}</h2><div class="breed-detail-image"><img src="${entry.image}" alt="${entry.name}"></div><section class="breed-facts"><h3>Основные характеристики</h3><div><span>Вес взрослых</span><b>${d.weightText||'Зависит от пола и телосложения'}</b></div><div><span>Шерсть и уход</span><b>${d.coatText||'Короткая или длинная'}</b></div><div><span>Ориентир питания</span><b>${d.kcalRefText||'Уточняется по профилю питомца'}</b></div></section><section class="breed-note"><h3>Что важно знать для питомца</h3><p>${d.diseasesText||d.distinctive||'Учитывайте возраст, вес и состояние здоровья питомца.'}</p><p>${d.funFact||'Порода не заменяет индивидуальные особенности питомца.'}</p></section><button class="primary full" onclick="chooseBreed('${entry.value}')">Выбрать породу</button>`)}
-function chooseBreed(value){const entry=breedEntries(breedDraft.species).find(x=>x.value===value||x.id===value||x.name===value);breedDraft.breed=entry?.name||value;breedDraft.breedId=entry?.id||value;breedDraft.breedLabel=entry?.name||value;petForm(breedDraft)}
+function chooseBreed(value){const entry=breedEntries(breedDraft.species).find(x=>x.value===value||x.id===value||x.name===value);if(!entry)return;breedDraft=Object.assign({},breedDraft,{breedId:entry.id,breed:entry.name,breedLabel:entry.name});petForm(breedDraft)}
 const petFormWithBreedGuide=petForm;petForm=function(raw){petFormWithBreedGuide(raw);const select=$('petInputBreed');if(!select)return;const label=select.options[select.selectedIndex]?.text||'Выберите породу';select.style.display='none';select.insertAdjacentHTML('beforebegin',`<button type="button" class="breed-picker-button" onclick="openBreedPicker()"><span>${label}</span><strong>›</strong></button>`)};
 const petFormWithSingleChoice=petForm;petForm=function(raw){petFormWithSingleChoice(raw);document.querySelectorAll('input[name="activity"],input[name="sterilized"]').forEach(input=>{input.type='radio'});};
 const savePetWithBreedRequired=window.savePet;window.savePet=function(id){const breed=document.querySelector('#petInputBreed')?.value.trim();if(!breed){return formError('Выберите породу питомца.')}return savePetWithBreedRequired(id)};
 const savePetWithBreedLabel=window.savePet;window.savePet=function(id){const select=document.querySelector('#petInputBreed');const label=select?.selectedOptions?.[0]?.textContent?.trim()||'';savePetWithBreedLabel(id);const saved=id?state.pets.find(x=>x.id===id):state.pets[state.pets.length-1];if(saved&&label){saved.breedLabel=label;save();render()}};
 const petFormWithCatalogBreedLabel=petForm;petForm=function(raw){petFormWithCatalogBreedLabel(raw);const select=document.querySelector('#petInputBreed');const desired=raw?.breedLabel||'';const option=desired&&[...(select?.options||[])].find(x=>x.textContent.trim()===desired);if(option){select.value=option.value;const button=document.querySelector('.breed-picker-button span');if(button)button.textContent=desired}};
 const petFormWithHealthyExclusive=petForm;petForm=function(raw){petFormWithHealthyExclusive(raw);const section=[...document.querySelectorAll('.form-section')].find(x=>x.textContent.includes('Здоровье и аллергии'));if(!section)return;const inputs=[...section.querySelectorAll('input[name="diagnosis"]')];const healthy=inputs.find(x=>x.value==='healthy');inputs.forEach(input=>input.addEventListener('change',()=>{if(input===healthy&&input.checked)inputs.filter(x=>x!==healthy).forEach(x=>x.checked=false);if(input!==healthy&&input.checked&&healthy)healthy.checked=false;}))};
-const viewNoPetScreen=()=>`<section class="welcome-screen"><div class="welcome-brand">Nutri<span>Pate</span></div><h1>Добро пожаловать!</h1><img class="welcome-art" src="assets/welcome_pets.png" alt="Питомцы рядом"><h2>Здесь будет день<br>вашего питомца</h2><p class="welcome-lead">Всего один профиль — и важное всегда под рукой: корм, порция и время кормления.</p><button class="primary" data-action="start-onboarding">Добавить первого питомца</button><div class="welcome-example"><b>Что понадобится</b><p>Возраст, вес, активность и особенности здоровья.</p></div><p class="welcome-note">Один питомец и основной дневник — бесплатно.</p></section>`;
-const viewFirstLaunch=()=>`<section class="welcome-screen"><div class="welcome-brand">Nutri<span>Pate</span></div><img class="welcome-art" src="assets/welcome_pets.png" alt="Питомцы рядом"><h2>Забота о питании<br>тех, кто рядом.</h2><p class="welcome-lead">Чем, сколько и когда кормить — всё важное для вашего питомца в одном приложении.</p><div class="welcome-steps"><div class="welcome-step"><b>1</b><span>Понятные порции на каждый день</span></div><div class="welcome-step"><b>2</b><span>Напоминания о кормлении</span></div><div class="welcome-step"><b>3</b><span>Вес и наблюдения в одном дневнике</span></div></div><p class="welcome-note">Один питомец и базовый дневник — бесплатно</p><button class="primary" data-action="start-onboarding">Начать</button><button class="soft-button" data-action="example">Посмотреть пример</button></section>`;
+const viewNoPetScreen=()=>`<section class="welcome-screen"><div class="welcome-brand">Nutri<span>Pate</span></div><h1>Добро пожаловать!</h1><img class="welcome-art" src="assets/welcome_pets.png" alt="Питомцы рядом"><h2>Здесь будет день<br>вашего питомца</h2><p class="welcome-lead">Всего один профиль — и важное всегда под рукой: корм, порция и время кормления.</p><button class="primary" data-action="start-onboarding">Добавить первого питомца</button><div class="welcome-example"><b>Что понадобится</b><p>Возраст, вес, активность и особенности здоровья.</p></div><button class="primary welcome-login" data-action="login">Войти</button><button class="soft-button welcome-login" data-action="register">Зарегистрироваться</button><p class="welcome-note">Войти: почта и одноразовый код. Регистрация: имя, почта, код и согласие на обработку данных.</p></section>`;
+const viewFirstLaunch=()=>viewNoPetScreen();
 const renderWithoutPet=render;render=function(){const shell=document.querySelector('.app-shell');if(!activePet()){const nav=document.querySelector('.bottom-nav');const switcher=$('petSwitcher');shell?.classList.add('no-pet');nav.hidden=true;nav.style.setProperty('display','none','important');nav.style.setProperty('visibility','hidden','important');switcher.style.display='none';$('appMain').innerHTML=state.onboardingDone?viewNoPetScreen():viewFirstLaunch();bind();return}shell?.classList.remove('no-pet');renderWithoutPet()};
 const startOnboardingOriginal=startOnboarding;startOnboarding=function(){state.onboardingDone=true;save();petForm()};
 state.reminders=Object.assign({enabled:false,morning:'08:00',day:'13:00',evening:'19:00',weighEnabled:false,weigh:'09:00'},state.reminders||{});
@@ -147,7 +181,7 @@ const actionsWithFilters=actions;actions=function(a){if(a==='filters')return fil
 function exampleModal(){openModal(`<h2>Сегодня</h2><p class="muted">Пример экрана. Данные не сохраняются.</p><section class="card mint-card hero-card"><div class="meal-top">СЛЕДУЮЩЕЕ · 19:00</div><h2>Вечерняя порция</h2><div class="grams">25<small>г</small></div><p class="food-line">Royal Canin · Sterilised 37</p><button class="primary full" onclick="toast('Это пример, запись не сохраняется')">Покормил</button></section><button class="primary full" onclick="modal.close();startOnboarding()">Добавить своего питомца</button>`)}
 const actionsWithExample=actions;actions=function(a){if(a==='example')return exampleModal();return actionsWithExample(a)};
 const viewFoodsWithFilterState=viewFoods;viewFoods=function(){const html=viewFoodsWithFilterState();const f=state.foodFilters||{};const hidden=catalog.filter(x=>(f.form&&f.form!=='all'&&x.form!==f.form)||(f.budget&&x.tier!=='budget')||(f.sterilized&&!((x.tags||[]).includes('sterilised')||/sterilis/i.test(x.name||'')))||(f.sensitive&&!((x.tags||[]).includes('sensitive')||/sensitive|digestive|gastro/i.test(`${x.name} ${x.composition||''}`)))||(f.brand&&String(x.brand||'')!==String(f.brand))).map(x=>x.id).filter(Boolean);if(!hidden.length)return html;return `${html}<style>${hidden.map(id=>`.food-card:has([data-food="${id}"]){display:none!important}`).join('')}</style>`};
-const foodDetailsOriginal=foodDetails;foodDetails=function(id){const f=foodById(id);if(!f)return;const p=activePet(),ok=Boolean(foodRecommendation(f,p)),image=foodImage(f);openModal(`<div class="food-detail"><h2>${esc(f.name)}</h2><div class="food-detail-hero">${image?`<img src="${esc(image)}" alt="${esc(f.name)}">`:'<div class="food-placeholder">🥫</div>'}</div><p class="eyebrow">${esc(f.brand)} · производитель ${esc(f.brand)}</p><h3>${f.form==='wet'?'Влажный корм':'Сухой корм'}</h3><p class="muted">${f.form==='wet'?'Влажный':'Сухой'} · упаковка с этикетки</p><div class="food-detail-rows"><div><span>Стоимость упаковки</span><b>${f.price?'≈ '+esc(f.price)+' ₽':'Не указана'}</b></div><div><span>Стоимость дня</span><b>${p&&f.kcalPer100g?'≈ '+dailyGrams(p,f)+' г / день':'Нужны данные'}</b></div></div>${ok?`<div class="mint-card card"><h3>Подойдёт ли ${esc(p?.name||'питомцу')}?</h3><p>Подходит по выбранному профилю. Не заменяет назначение ветеринара.</p></div>`:`<div class="warning-card card"><h3>Состав требует проверки</h3><p>Совместимость корма ещё не подтверждена. Сверьте состав и ограничения питомца.</p><button class="link-button" onclick="toast('Проверьте состав на упаковке')">Проверить этикетку →</button></div>`}<h3>Состав и питательные показатели</h3><p class="muted">Белки: ${f.proteinPer100g||'—'}% · жиры: ${f.fatPer100g||'—'}% · калорийность: ${f.kcalPer100g||'—'} ккал / 100 г</p><p>${esc(f.composition||'Состав пока не внесён.')}</p><div class="form-actions"><button class="soft-button" onclick="toast('Сравнение добавлено')">Сравнить</button><button class="soft-button" onclick="openFoodLabel('${esc(f.id)}')">Этикетка</button></div><button class="primary full" onclick="selectFood('${esc(f.id)}')">${ok?'Добавить в рацион':'Проверить этикетку'}</button></div>`) };
+const foodDetailsOriginal=foodDetails;foodDetails=function(id){const f=foodById(id);if(!f)return;const p=activePet(),ok=Boolean(foodRecommendation(f,p)),image=foodImage(f);openModal(`<div class="food-detail"><h2>${esc(f.name)}</h2><div class="food-detail-hero">${image?`<img src="${esc(image)}" alt="${esc(f.name)}">`:'<div class="food-placeholder">🥫</div>'}</div><p class="eyebrow">${esc(f.brand)} · производитель ${esc(f.brand)}</p><h3>${f.form==='wet'?'Влажный корм':'Сухой корм'}</h3><p class="muted">${f.form==='wet'?'Влажный':'Сухой'} · упаковка с этикетки</p><div class="food-detail-rows"><div><span>Стоимость упаковки</span><b>${f.price?'≈ '+esc(f.price)+' ₽':'Не указана'}</b></div><div><span>Стоимость дня</span><b>${p&&f.kcalPer100g?'≈ '+dailyGrams(p,f)+' г / день':'Нужны данные'}</b></div></div>${ok?`<div class="mint-card card"><h3>Подойдёт ли ${esc(p?.name||'питомцу')}?</h3><p>Подходит по выбранному профилю. Не заменяет назначение ветеринара.</p></div>`:`<div class="warning-card card"><h3>Состав требует проверки</h3><p>Совместимость корма ещё не подтверждена. Сверьте состав и ограничения питомца.</p><button class="link-button" onclick="toast('Проверьте состав на упаковке')">Проверить этикетку →</button></div>`}<h3>Состав и питательные показатели</h3><p class="muted">Белки: ${f.proteinPer100g||'—'}% · жиры: ${f.fatPer100g||'—'}% · калорийность: ${f.kcalPer100g||'—'} ккал / 100 г</p><p>${esc(f.composition||'Состав пока не внесён.')}</p><div class="form-actions"><button class="soft-button" onclick="toast('Сравнение добавлено')">Сравнить</button><button class="soft-button" onclick="toast('Проверьте этикетку на упаковке')">Этикетка →</button></div><button class="primary full" onclick="selectFood('${esc(f.id)}')">${ok?'Добавить в рацион':'Проверить этикетку'}</button></div>`) };
 const selectFoodOriginal=window.selectFood;window.selectFood=id=>{const f=foodById(id);if(!foodRecommendation(f,activePet()))return toast('Проверьте состав на упаковке');return selectFoodOriginal(id)};
 state.ration=state.ration&&typeof state.ration==='object'?state.ration:{};
 const dailyGramsSingle=dailyGrams;const rationConfig=p=>{const r=state.ration?.[p?.id]||{};const secondary=foodById(r.secondaryId);const share=secondary?Math.max(0,Math.min(100,Number(r.share)||70)):100;return {secondary,share}};const rationItems=()=>{const p=activePet(),primary=chosenFood();if(!p||!primary)return[];const r=rationConfig(p),items=[{food:primary,share:r.secondary?r.share:100}];if(r.secondary&&r.share<100)items.push({food:r.secondary,share:100-r.share});return items.map(x=>Object.assign(x,{grams:Math.max(0,Math.round(dailyGramsSingle(p,x.food)*x.share/100/5)*5)}))};
@@ -155,23 +189,20 @@ dailyGrams=function(p,food){if(arguments.length>1)return dailyGramsSingle(p,food
 window.setRationShare=share=>{const p=activePet();if(!p)return;state.ration[p.id]=Object.assign({},state.ration[p.id]||{},{share:Number(share)});save();modal.close();toast('Доля рациона сохранена');render()};window.startSecondaryFood=()=>{const p=activePet();if(!p)return;state.secondaryPicking=true;save();modal.close();tab='foods';render()};window.removeSecondaryFood=()=>{const p=activePet();if(!p)return;state.ration[p.id]={secondaryId:null,share:100};save();modal.close();toast('Второй корм убран');render()};
 const selectFoodWithSecondary=window.selectFood;window.selectFood=id=>{const f=foodById(id);if(state.secondaryPicking){if(!foodRecommendation(f,activePet()))return toast('Проверьте состав на упаковке');const p=activePet();state.ration[p.id]={secondaryId:id,share:70};state.secondaryPicking=false;save();modal.close();tab='today';toast('Второй корм добавлен');render();return}return selectFoodWithSecondary(id)};
 const calcModalOriginal=calcModal;calcModal=function(){const p=activePet(),f=chosenFood(),items=rationItems(),r=rationConfig(p);if(!p||!f)return toast('Сначала выберите корм');openModal(`<h2>Как рассчитана порция</h2><div class="card mint-card"><b>${dailyGrams()} г / день</b><p>${kcalNeed(p)} ккал в сутки</p></div><div class="more-section"><h3>Рацион</h3>${items.map(x=>`<div class="kv"><span>${esc(x.food.brand)} · ${esc(x.food.name)}</span><strong>${x.grams} г · ${x.share}%</strong></div>`).join('')}<div class="chips"><button class="chip ${r.share===100?'active':''}" onclick="setRationShare(100)">100%</button>${r.secondary?`<><button class="chip ${r.share===70?'active':''}" onclick="setRationShare(70)">70 / 30</button><button class="chip ${r.share===50?'active':''}" onclick="setRationShare(50)">50 / 50</button><button class="chip ${r.share===30?'active':''}" onclick="setRationShare(30)">30 / 70</button></>`:''}</div>${r.secondary?`<button class="soft-button full" onclick="removeSecondaryFood()">Убрать второй корм</button>`:`<button class="soft-button full" onclick="startSecondaryFood()">Добавить второй корм</button>`}</div><p class="muted">Учитываются вес, возраст, активность, стерилизация, целевой вес и калорийность корма. Это ориентир, а не назначение врача.</p><button class="primary full" onclick="modal.close()">Понятно</button>`) };
-function proModal(){const isPro=Boolean(state.pro);openModal(`<h2>Больше заботы с PRO</h2><div class="pro-hero"><b>NutriPate PRO</b><p>Для большой семьи и более подробной истории заботы.</p></div><div class="pro-table"><div><b>Возможности</b><b>Бесплатно</b><b>PRO</b></div>${[['Питомцы','1','2+'],['Расчёт и выбранный корм','✓','✓'],['Дневник и история веса','Базовые','Полные'],['Сравнение кормов','—','✓'],['Сканер упаковок','—','✓'],['Отчёты и анализ','—','Расшир.'],['Напоминания','Базовые','Больше']].map(r=>`<div><span>${r[0]}</span><span>${r[1]}</span><strong>${r[2]}</strong></div>`).join('')}</div><p class="muted">Без подписки остаются расчёт нормы, один питомец и основной дневник.</p><div class="pro-plan"><b>Месяц</b><strong>199 ₽</strong><button class="primary" onclick="enablePro('month')">${isPro?'Выбран':'Выбрать'}</button></div><div class="pro-plan"><b>Год</b><strong>1 490 ₽</strong><button class="primary" onclick="enablePro('year')">${isPro?'Выбран':'Выбрать'}</button></div>${isPro?`<div class="mint-card card"><b>PRO включён на этой почте</b><p>Отметка хранится на почте аккаунта. Оплату через ЮKassa подключим позже, и тогда Pro включится на телефоне, в Windows и в веб-версии.</p><button class="soft-button" onclick="disablePro()">Выключить PRO</button></div>`:''}<button class="soft-button full" onclick="modal.close()">Продолжить бесплатно</button>`)}
-window.enablePro=plan=>{state.pro=true;state.proPlan=plan;save();modal.close();toast(`Тариф ${plan==='year'?'«Год»':'«Месяц»'} записан на эту почту и откроется на всех устройствах`);render()};window.disablePro=()=>{state.pro=false;state.proPlan=null;save();modal.close();toast('Снова бесплатная версия');render()};
+function proModal(){const isPro=Boolean(state.pro);openModal(`<h2>Больше заботы с PRO</h2><div class="pro-hero"><b>NutriPate PRO</b><p>Для большой семьи и более подробной истории заботы.</p></div><div class="pro-table"><div><b>Возможности</b><b>Бесплатно</b><b>PRO</b></div>${[['Питомцы','1','2+'],['Расчёт и выбранный корм','✓','✓'],['Дневник и история веса','Базовые','Полные'],['Сравнение кормов','—','✓'],['Сканер упаковок','—','✓'],['Отчёты и анализ','—','Расшир.'],['Напоминания','Базовые','Больше']].map(r=>`<div><span>${r[0]}</span><span>${r[1]}</span><strong>${r[2]}</strong></div>`).join('')}</div><p class="muted">Без подписки остаются расчёт нормы, один питомец и основной дневник.</p><div class="pro-plan"><b>Месяц</b><strong>199 ₽</strong><button class="primary" onclick="enablePro('month')">${isPro?'Выбран':'Выбрать'}</button></div><div class="pro-plan"><b>Год</b><strong>1 490 ₽</strong><button class="primary" onclick="enablePro('year')">${isPro?'Выбран':'Выбрать'}</button></div>${isPro?`<div class="mint-card card"><b>PRO включён на этом устройстве</b><p>Это местный переключатель, не покупка.</p><button class="soft-button" onclick="disablePro()">Выключить PRO</button></div>`:''}<button class="soft-button full" onclick="modal.close()">Продолжить бесплатно</button>`)}
+window.enablePro=plan=>{state.pro=true;state.proPlan=plan;save();modal.close();toast(`Тариф ${plan==='year'?'«Год»':'«Месяц»'} включён на этом устройстве`);render()};window.disablePro=()=>{state.pro=false;state.proPlan=null;save();modal.close();toast('Снова бесплатная версия');render()};
 const actionsWithPro=actions;actions=function(a){if(a==='pro')return proModal();return actionsWithPro(a)};
 const viewFoodsWithSecondFood=viewFoods;viewFoods=function(){const html=viewFoodsWithSecondFood();return state.secondaryPicking?`<div class="card mint-card"><b>Второй корм</b><p class="muted">Выберите корм, который закроет оставшуюся долю рациона.</p><button class="soft-button" data-action="cancel-secondary">Отмена</button></div>${html}`:html};const actionsWithSecondary=actions;actions=function(a){if(a==='cancel-secondary'){state.secondaryPicking=false;save();render();return}return actionsWithSecondary(a)};
 const viewTodayWithAppRows=viewToday;viewToday=function(){let html=viewTodayWithAppRows();html=html.replace('</section><button class="kv" data-action="weight">',`</section><button class="kv" data-action="reminders"><span>Напоминания о кормлении</span><strong>${state.reminders.enabled?'Настроены':'Настроить'}</strong><span>›</span></button><button class="kv" data-action="weight">`);if(loggedToday().length)html=html.replace('</div>`}',`</div><button class="kv danger-row" data-action="undo-feed"><span>Отменить последнюю порцию</span><span>›</span></button>`);return html};
 function reportPreviewText(p,flags){const weights=state.weights.filter(x=>x.petId===p.id),entries=state.feedEntries.filter(x=>x.petId===p.id),feeds=entries.filter(x=>(x.kind||'feed')==='feed'),notes=entries.filter(x=>x.kind==='note');return `<div class="report-paper"><b>NutriPate</b><h3>История ${esc(p.name||'питомца')}</h3><p class="muted">${new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'})}</p><p>${esc(p.species==='dog'?'Собака':'Кошка')} · ${esc(p.breedLabel||p.breed||'Порода не указана')} · ${esc(p.weight)} кг</p>${flags.weight?`<h4>История веса</h4><p>${weights.length?weights.map(x=>`${esc(x.date)} — ${esc(x.kg)} кг`).join('<br>'):'Записей нет'}</p>`:''}${flags.feed?`<h4>Кормления и рацион</h4><p>${feeds.length?`${feeds.length} записей · ${feeds.reduce((a,x)=>a+Number(x.grams||0),0)} г выдано`:'Записей нет'}</p>`:''}${flags.notes?`<h4>Наблюдения</h4><p>${notes.length?notes.map(x=>esc(x.text||x.name||'Наблюдение')).join('<br>'):'Записей нет'}</p>`:''}<small>Автоматических диагнозов в отчёте нет. Передайте документ ветеринару для обсуждения.</small></div>`}
 function reportPreviewModal(){const p=activePet();if(!p)return;const flags=Object.assign({weight:true,feed:true,notes:true},state.reportFlags||{});const open=()=>{openModal(`<h2>Отчёт готов</h2><div class="card mint-card"><b>${esc(p.name||'Питомец')} · ${p.species==='dog'?'собака':'кошка'}</b><p class="muted">Вес, рацион и заметки собраны вместе. Проверьте документ перед передачей ветеринару.</p></div><div class="form report-options"><label><input type="checkbox" id="reportWeight" ${flags.weight?'checked':''}> История веса</label><label><input type="checkbox" id="reportFeed" ${flags.feed?'checked':''}> Кормления и рацион</label><label><input type="checkbox" id="reportNotes" ${flags.notes?'checked':''}> Наблюдения</label></div><div id="reportPreview">${reportPreviewText(p,flags)}</div><div class="form-actions"><button class="soft-button" onclick="printReport()">Печать / PDF</button><button class="primary" onclick="downloadReport()">Скачать JSON</button></div><button class="soft-button full" onclick="modal.close()">Готово</button>`);['reportWeight','reportFeed','reportNotes'].forEach(id=>$(id)?.addEventListener('change',()=>{state.reportFlags={weight:$('reportWeight').checked,feed:$('reportFeed').checked,notes:$('reportNotes').checked};save();$('reportPreview').innerHTML=reportPreviewText(p,state.reportFlags)}));};open()}
-function printReport(){const p=activePet();if(!p)return;const flags=Object.assign({weight:true,feed:true,notes:true},state.reportFlags||{}),w=window.open('','_blank','noopener,noreferrer');if(!w)return toast('Разрешите всплывающие окна для печати');w.document.write(`<html lang="ru"><head><meta charset="utf-8"><title>NutriPate — отчёт</title><style>body{font:16px Montserrat,sans-serif;color:#000;max-width:760px;margin:40px auto;line-height:1.5}h1,h2,h3{color:#07383a}.paper{border:1px solid #dce7e2;border-radius:18px;padding:28px}small{color:#536e6b}</style></head><body><div class="paper"><h1>NutriPate</h1>${reportPreviewText(p,flags)}</div><script>window.onload=()=>window.print()<\/script></body></html>`);w.document.close()}
-const reportModalOriginal=reportModal;reportModal=function(){downloadReport();};
-function reportPdfHtml(p){const weights=state.weights.filter(x=>x.petId===p.id).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));const entries=state.feedEntries.filter(x=>x.petId===p.id),feeds=entries.filter(x=>(x.kind||'feed')==='feed'),notes=entries.filter(x=>x.kind==='note'),current=Number(p.weight||p.kg||0),target=Number(p.targetWeight||0),first=weights[0]&&Number(weights[0].kg)||current,last=weights[weights.length-1]&&Number(weights[weights.length-1].kg)||current,delta=last-first,percent=first?delta/first*100:0;const chartW=700,chartH=230,plotW=610,plotH=135,vals=weights.map(x=>Number(x.kg)).filter(Number.isFinite),lo=Math.min.apply(null,vals.length?vals:[current])-0.2,hi=Math.max.apply(null,vals.length?vals:[current])+0.2,pts=weights.map((x,i)=>{const y=32+(hi-Number(x.kg))/(hi-lo)*plotH;const xx=45+(weights.length<2?plotW/2:i/(weights.length-1)*plotW);return xx.toFixed(1)+','+y.toFixed(1)}).join(' ');return `<div style="width:760px;background:#fff;color:#07383a;font:16px Montserrat,sans-serif;line-height:1.45;padding:42px;box-sizing:border-box"><div style="display:flex;justify-content:space-between;color:#53716f"><b style="font-size:25px;color:#07383a">NutriPate</b><span>Сформирован ${new Date().toLocaleDateString('ru-RU')}</span></div><h1 style="font:38px Montserrat,sans-serif;margin:22px 0 4px">Отчёт о питомце</h1><p style="font:22px Montserrat,sans-serif;margin:0 0 26px">${esc(p.name||'Питомец')} - питание и изменения состояния</p><section style="background:#d9f6f3;border-radius:18px;padding:22px;margin-bottom:22px"><div style="color:#53716f;margin-bottom:14px">01 ПАСПОРТ ПИТОМЦА</div><h2 style="font:26px Montserrat,sans-serif;margin:0 0 8px">${esc(p.name||'Питомец')}</h2><p>${p.species==='dog'?'Собака':'Кошка'} · ${esc(p.ageMonths?Math.floor(p.ageMonths/12)+' лет':'Возраст не указан')} · ${esc(p.sex||'пол не указан')}<br>${esc(p.breedLabel||p.breed||'Порода не указана')}</p><div style="display:flex;gap:100px;margin-top:18px"><div><small>Текущий вес</small><div style="font:28px Montserrat,sans-serif">${current?current.toFixed(1).replace('.',',')+' кг':'—'}</div></div><div><small>Целевой вес</small><div style="font:28px Montserrat,sans-serif">${target?target.toFixed(1).replace('.',',')+' кг':'—'}</div></div></div><p><small>Аллергии</small><br>${esc(p.allergens||'Не указаны')}</p><p><small>Индивидуальные особенности</small><br>${p.sterilized?'Стерилизована. ':''}${p.activity?'Активность: '+esc(p.activity)+'. ':''}${p.diagnoses?'Состояния: '+esc(p.diagnoses)+'.':''}</p><small>Данные внесены владельцем и не заменяют консультацию ветеринара.</small></section><section style="border:1px solid #d8e5e1;border-radius:18px;padding:22px;margin-bottom:22px"><div style="color:#53716f">02 ДИНАМИКА ВЕСА</div><h2 style="font:26px Montserrat,sans-serif;margin:10px 0">Вес за всё время</h2><div style="display:flex;justify-content:space-between"><div>Начальный вес<br><b style="font:26px Montserrat,sans-serif">${first.toFixed(1).replace('.',',')} кг</b></div><div>Текущий вес<br><b style="font:26px Montserrat,sans-serif">${last.toFixed(1).replace('.',',')} кг</b></div><div>Изменение<br><b style="font:26px Montserrat,sans-serif">${delta>=0?'+':''}${delta.toFixed(1).replace('.',',')} кг</b></div><div>От начального<br><b style="font:26px Montserrat,sans-serif">${percent.toFixed(1).replace('.',',')}%</b></div></div><svg viewBox="0 0 ${chartW} ${chartH}" style="width:100%;height:230px;margin-top:18px"><line x1="45" y1="32" x2="655" y2="32" stroke="#cfe1dd" stroke-dasharray="5 5"/><line x1="45" y1="99" x2="655" y2="99" stroke="#cfe1dd" stroke-dasharray="5 5"/><line x1="45" y1="167" x2="655" y2="167" stroke="#cfe1dd" stroke-dasharray="5 5"/><polyline points="${pts}" fill="none" stroke="#12b6b8" stroke-width="5"/>${weights.map((x,i)=>{const q=pts.split(' ')[i].split(',');return `<circle cx="${q[0]}" cy="${q[1]}" r="6" fill="#fff" stroke="#12b6b8" stroke-width="4"/>`}).join('')}</svg><p>${weights.length} измерений${weights.length?' · '+esc(weights[0].date)+' - '+esc(weights[weights.length-1].date):''}</p><p>Вес ${delta>0?'увеличился':delta<0?'уменьшился':'не изменился'} на ${Math.abs(delta).toFixed(1).replace('.',',')} кг (${Math.abs(percent).toFixed(1).replace('.',',')}%).</p></section><section style="border:1px solid #d8e5e1;border-radius:18px;padding:22px;margin-bottom:22px"><div style="color:#53716f">03 ИСТОРИЯ ПИТАНИЯ</div><h2 style="font:26px Montserrat,sans-serif;margin:10px 0">Рационы и даты смены</h2><p>${feeds.length?feeds.map(x=>`${esc(x.date)} · ${esc(x.grams||0)} г · ${esc(x.foodName||'Корм')}`).join('<br>'):'Записей кормлений пока нет.'}</p></section><section style="border:1px solid #d8e5e1;border-radius:18px;padding:22px;margin-bottom:22px"><div style="color:#53716f">04 АЛЛЕРГИИ И ИЗМЕНЕНИЯ СОСТОЯНИЯ</div><h2 style="font:26px Montserrat,sans-serif;margin:10px 0">До и после изменений</h2><p>Известные аллергии: ${esc(p.allergens||'не указаны')}.</p><p>${notes.length?notes.map(x=>esc(x.text||x.name||'Наблюдение')).join('<br>'):'Наблюдений владельца за период нет.'}</p><small>Наблюдения являются записями владельца, а не медицинским заключением.</small></section><section style="background:#d9f6f3;border-radius:18px;padding:22px"><div style="color:#53716f">05 ИТОГОВАЯ АНАЛИТИЧЕСКАЯ СВОДКА</div><h2 style="font:26px Montserrat,sans-serif;margin:10px 0">Главное за выбранный период</h2><p>Изменение веса: <b>${delta.toFixed(1).replace('.',',')} кг</b> · ${feeds.length} рационов · ${notes.length} записей.</p><p>Текущий вес: ${current.toFixed(1).replace('.',',')} кг.${target?' До цели '+Math.abs(current-target).toFixed(1).replace('.',',')+' кг.':''}</p><small>В отчёте показаны только внесённые данные. При заболевании рацион и изменения состояния согласовывают с ветеринаром.</small></section></div>`}
-downloadReport=function(){const p=activePet();if(!p)return;const C=window.jspdf&&window.jspdf.jsPDF;if(!C)return toast('Не удалось подготовить PDF');const rows=state.weights.filter(x=>x.petId===p.id).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date))),entries=state.feedEntries.filter(x=>x.petId===p.id),feeds=entries.filter(x=>(x.kind||'feed')==='feed'),notes=entries.filter(x=>x.kind==='note'),current=Number(p.weight||p.kg||0),target=Number(p.targetWeight||0),first=rows[0]?Number(rows[0].kg):current,last=rows.length?Number(rows[rows.length-1].kg):current,delta=last-first,pct=first?delta/first*100:0,canvas=document.createElement('canvas'),ctx=canvas.getContext('2d'),W=1200,H=1700;canvas.width=W;canvas.height=H;ctx.textBaseline='top';const wrap=(s,n)=>{const a=[];String(s||'').split(/\s+/).reduce((line,word)=>{const next=line?line+' '+word:word;if(ctx.measureText(next).width>n&&line){a.push(line);return word}return next},'')&&a.push(String(s||'').split(/\s+/).reduce((line,word)=>{const next=line?line+' '+word:word;return ctx.measureText(next).width>n&&line?word:next},''));return a},txt=(s,x,y,size=24,color='#07383a',bold=false)=>{ctx.font=(bold?'700 ':'400 ')+size+'px Arial';ctx.fillStyle=color;ctx.fillText(String(s||''),x,y)},section=(title,y,mint=false)=>{ctx.fillStyle=mint?'#d9f6f3':'#ffffff';ctx.strokeStyle='#d8e5e1';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(70,y,1060,230,22);ctx.fill();ctx.stroke();txt(title,95,y+24,20,'#53716f');return y+65},page=()=>{ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);txt('NutriPate',80,70,34,'#07383a',true);txt('Сформирован '+new Date().toLocaleDateString('ru-RU'),820,78,18,'#53716f')};page();txt('Отчёт о питомце',80,150,54,'#07383a');txt((p.name||'Питомец')+' - питание и изменения состояния',80,220,28,'#53716f');let y=300;y=section('01 ПАСПОРТ ПИТОМЦА',y,true);txt(p.name||'Питомец',100,y+5,34);txt((p.species==='dog'?'Собака':'Кошка')+' · '+(p.ageMonths?Math.floor(p.ageMonths/12)+' лет':'Возраст не указан')+' · '+(p.sex||'пол не указан'),100,y+52,23);txt(p.breedLabel||p.breed||'Порода не указана',100,y+88,23);txt('Текущий вес: '+(current?current.toFixed(1).replace('.',',')+' кг':'—'),100,y+135,25);txt('Целевой вес: '+(target?target.toFixed(1).replace('.',',')+' кг':'—'),600,y+135,25);txt('Аллергии: '+(p.allergens||'не указаны'),100,y+178,21);y=565;y=section('02 ДИНАМИКА ВЕСА',y);txt('Вес за всё время',100,y+5,32);txt('Начальный: '+first.toFixed(1).replace('.',',')+' кг',100,y+58,23);txt('Текущий: '+last.toFixed(1).replace('.',',')+' кг',350,y+58,23);txt('Изменение: '+delta.toFixed(1).replace('.',',')+' кг',600,y+58,23);txt('От начального: '+pct.toFixed(1).replace('.',',')+'%',850,y+58,23);const gx=120,gy=y+115,gw=930,gh=180,vals=rows.map(x=>Number(x.kg)).filter(Number.isFinite),lo=(vals.length?Math.min(...vals):current)-.2,hi=(vals.length?Math.max(...vals):current)+.2;ctx.strokeStyle='#cfe1dd';ctx.setLineDash([8,8]);[0,.5,1].forEach(v=>{ctx.beginPath();ctx.moveTo(gx,gy+gh*v);ctx.lineTo(gx+gw,gy+gh*v);ctx.stroke()});ctx.setLineDash([]);ctx.strokeStyle='#12b6b8';ctx.lineWidth=6;ctx.beginPath();rows.forEach((r,i)=>{const xx=gx+(rows.length<2?gw/2:i/(rows.length-1)*gw),yy=gy+(hi-Number(r.kg))/(hi-lo)*gh;i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(xx,yy,8,0,Math.PI*2);ctx.fill();ctx.stroke()});ctx.stroke();txt(rows.length+' измерений · '+(rows[0]?.date||'')+' - '+(rows[rows.length-1]?.date||''),100,y+315,20,'#53716f');y=1075;y=section('03 ИСТОРИЯ ПИТАНИЯ',y);txt('Рационы и даты смены',100,y+5,30);txt(feeds.length?feeds.map(x=>x.date+' · '+(x.grams||0)+' г · '+(x.foodName||'Корм')).join(' | '):'Записей кормлений пока нет.',100,y+58,21);y=1370;txt('04 АЛЛЕРГИИ И ИЗМЕНЕНИЯ СОСТОЯНИЯ',80,y,20,'#53716f');txt('Известные аллергии: '+(p.allergens||'не указаны'),80,y+45,24);txt(notes.length?notes.map(x=>x.text||x.name||'Наблюдение').join(' | '):'Наблюдений владельца за период нет.',80,y+90,21);const doc=new C({unit:'pt',format:'a4'});doc.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,595,842);canvas.width=W;canvas.height=H;page();txt('05 ИТОГОВАЯ АНАЛИТИЧЕСКАЯ СВОДКА',80,120,24,'#53716f');txt('Главное за выбранный период',80,175,38);txt('Изменение веса: '+delta.toFixed(1).replace('.',',')+' кг · '+feeds.length+' рационов · '+notes.length+' записей.',80,270,25);txt('Текущий вес: '+current.toFixed(1).replace('.',',')+' кг'+(target?' · до цели '+Math.abs(current-target).toFixed(1).replace('.',',')+' кг.':''),80,320,25);txt('В отчёте показаны только внесённые данные.',80,410,22,'#53716f');txt('При заболевании рацион и изменения состояния согласовывают с ветеринаром.',80,450,22,'#53716f');doc.addPage();doc.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,595,842);doc.save('nutripate-report-'+(p.name||'pet').replace(/\s+/g,'-')+'.pdf');toast('PDF-отчёт скачан')};
+function printReport(){const p=activePet();if(!p)return;const flags=Object.assign({weight:true,feed:true,notes:true},state.reportFlags||{}),w=window.open('','_blank','noopener,noreferrer');if(!w)return toast('Разрешите всплывающие окна для печати');w.document.write(`<html lang="ru"><head><meta charset="utf-8"><title>NutriPate — отчёт</title><style>body{font:16px Arial;color:#000;max-width:760px;margin:40px auto;line-height:1.5}h1,h2,h3{color:#07383a}.paper{border:1px solid #dce7e2;border-radius:18px;padding:28px}small{color:#536e6b}</style></head><body><div class="paper"><h1>NutriPate</h1>${reportPreviewText(p,flags)}</div><script>window.onload=()=>window.print()<\/script></body></html>`);w.document.close()}
+const reportModalOriginal=reportModal;reportModal=reportPreviewModal;
 function calcModalDetailed(){const p=activePet(),f=chosenFood(),items=rationItems(),r=rationConfig(p);if(!p||!f)return toast('Сначала выберите корм');const grams=dailyGrams(),treats=state.feedEntries.filter(x=>x.petId===p.id&&x.date===todayKey()&&x.kind==='treat').reduce((sum,x)=>sum+Number(x.kcal||0),0),protein=f.proteinPer100g?Math.round(grams*Number(f.proteinPer100g)/100*10)/10:null,fat=f.fatPer100g?Math.round(grams*Number(f.fatPer100g)/100*10)/10:null,activity=({low:'Низкая',medium:'Умеренная',high:'Высокая',very_high:'Очень высокая'})[p.activity]||'Умеренная';openModal(`<h2>Как рассчитана порция</h2><div class="card mint-card"><b>${grams} г / день</b><p>${kcalNeed(p)} ккал в сутки · ${esc(f.brand)} ${esc(f.name)}</p></div><div class="more-section"><h3>На чём основан расчёт</h3><div class="kv"><span>Питомец</span><strong>${esc(p.name||'Питомец')} · ${esc(p.weight)} кг</strong></div><div class="kv"><span>Активность</span><strong>${activity}</strong></div><div class="kv"><span>Энергия</span><strong>${kcalNeed(p)} ккал</strong></div><div class="kv"><span>Белок / жир</span><strong>${protein===null?'—':protein+' г'} / ${fat===null?'—':fat+' г'}</strong></div>${treats?`<div class="kv"><span>Лакомства сегодня</span><strong>${treats} ккал</strong></div>`:''}<p class="muted">RER = 70 × вес<sup>0,75</sup>; затем учитываются возраст, активность, стерилизация и цель по весу. Граммы зависят от калорийности выбранного корма.</p><h3>Рацион</h3>${items.map(x=>`<div class="kv"><span>${esc(x.food.brand)} · ${esc(x.food.name)}</span><strong>${x.grams} г · ${x.share}%</strong></div>`).join('')}<div class="chips"><button class="chip ${r.share===100?'active':''}" onclick="setRationShare(100)">100%</button>${r.secondary?`<><button class="chip ${r.share===70?'active':''}" onclick="setRationShare(70)">70 / 30</button><button class="chip ${r.share===50?'active':''}" onclick="setRationShare(50)">50 / 50</button><button class="chip ${r.share===30?'active':''}" onclick="setRationShare(30)">30 / 70</button></>`:''}</div>${r.secondary?`<button class="soft-button full" onclick="removeSecondaryFood()">Убрать второй корм</button>`:`<button class="soft-button full" onclick="startSecondaryFood()">Добавить второй корм</button>`}</div><p class="muted">Это ориентир, а не назначение врача. При заболеваниях рацион согласуйте с ветеринаром.</p><button class="primary full" onclick="modal.close()">Понятно</button>`) }
-downloadReport=function(){const p=activePet();if(!p)return;const Pdf=window.jspdf&&window.jspdf.jsPDF;if(!Pdf)return toast('Не удалось подготовить PDF');const weights=state.weights.filter(x=>x.petId===p.id).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date))),entries=state.feedEntries.filter(x=>x.petId===p.id),feeds=entries.filter(x=>(x.kind||'feed')==='feed'),notes=entries.filter(x=>x.kind==='note'),img=new Image();let finished=false;const build=(photo)=>{if(finished)return;finished=true;const W=1200,H=1700,canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');canvas.width=W;canvas.height=H;const text=(s,x,y,size=24,color='#07383a',bold=false)=>{ctx.font=(bold?'700 ':'400 ')+size+'px Arial';ctx.fillStyle=color;ctx.fillText(String(s||''),x,y)},box=(y,h,mint=false)=>{ctx.fillStyle=mint?'#d9f6f3':'#fff';ctx.strokeStyle='#d8e5e1';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(70,y,1060,h,22);ctx.fill();ctx.stroke()},page=()=>{ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);text('NutriPate',80,70,34,'#07383a',true);text('Сформирован '+new Date().toLocaleDateString('ru-RU'),825,78,18,'#53716f')},drawGraph=(y)=>{const vals=weights.map(x=>Number(x.kg)).filter(Number.isFinite),low=(vals.length?Math.min(...vals):Number(p.weight||0))-.2,high=(vals.length?Math.max(...vals):Number(p.weight||0))+.2,gx=130,gy=y+115,gw=920,gh=190;ctx.strokeStyle='#cfe1dd';ctx.setLineDash([8,8]);[0,.25,.5,.75,1].forEach(v=>{ctx.beginPath();ctx.moveTo(gx,gy+gh*v);ctx.lineTo(gx+gw,gy+gh*v);ctx.stroke();text((high-(high-low)*v).toFixed(1).replace('.',','),78,gy+gh*v-10,18,'#53716f')});ctx.setLineDash([]);ctx.strokeStyle='#12b6b8';ctx.lineWidth=6;ctx.beginPath();weights.forEach((r,i)=>{const xx=gx+(weights.length<2?gw/2:i/(weights.length-1)*gw),yy=gy+(high-Number(r.kg))/(high-low)*gh;i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy)});ctx.stroke();weights.forEach((r,i)=>{const xx=gx+(weights.length<2?gw/2:i/(weights.length-1)*gw),yy=gy+(high-Number(r.kg))/(high-low)*gh;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(xx,yy,9,0,Math.PI*2);ctx.fill();ctx.stroke();});text(weights[0]?.date||'Начало',gx,gy+gh+25,18,'#53716f');text(weights[weights.length-1]?.date||'Сегодня',gx+gw-140,gy+gh+25,18,'#53716f')};page();text('Отчёт о питомце',80,150,54);text((p.name||'Питомец')+' - питание и изменения состояния',80,220,28,'#53716f');box(300,360,true);text('01 ПАСПОРТ ПИТОМЦА',95,340,20,'#53716f');if(photo){ctx.drawImage(photo,105,390,190,190)}text(p.name||'Питомец',360,405,34);text((p.species==='dog'?'Собака':'Кошка')+' · '+(p.ageMonths?Math.floor(p.ageMonths/12)+' лет':'Возраст не указан')+' · '+(p.sex||'пол не указан'),360,450,23);text(p.breedLabel||p.breed||'Порода не указана',360,490,23);text('Текущий вес',360,545,18,'#53716f');text((p.weight||p.kg||'—')+' кг',360,575,30);text('Целевой вес',760,545,18,'#53716f');text((p.targetWeight||'—')+' кг',760,575,30);text('Аллергии: '+(p.allergens||'не указаны'),105,650,21);text('Особенности: '+(p.diagnoses||'не указаны'),105,690,21);text('Данные внесены владельцем и не заменяют консультацию ветеринара.',105,735,18,'#53716f');box(790,540);text('02 ДИНАМИКА ВЕСА',95,830,20,'#53716f');text('Вес за всё время',95,875,34);const first=weights[0]?Number(weights[0].kg):Number(p.weight||0),last=weights.length?Number(weights[weights.length-1].kg):first;text('Начальный вес: '+first.toFixed(1).replace('.',',')+' кг',95,920,22);text('Текущий вес: '+last.toFixed(1).replace('.',',')+' кг',380,920,22);text('Изменение: '+(last-first).toFixed(1).replace('.',',')+' кг',700,920,22);drawGraph(930);text(weights.length+' измерений · '+(weights[0]?.date||'')+' - '+(weights[weights.length-1]?.date||''),95,1250,19,'#53716f');text('Записи веса',95,1300,26,true);weights.slice(-4).forEach((r,i)=>text(r.date+' — '+r.kg+' кг',95,1340+i*38,21));const doc=new Pdf({unit:'pt',format:'a4'});doc.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,595,842);canvas.width=W;canvas.height=H;page();text('03 ИСТОРИЯ ПИТАНИЯ',80,130,24,'#53716f');text('Рационы и кормления',80,185,40);let yy=260;if(feeds.length){feeds.forEach(r=>{box(yy,100);text(r.date||'Дата не указана',105,yy+22,20,'#53716f');text((r.foodName||'Корм')+' · '+(r.grams||0)+' г',105,yy+58,25,true);yy+=125})}else{text('Записей кормлений пока нет.',105,yy,24,'#53716f');yy+=100}box(yy+20,220);text('04 АЛЛЕРГИИ И ИЗМЕНЕНИЯ СОСТОЯНИЯ',95,yy+55,20,'#53716f');text('Аллергии: '+(p.allergens||'не указаны'),95,yy+100,24);text(notes.length?notes.map(x=>x.text||x.name||'Наблюдение').join(' | '):'Наблюдений владельца пока нет.',95,yy+145,21);box(yy+280,220,true);text('05 ИТОГОВАЯ СВОДКА',95,yy+315,20,'#53716f');text('Текущий вес: '+last.toFixed(1).replace('.',',')+' кг',95,yy+365,26);text('Кормлений: '+feeds.length+' · записей веса: '+weights.length,95,yy+410,24);text('Отчёт содержит только внесённые данные.',95,yy+465,19,'#53716f');doc.addPage();doc.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,595,842);doc.save('nutripate-report-'+(p.name||'pet').replace(/\s+/g,'-')+'.pdf');toast('PDF-отчёт скачан')};img.onload=()=>build(img);img.onerror=()=>build(null);img.src=typeof petPhoto==='function'?petPhoto(p):'';if(img.complete&&img.naturalWidth)build(img)};
 calcModal=calcModalDetailed;
 const petFormWithDelete=petForm;petForm=function(raw){petFormWithDelete(raw);if(!raw?.id)return;const actionsBox=document.querySelector('#modalContent .form-actions');if(actionsBox)actionsBox.insertAdjacentHTML('afterend','<button type="button" class="danger-button" onclick="deletePetWeb(\''+esc(raw.id)+'\')">Удалить питомца</button>')};
 const petFormWithTopSpecies=petForm;petForm=function(raw){petFormWithTopSpecies(raw);const content=document.querySelector('#modalContent');const first=content?.querySelector('.form-section');if(!content||!first)return;first.querySelector('.pet-photo-field')?.remove();const title=content.querySelector(':scope > h2');if(title&&!content.querySelector('.pet-form-header'))title.insertAdjacentHTML('beforebegin','<div class="pet-form-header"><button type="button" class="back-button" onclick="modal.close()">‹</button><span>NutriPate</span></div>');const chips=first.querySelector('.pet-species-chips');if(chips){first.insertBefore(chips,first.firstElementChild);if(!first.querySelector('.pet-photo-row'))chips.insertAdjacentHTML('afterend','<div class="pet-photo-row"><span class="pet-paw-placeholder" aria-hidden="true"><svg class="pet-paw-mark" viewBox="0 0 24 24"><ellipse cx="7.1" cy="8.1" rx="1.65" ry="2.25" transform="rotate(-28 7.1 8.1)"/><ellipse cx="10.4" cy="5.9" rx="1.65" ry="2.25" transform="rotate(-9 10.4 5.9)"/><ellipse cx="13.6" cy="5.9" rx="1.65" ry="2.25" transform="rotate(9 13.6 5.9)"/><ellipse cx="16.9" cy="8.1" rx="1.65" ry="2.25" transform="rotate(28 16.9 8.1)"/><path d="M12 10c-1.8 0-3.3 1.5-4.2 2.7-.8 1.1-2.7 2.6-2.7 4.7 0 2.2 1.7 3.2 3.6 3.2 1.3 0 2.4-.6 3.3-.6.9 0 2 .6 3.3.6 1.9 0 3.6-1 3.6-3.2 0-2.1-1.9-3.6-2.7-4.7C15.3 11.5 13.8 10 12 10Z"/></svg></span><button type="button" class="link-button">Фото</button></div>')}};
-window.deletePetWeb=id=>{const p=state.pets.find(x=>x.id===id);if(!p||!confirm(`Удалить профиль «${p.name||'Питомец'}» и его дневник?`))return;state.removedPetIds=Array.from(new Set([...(state.removedPetIds||[]),id]));state.pets=state.pets.filter(x=>x.id!==id);state.feedEntries=state.feedEntries.filter(x=>x.petId!==id);state.weights=state.weights.filter(x=>x.petId!==id);delete state.selectedFoods[id];if(state.activePetId===id)state.activePetId=state.pets[0]?.id||null;save();modal.close();toast('Питомец удалён');render()};
+window.deletePetWeb=id=>{const p=state.pets.find(x=>x.id===id);if(!p||!confirm(`Удалить профиль «${p.name||'Питомец'}» и его дневник?`))return;state.pets=state.pets.filter(x=>x.id!==id);state.feedEntries=state.feedEntries.filter(x=>x.petId!==id);state.weights=state.weights.filter(x=>x.petId!==id);delete state.selectedFoods[id];if(state.activePetId===id)state.activePetId=state.pets[0]?.id||null;save();modal.close();toast('Питомец удалён');render()};
 let petPhotoDraft=null;let petFormDraftId='';
 function handlePetPhoto(file){if(!file)return;const reader=new FileReader();reader.onload=()=>{petPhotoDraft=String(reader.result||'');const preview=$('petPhotoPreview');if(preview)preview.src=petPhotoDraft};reader.readAsDataURL(file)}
 const petFormWithPhoto=petForm;petForm=function(raw){petFormDraftId=raw?.id||'';petPhotoDraft=raw?.photo||null;petFormWithPhoto(raw);const first=document.querySelector('#modalContent .form-section');if(!first)return;first.insertAdjacentHTML('afterbegin',`<div class="pet-photo-field"><img id="petPhotoPreview" src="${esc(petPhotoDraft||'')}" alt="Фото питомца"><label class="soft-button photo-upload">Фото питомца<input id="petPhotoInput" type="file" accept="image/*" hidden></label><button type="button" class="link-button photo-clear" onclick="petPhotoDraft=null;document.querySelector('#petPhotoPreview').src='';document.querySelector('#petPhotoInput').value=''">Убрать фото</button></div>`);const input=$('petPhotoInput');if(input)input.onchange=()=>handlePetPhoto(input.files?.[0])};
@@ -181,9 +212,9 @@ const savePetWithPhoto=window.savePet;window.savePet=function(id){savePetWithPho
 const actionsWithTodayParity=actions;actions=function(a){if(a==='undo-feed'){const rows=loggedToday();const last=rows[rows.length-1];if(last){const i=state.feedEntries.indexOf(last);if(i>=0)state.feedEntries.splice(i,1);save();toast('Последняя порция отменена');render()}return}return actionsWithTodayParity(a)};
 window.toggleFoodFavoriteWeb=id=>{state.favorites=state.favorites.includes(id)?state.favorites.filter(x=>x!==id):[...state.favorites,id];save();if($('modal')?.open)foodDetails(id);else render()};
 window.compareFoodWeb=id=>{if(!state.favorites.includes(id)){if(state.favorites.length>=3)return toast('В сравнении может быть до трёх кормов');state.favorites=[...state.favorites,id];save()}if($('modal')?.open)modal.close();compareModal()};
-window.removePrimaryFoodWeb=()=>{const p=activePet();if(!p)return;delete state.selectedFoods[p.id];if(state.ration?.[p.id])delete state.ration[p.id];state.foodClearedAt=state.foodClearedAt||{};state.foodClearedAt[p.id]=new Date().toISOString();save();modal.close();toast('Корм убран из рациона');render()};
+window.removePrimaryFoodWeb=()=>{const p=activePet();if(!p)return;delete state.selectedFoods[p.id];if(state.ration?.[p.id])delete state.ration[p.id];save();modal.close();toast('Корм убран из рациона');render()};
 window.addSecondaryFoodWeb=id=>{const p=activePet(),f=foodById(id);if(!p||!f)return;if(!foodRecommendation(f,p))return toast('Проверьте состав на упаковке');state.ration=state.ration||{};state.ration[p.id]={secondaryId:id,share:70};save();modal.close();toast('Второй корм добавлен');render()};
-const foodDetailsDesktopParity=foodDetails;foodDetails=function(id){const f=foodById(id);if(!f)return;const p=activePet(),ok=Boolean(foodRecommendation(f,p)),image=foodImage(f),primaryId=p&&state.selectedFoods?.[p.id],secondaryId=p&&state.ration?.[p.id]?.secondaryId,isPrimary=primaryId===f.id,isSecondary=secondaryId===f.id;openModal(`<div class="food-detail"><div class="row-between"><h2>${esc(f.name)}</h2><button class="heart" onclick="toggleFoodFavoriteWeb('${esc(f.id)}')">${state.favorites.includes(f.id)?'♥':'♡'}</button></div><div class="food-detail-hero">${image?`<img src="${esc(image)}" alt="${esc(f.name)}">`:'<div class="food-placeholder">🥫</div>'}</div><p class="eyebrow">${esc(f.brand)} · производитель ${esc(f.brand)}</p><h3>${f.form==='wet'?'Влажный корм':'Сухой корм'}</h3><p class="muted">${f.form==='wet'?'Влажный':'Сухой'} · упаковка с этикетки</p><div class="food-detail-rows"><div><span>Стоимость упаковки</span><b>${f.price?'≈ '+esc(f.price)+' ₽':'Не указана'}</b></div><div><span>Стоимость дня</span><b>${p&&f.kcalPer100g?'≈ '+dailyGrams(p,f)+' г / день':'Нужны данные'}</b></div></div>${ok?`<div class="mint-card card"><h3>Подойдёт ли ${esc(p?.name||'питомцу')}?</h3><p>Подходит по выбранному профилю. Не заменяет назначение ветеринара.</p></div>`:`<div class="warning-card card"><h3>Состав требует проверки</h3><p>Совместимость корма ещё не подтверждена. Сверьте состав и ограничения питомца.</p></div>`}<h3>Состав и питательные показатели</h3><p class="muted">Белки: ${f.proteinPer100g||'—'}% · жиры: ${f.fatPer100g||'—'}% · калорийность: ${f.kcalPer100g||'—'} ккал / 100 г</p><p>${esc(f.composition||'Состав пока не внесён.')}</p><div class="form-actions"><button class="soft-button" onclick="compareFoodWeb('${esc(f.id)}')">Сравнить</button></div>${isPrimary?`<button class="soft-button full" onclick="removePrimaryFoodWeb()">Убрать из рациона</button>`:isSecondary?`<button class="soft-button full" onclick="removeSecondaryFood()">Убрать второй корм</button>`:`<button class="primary full" onclick="${p&&primaryId&&f.form!==foodById(primaryId)?.form?`addSecondaryFoodWeb('${esc(f.id)}')`:`selectFood('${esc(f.id)}')`}">${p&&primaryId&&f.form!==foodById(primaryId)?.form?'Добавить вторым кормом':ok?'Добавить в рацион':'Проверить этикетку'}</button>`}</div>`) };
+const foodDetailsDesktopParity=foodDetails;foodDetails=function(id){const f=foodById(id);if(!f)return;const p=activePet(),ok=Boolean(foodRecommendation(f,p)),image=foodImage(f),primaryId=p&&state.selectedFoods?.[p.id],secondaryId=p&&state.ration?.[p.id]?.secondaryId,isPrimary=primaryId===f.id,isSecondary=secondaryId===f.id;openModal(`<div class="food-detail"><div class="row-between"><h2>${esc(f.name)}</h2><button class="heart" onclick="toggleFoodFavoriteWeb('${esc(f.id)}')">${state.favorites.includes(f.id)?'♥':'♡'}</button></div><div class="food-detail-hero">${image?`<img src="${esc(image)}" alt="${esc(f.name)}">`:'<div class="food-placeholder">🥫</div>'}</div><p class="eyebrow">${esc(f.brand)} · производитель ${esc(f.brand)}</p><h3>${f.form==='wet'?'Влажный корм':'Сухой корм'}</h3><p class="muted">${f.form==='wet'?'Влажный':'Сухой'} · упаковка с этикетки</p><div class="food-detail-rows"><div><span>Стоимость упаковки</span><b>${f.price?'≈ '+esc(f.price)+' ₽':'Не указана'}</b></div><div><span>Стоимость дня</span><b>${p&&f.kcalPer100g?'≈ '+dailyGrams(p,f)+' г / день':'Нужны данные'}</b></div></div>${ok?`<div class="mint-card card"><h3>Подойдёт ли ${esc(p?.name||'питомцу')}?</h3><p>Подходит по выбранному профилю. Не заменяет назначение ветеринара.</p></div>`:`<div class="warning-card card"><h3>Состав требует проверки</h3><p>Совместимость корма ещё не подтверждена. Сверьте состав и ограничения питомца.</p></div>`}<h3>Состав и питательные показатели</h3><p class="muted">Белки: ${f.proteinPer100g||'—'}% · жиры: ${f.fatPer100g||'—'}% · калорийность: ${f.kcalPer100g||'—'} ккал / 100 г</p><p>${esc(f.composition||'Состав пока не внесён.')}</p><div class="form-actions"><button class="soft-button" onclick="compareFoodWeb('${esc(f.id)}')">Сравнить</button><button class="soft-button" onclick="toast('Проверьте этикетку на упаковке')">Этикетка →</button></div>${isPrimary?`<button class="soft-button full" onclick="removePrimaryFoodWeb()">Убрать из рациона</button>`:isSecondary?`<button class="soft-button full" onclick="removeSecondaryFood()">Убрать второй корм</button>`:`<button class="primary full" onclick="${p&&primaryId&&f.form!==foodById(primaryId)?.form?`addSecondaryFoodWeb('${esc(f.id)}')`:`selectFood('${esc(f.id)}')`}">${p&&primaryId&&f.form!==foodById(primaryId)?.form?'Добавить вторым кормом':ok?'Добавить в рацион':'Проверить этикетку'}</button>`}</div>`) };
 window.showMoreFoodsWeb=()=>{foodLimitWeb+=8;render()};
 const viewFoodsWithPagination=viewFoods;viewFoods=function(){const html=viewFoodsWithPagination();const p=activePet();const all=recommendedFoods(p).filter(x=>{const f=x.food;return(!query||`${f.brand} ${f.name} ${f.composition||''}`.toLowerCase().includes(query.toLowerCase()))&&(foodFilter==='all'||(foodFilter==='fav'?state.favorites.includes(f.id):f.form===foodFilter))});return `${html}${all.length>foodLimitWeb?`<button class="soft-button full" data-action="more-foods">Ещё ${Math.min(8,all.length-foodLimitWeb)}</button>`:''}`};
 const actionsWithFoodPagination=actions;actions=function(a){if(a==='more-foods')return showMoreFoodsWeb();return actionsWithFoodPagination(a)};
@@ -197,47 +228,44 @@ function readableBreedNote(text,name){let s=String(text||'').trim();const specif
 const openBreedDetailReadable=openBreedDetail;openBreedDetail=function(species,index){openBreedDetailReadable(species,index);const entry=breedEntries(species)[index],d=breedData(entry),note=document.querySelector('.breed-note p');if(note)note.textContent=readableBreedNote(d.diseasesText||d.distinctive,entry.name)};
 const clearBreedFacts={'Британская':'Спокойная и плотная кошка с короткой шерстью. Может быстро набрать вес, поэтому важны движение и подходящая порция.','Шотландская вислоухая':'Форма ушей связана с особенностью хрящевой ткани. Не скрещивают двух вислоухих кошек; при выборе котёнка проверяют походку и хвост.','Шотландская прямоухая':'Уши имеют обычную форму, а характер обычно спокойный и дружелюбный. Следите за весом и уточните у заводчика историю здоровья родителей.','Мейн-кун':'Крупная кошка, которая растёт дольше большинства пород. Следите за сердцем, суставами и весом; котёнку нужно достаточно места для движения.','Сибирская':'Активная кошка с густой шерстью. Ей нужен регулярный уход за шерстью и контроль веса, особенно при домашнем образе жизни.','Канадский сфинкс':'Шерсти почти нет, поэтому кожа нуждается в уходе. Кошку важно защищать от холода и перегрева; также регулярно проверяют зубы и сердце.','Донской сфинкс':'Кожа требует регулярного ухода, а зимой кошке может быть холодно. Следите за зубами, сердцем и температурой в помещении.','Петерболд':'Очень общительная и активная кошка с разным количеством шерсти. Следите за кожей, зубами и тем, чтобы кошка не мёрзла.','Персидская':'Из-за короткой морды могут появляться слезотечение и затруднённое дыхание. Нужны уход за глазами, зубами и шерстью, а также контроль веса.','Сиамская':'Разговорчивая и очень привязанная к человеку кошка. Ей нужны общение и активные игры; регулярно проверяйте зубы и дёсны.','Тайская':'Активная и контактная кошка с короткой шерстью. Ей нужны игры и внимание, а также обычный уход за зубами.','Ориентальная':'Стройная, энергичная и очень общительная кошка. Ей важно много играть и общаться; худощавое телосложение для породы нормально.','Бенгальская':'Активная кошка с сильным интересом к играм и воде. Ей нужны вертикальные поверхности и ежедневная нагрузка; следите за сердцем и зрением.','Абиссинская':'Подвижная и любопытная кошка, которой нужны игры и места для лазания. Следите за почками, зрением и коленными суставами.','Русская голубая':'Спокойная, но достаточно активная кошка с короткой шерстью. При малой активности легко набирает вес, поэтому важны игры и режим питания.','Рэгдолл':'Крупная спокойная кошка, которая любит находиться рядом с человеком. Следите за сердцем и весом, потому что порода не всегда много двигается.','Норвежская лесная':'Крупная кошка с густой шерстью и хорошими навыками лазания. Нужны расчёсывание, движение и контроль сердца и суставов.','Курильский бобтейл':'Активная и выносливая кошка с коротким хвостом, который является особенностью породы. Ей нужны игры и возможность двигаться.','Корниш-рекс':'Очень активная кошка с короткой волнистой шерстью. Она легко мёрзнет, поэтому ей нужно тёплое место и регулярные игры.','Девон-рекс':'Игривый и общительный компаньон с тонкой волнистой шерстью. Следите за кожей, мышцами и суставами; кошке нужен комфортный тёплый дом.','Бурманская':'Контактная и энергичная кошка, которая плохо переносит одиночество. Ей нужны общение, игры и контроль веса.','Священная бирма':'Спокойная домашняя кошка с мягким характером и белыми лапами. Нужны обычный уход за шерстью, зубами и контроль веса.','Манчкин':'Короткие лапы не мешают играть, но увеличивают нагрузку на спину. Не допускайте лишнего веса и ограничьте опасные высокие прыжки.','Саванна':'Очень активная и крупная кошка с сильным интересом к играм. Ей нужны пространство, ежедневная нагрузка и внимательный контроль суставов и сердца.','Турецкая ангора':'Подвижная кошка с лёгкой длинной шерстью. Белые кошки с голубыми глазами могут иметь проблемы со слухом, поэтому слух проверяют с детства.','Турецкий ван':'Активная кошка, которая часто любит воду. Ей нужны игры и движение; шерсть обычно не требует сложного ухода.','Европейская короткошёрстная':'Неприхотливая и обычно крепкая кошка. Главный риск при жизни в квартире — лишний вес, поэтому важны игры и режим питания.','Американская короткошёрстная':'Спокойная крепкая кошка, хорошо приспосабливающаяся к дому. Следите за весом и давайте возможность ежедневно двигаться.','Оцикет':'Активная пятнистая кошка, которой нужны игры и общение. При выборе котёнка обращают внимание на зрение, зубы и общее состояние здоровья.','Селкирк-рекс':'Дружелюбная кошка с кудрявой шерстью. Шерсть требует регулярного ухода; при покупке уточните историю здоровья почек и сердца.','Американский керл':'Уши загнуты назад из-за особенности хряща и не требуют разгибания. Кошка обычно активная и контактная, ей нужны игры и внимание.','Шартрез':'Тихая спокойная кошка с плотной шерстью. Следите за весом и сердцем, особенно если кошка мало двигается.','Бомбей':'Общительная короткошёрстная кошка с высокой потребностью в играх. Ей важно не переедать и получать достаточно движения.','Японский бобтейл':'Активная кошка с коротким хвостом, который является природной особенностью. Обычно ей подходят игры, общение и обычный уход.','Сноу-шу':'Общительная кошка с белыми отметинами на лапах. Ей нужны игры и внимание; при уходе отдельно следят за зубами.','Немецкий шпиц (померанский)':'Маленькая активная собака с густой шерстью. Нужны уход за зубами и шерстью, ежедневные прогулки и контроль коленных суставов.','Чихуахуа':'Очень маленькая, но активная собака. Щенкам важно регулярное питание, а взрослой собаке — беречь трахею, колени и зубы.','Вельш-корги пемброк':'Активная собака с длинной спиной и склонностью к набору веса. Следите за весом, спиной и суставами, не перегружайте прыжками.','Пудель (все размеры)':'Умная активная собака, которой нужны занятия и регулярный уход за шерстью. Риски зависят от размера, поэтому важны контроль коленей, зрения и общего здоровья.','Немецкая овчарка':'Крупная активная собака, которой нужны движение и обучение. Следите за тазобедренными и локтевыми суставами, кожей и пищеварением.','Кавалер-кинг-чарльз-спаниель':'Мягкая общительная собака-компаньон. Регулярно проверяйте сердце, глаза, уши и коленные суставы.','Йоркширский терьер':'Маленькая активная собака с длинной шерстью. Нужны уход за зубами и шерстью, аккуратные игры и контроль коленей и дыхания.','Лабрадор-ретривер':'Дружелюбная активная собака, которая любит есть. Ей нужны прогулки и контроль веса, суставов и глаз.','Среднеазиатская овчарка (алабай)':'Очень крупная спокойная собака, которой нужны пространство и правильная нагрузка. Следите за ростом, суставами и весом.','Джек-рассел-терьер':'Очень энергичная собака с сильным охотничьим инстинктом. Ей нужны длительные прогулки, игры и контроль зрения, слуха и коленей.','Французский бульдог':'Собака с короткой мордой, которой трудно переносить жару и сильные нагрузки. Следите за дыханием, кожными складками и спиной.','Золотистый ретривер':'Дружелюбная активная собака, которой нужны прогулки и общение. Следите за весом, суставами, кожей и регулярно показывайте собаку врачу.','Такса':'Собака с длинной спиной, поэтому особенно важно не допускать лишний вес и прыжки с высоты. Следите за спиной, коленями и уровнем сахара.','Мопс':'Спокойная собака с короткой мордой. Она быстро перегревается и может тяжело дышать, поэтому важны прохлада, умеренная нагрузка и уход за складками.','Бигль':'Любопытная активная собака с хорошим аппетитом. Ей нужны прогулки и контроль веса, ушей и суставов.','Боксёр':'Энергичная крупная собака, которой нужны движение и занятия. Следите за сердцем, суставами и дыханием; после еды избегайте активных игр.','Доберман':'Спортивная собака, которой нужны регулярные нагрузки и обучение. Важно контролировать сердце, щитовидную железу и суставы.','Хаски (сибирский)':'Очень активная собака с густой шерстью. Ей нужны длительные прогулки и прохлада; следите за глазами, кожей и суставами.','Далматин':'Активная собака с характерным окрасом. Ей нужно много движения и воды; при выборе щенка проверяют слух и работу мочевыделительной системы.','Бультерьер':'Сильная активная собака, которой нужны воспитание и безопасная нагрузка. Следите за почками, кожей, слухом и коленными суставами.','Эрдельтерьер':'Крупная активная собака, которой нужны прогулки, игры и уход за шерстью. Следите за суставами, щитовидной железой и желудком.','Ротвейлер':'Крупная сильная собака, которой нужны воспитание и умеренная нагрузка. Следите за суставами, сердцем и весом; после еды избегайте активных игр.','Сиба-ину':'Самостоятельная активная собака с густой шерстью. Ей нужны прогулки и спокойное обучение; следите за кожей, глазами и коленями.','Чау-чау':'Спокойная собака с густой шерстью и складками кожи. Она плохо переносит жару, поэтому важны прохлада, уход за глазами и контроль веса.'};
 const readableBreedNoteBase=readableBreedNote;readableBreedNote=function(text,name){return clearBreedFacts[name]||readableBreedNoteBase(text,name)};
-const petFormTargetRequired=petForm;petForm=function(raw){petFormTargetRequired(raw);const input=document.querySelector('#petInputTarget');if(input){input.required=true;input.placeholder='Введите целевой вес'}};
-const savePetTargetRequired=window.savePet;window.savePet=function(id){const target=readNumber('petInputTarget');if(!Number.isFinite(target)||target<=0)return formError('Укажите целевой вес питомца.');return savePetTargetRequired(id)};
+const petFormTargetOptional=petForm;petForm=function(raw){petFormTargetOptional(raw);const input=document.querySelector('#petInputTarget');if(input){input.required=false;input.placeholder='Необязательно'}};
+// Целевой вес необязателен: проверяем его только если пользователь заполнил поле.
 const renderWithPrePetNav=render;render=function(){renderWithPrePetNav();if(!activePet()){const nav=document.querySelector('.bottom-nav');if(nav){nav.hidden=false;nav.style.setProperty('display','grid','important');nav.style.setProperty('visibility','visible','important')}}};render();
 const savePetWithoutDemoFood=window.savePet;window.savePet=function(id){const isNew=!id;savePetWithoutDemoFood(id);if(isNew){const p=state.pets[state.pets.length-1];if(p){state.selectedFoods[p.id]='__not_selected__';save();render()}}};
 const viewTodayReferenceOriginal=viewToday;viewToday=function(){const p=activePet();if(!p||chosenFood())return viewTodayReferenceOriginal();const day=new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});const date=day.charAt(0).toUpperCase()+day.slice(1);return `${title('', 'Сегодня', date)}<section class="card mint-card hero-card"><h2>Выберите корм для питомца</h2><p class="muted">Нажмите кнопку ниже — приложение подберёт варианты по профилю питомца.</p><button class="primary full" data-tab-go="foods">Выбрать корм</button></section><button class="kv" data-action="weight"><span>Взвешивание</span><strong>${lastWeightLabel()}</strong><span>›</span></button><button class="kv" data-action="stock"><span>Запас корма</span><strong>Нет корма</strong><span>›</span></button><div class="card norm"><strong>Норма ${dailyGrams()||'—'} ккал / день</strong><button class="link-button" data-action="calc">Как рассчитана порция <span>→</span></button></div><button class="kv" data-action="reminders"><span>Напоминания о кормлении</span><span>→</span></button>`};
 const renderTodayReferenceOriginal=render;render=function(){renderTodayReferenceOriginal();if(activePet()&&!chosenFood()&&tab==='today')document.querySelector('.meal-bar')?.remove()};render();
 const viewTodayNoFoodFinal=viewToday;viewToday=function(){const p=activePet();if(!p||chosenFood())return viewTodayNoFoodFinal();const day=new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'}),date=day.charAt(0).toUpperCase()+day.slice(1);return `${title('','Сегодня',date)}<section class="card mint-card hero-card"><h2>Выберите корм для питомца</h2><p class="muted">Нажмите кнопку ниже — приложение подберёт варианты по профилю питомца.</p><button class="primary full" data-tab-go="foods">Выбрать корм</button></section><button class="kv" data-action="weight"><span>Взвешивание</span><strong>${lastWeightLabel()}</strong><span>›</span></button><button class="kv" data-action="stock"><span>Запас корма</span><strong>Нет корма</strong><span>›</span></button><div class="card norm"><strong>Норма ${kcalNeed(p)} ккал / день</strong><button class="link-button" data-action="calc">Как рассчитана порция <span>→</span></button></div><button class="kv" data-action="reminders"><span>Напоминания о кормлении</span><span>→</span></button>`};render();
-state.foodChoiceConfirmed=state.foodChoiceConfirmed&&typeof state.foodChoiceConfirmed==='object'?state.foodChoiceConfirmed:{};Object.keys(state.selectedFoods||{}).forEach(id=>{if(state.selectedFoods[id]&&state.selectedFoods[id]!=='__not_selected__')state.foodChoiceConfirmed[id]=state.selectedFoods[id]});
+state.foodChoiceConfirmed=state.foodChoiceConfirmed&&typeof state.foodChoiceConfirmed==='object'?state.foodChoiceConfirmed:{};Object.keys(state.selectedFoods||{}).forEach(id=>{if(state.selectedFoods[id]&&state.selectedFoods[id]!=='__not_selected__'&&!state.foodChoiceConfirmed[id])state.selectedFoods[id]='__not_selected__'});save();
 const selectFoodConfirm=window.selectFood;window.selectFood=function(id){const p=activePet();if(p){state.foodChoiceConfirmed[p.id]=true;save()}return selectFoodConfirm(id)};
 const foodDetailsNoPrimaryFix=foodDetails;foodDetails=function(id){const noPrimary=!chosenFood();foodDetailsNoPrimaryFix(id);if(noPrimary){const button=document.querySelector('#modalContent .primary');if(button){button.textContent='Добавить в рацион';button.onclick=()=>window.selectFood(id)}}};
 const foodDetailsNoPrimaryFinal=foodDetails;foodDetails=function(id){const noPrimary=!chosenFood();foodDetailsNoPrimaryFinal(id);if(noPrimary){const button=document.querySelector('#modalContent .primary');if(button){button.textContent=foodRecommendation(foodById(id),activePet())?'Добавить в рацион':'Проверить этикетку';button.onclick=()=>window.selectFood(id)}}};
 const viewTodayHideNormWithoutFood=viewToday;viewToday=function(){const p=activePet(),html=viewTodayHideNormWithoutFood();if(!p||chosenFood())return html;return html.replace(/<div class="card norm">[\s\S]*?<\/div>/,'')};render();
-window.openFoodLabel=function(id){
-  const f=foodById(id);if(!f)return;
-  const bits=[f.proteinPer100g!=null?`Белок ${f.proteinPer100g}%`:null,f.fatPer100g!=null?`Жир ${f.fatPer100g}%`:null,f.fiberPer100g!=null?`Клетчатка ${f.fiberPer100g}%`:null,f.ashPer100g!=null?`Зола ${f.ashPer100g}%`:null,f.moisturePer100g!=null?`Влага ${f.moisturePer100g}%`:null,f.kcalPer100g!=null?`${f.kcalPer100g} ккал / 100 г`:null].filter(Boolean);
-  let shop='магазин';
-  try{shop=new URL(f.buy_url).hostname.replace(/^www\./,'')}catch(e){}
-  const image=foodImage(f);
-  const link=f.buy_url?`<a class="primary full food-buy" href="${esc(f.buy_url)}" target="_blank" rel="noopener">Купить на ${esc(shop)}</a>`:'<p class="muted">Ссылка на магазин пока не указана.</p>';
-  openModal(`<div class="food-detail food-label"><button class="soft-button" type="button" onclick="foodDetails('${esc(f.id)}')">← Назад к корму</button><h2>Этикетка</h2><div class="food-detail-hero">${image?`<img src="${esc(image)}" alt="${esc(f.name)}">`:''}</div><p class="eyebrow">${esc(f.brand||'')}</p><h3>${esc(f.name)}</h3><p class="muted">${f.form==='wet'?'Влажный корм':'Сухой корм'}${f.country?' · '+esc(f.country):''}</p><p class="food-nutrition">${esc(bits.join(' · ')||'Цифры с этикетки не внесены')}</p><h3>Состав</h3><p>${esc(f.composition||'Состав пока не внесён.')}</p><p class="muted">Цифры с этикетки — ориентир, не назначение врача.</p>${link}</div>`);
-};
 const foodDetailsAppParity=foodDetails;foodDetails=function(id){
   const f=foodById(id);if(!f)return;
   const p=activePet(),ok=Boolean(foodRecommendation(f,p)),image=foodImage(f),tags=f.tags||[];
   const audience=tags.includes('sterilised')?'Для стерилизованных':tags.includes('kitten')?'Для котят':tags.includes('puppy')?'Для щенков':tags.includes('senior')?'Для пожилых питомцев':'Для взрослых питомцев';
   const nutrition=[f.proteinPer100g!=null?`белок ${f.proteinPer100g}%`:null,f.fatPer100g!=null?`жир ${f.fatPer100g}%`:null,f.kcalPer100g!=null?`${f.kcalPer100g} ккал / 100 г`:null,f.fiberPer100g!=null?`клетчатка ${f.fiberPer100g}%`:null].filter(Boolean).join(', ');
+  const breed=p?.breed||'вашего питомца';
   const primaryId=p&&state.selectedFoods?.[p.id],primary=foodById(primaryId),secondaryId=p&&state.ration?.[p.id]?.secondaryId,isPrimary=primaryId===f.id,isSecondary=secondaryId===f.id;
-  openModal(`<div class="food-detail app-parity-food"><h2>${esc(f.name)}</h2><div class="food-detail-hero">${image?`<img src="${esc(image)}" alt="${esc(f.name)}">`:'<div class="food-placeholder">🥫</div>'}</div><p class="eyebrow">${esc(audience)}</p><p class="muted">${f.form==='wet'?'Влажный корм':'Сухой корм'}</p><div class="food-detail-rows"><div><span>Ориентир цены</span><b>${f.pricePerKg?'≈ '+esc(f.pricePerKg)+' ₽ / кг':'Не указана'}</b></div><div><span>Стоимость дня</span><b>${p&&f.kcalPer100g?'≈ '+dailyGrams(p,f)+' ₽':'Нужны данные'}</b></div></div>${ok?'':`<div class="warning-card card"><h3>Состав требует проверки</h3><p>Сверьте состав корма с ограничениями питомца.</p></div>`}<h3>Состав и питательные показатели</h3><p class="food-nutrition">${esc(nutrition||'Данные не указаны')}</p><p>${esc(f.composition||'Состав пока не внесён.')}</p><p class="muted">Обновление состава: ноябрь 2026.</p><div class="form-actions"><button class="soft-button" onclick="compareFoodWeb('${esc(f.id)}')">Сравнить</button></div>${isPrimary?`<button class="soft-button full" onclick="removePrimaryFoodWeb()">Убрать из рациона</button>`:isSecondary?`<button class="soft-button full" onclick="removeSecondaryFood()">Убрать второй корм</button>`:`<button class="primary full" onclick="${p&&primary&&f.form!==primary.form?`addSecondaryFoodWeb('${esc(f.id)}')`:`selectFood('${esc(f.id)}')`}" >${p&&primary&&f.form!==primary.form?'Добавить вторым кормом':ok?'Добавить в рацион':'Проверить этикетку'}</button>`}<button class="soft-button full food-label-button" type="button" onclick="openFoodLabel('${esc(f.id)}')">Этикетка</button></div>`)
+  openModal(`<div class="food-detail app-parity-food"><h2>${esc(f.name)}</h2><div class="food-detail-hero">${image?`<img src="${esc(image)}" alt="${esc(f.name)}">`:'<div class="food-placeholder">🥫</div>'}</div><p class="eyebrow">${esc(audience)}</p><p class="muted">${f.form==='wet'?'Влажный корм':'Сухой корм'}</p><div class="food-detail-rows"><div><span>Ориентир цены</span><b>${f.pricePerKg?'≈ '+esc(f.pricePerKg)+' ₽ / кг':'Не указана'}</b></div><div><span>Стоимость дня</span><b>${p&&f.kcalPer100g?'≈ '+dailyGrams(p,f)+' ₽':'Нужны данные'}</b></div></div>${ok?`<div class="mint-card card"><h3>Подойдёт ли ${p?.species==='cat'?'вашей кошке':'вашему питомцу'}?</h3><p>Подходит породе «${esc(breed)}»</p></div>`:`<div class="warning-card card"><h3>Состав требует проверки</h3><p>Сверьте состав корма с ограничениями питомца.</p></div>`}<h3>Состав и питательные показатели</h3><p class="food-nutrition">${esc(nutrition||'Данные не указаны')}</p><p>${esc(f.composition||'Состав пока не внесён.')}</p><p class="muted">Обновление состава: ноябрь 2026.</p><div class="form-actions"><button class="soft-button" onclick="compareFoodWeb('${esc(f.id)}')">Сравнить</button><button class="soft-button" onclick="toast('Проверьте этикетку на упаковке')">Этикетка</button></div>${isPrimary?`<button class="soft-button full" onclick="removePrimaryFoodWeb()">Убрать из рациона</button>`:isSecondary?`<button class="soft-button full" onclick="removeSecondaryFood()">Убрать второй корм</button>`:`<button class="primary full" onclick="${p&&primary&&f.form!==primary.form?`addSecondaryFoodWeb('${esc(f.id)}')`:`selectFood('${esc(f.id)}')`}" >${p&&primary&&f.form!==primary.form?'Добавить вторым кормом':ok?'Добавить в рацион':'Проверить этикетку'}</button>`}</div>`)
 };
 // A food is considered selected only after the user explicitly confirms that exact food.
 // This also clears stale selections left by older builds or demo data.
+state.foodChoiceSource=state.foodChoiceSource&&typeof state.foodChoiceSource==='object'?state.foodChoiceSource:{};
 state.foodChoiceConfirmed=state.foodChoiceConfirmed&&typeof state.foodChoiceConfirmed==='object'?state.foodChoiceConfirmed:{};
 Object.keys(state.selectedFoods||{}).forEach(petId=>{
   const selected=state.selectedFoods[petId];
-  if(selected&&selected!=='__not_selected__')state.foodChoiceConfirmed[petId]=selected;
+  if(selected&&selected!=='__not_selected__'&&state.foodChoiceSource[petId]!==selected){
+    state.selectedFoods[petId]='__not_selected__';
+    delete state.foodChoiceConfirmed[petId];
+  }
 });
+save();
 const selectFoodExactFinal=window.selectFood;
 window.selectFood=function(id){
   const result=selectFoodExactFinal(id);
   const p=activePet();
-  if(p&&chosenFood()?.id===id){state.foodChoiceConfirmed[p.id]=id;state.foodSetAt=state.foodSetAt||{};state.foodSetAt[p.id]=new Date().toISOString();if(state.foodClearedAt)delete state.foodClearedAt[p.id];save()}
+  if(p&&chosenFood()?.id===id){state.foodChoiceConfirmed[p.id]=id;state.foodChoiceSource[p.id]=id;save()}
   return result
 };
 let parityFilterDraft={form:'all',budget:'all',brand:''};
@@ -279,348 +307,529 @@ function viewFoodsAppParity(){
 }
 viewFoods=viewFoodsAppParity;
 
-const viewWeightDiaryBase=viewWeightDiary;
-viewWeightDiary=function(p){
-  const stored=state.weights,own=stored.filter(x=>x.petId===p.id),hasProfile=own.some(x=>x.note==='Вес при создании профиля');
-  const profileWeight=Number(p.weight)>0&&!hasProfile;
-  if(profileWeight)state.weights=[{petId:p.id,kg:Number(p.weight).toFixed(1),date:'2026-11-15',note:'Вес при создании профиля'},...stored];
-  weightRegistrationDate=(state.weights.filter(x=>x.petId===p.id).map(x=>String(x.date||'')).filter(Boolean).sort()[0])||'2026-11-15'; window.weightRegistrationDate=weightRegistrationDate;
-  weightPeriod='all'; window.weightPeriod='all';
-  let html=viewWeightDiaryBase(p);
-  state.weights=stored;
-  html=html.replaceAll('2026-11-15','15 ноября 2026');
-  html=html.replace(/<div class="chips">[\s\S]*?<\/div>/,'<div class="chips"><button class="chip active" type="button">Всё время</button></div>');
-  if(p.targetWeight)html=html.replace('<div class="weight-summary">',`<div class="weight-goal">Цель ${esc(Number(p.targetWeight).toFixed(1))} кг</div><div class="weight-summary">`);
-  return html;
-};
-const viewDiaryParityBase=viewDiary;
-viewDiary=function(){
-  if(diaryTab==='weight'){
-    const p=activePet();
-    if(!p)return '<div class="empty">Добавьте питомца, чтобы открыть дневник.</div>';
-    return `${title('','Вес '+esc(p.name),'')}<div class="tabs"><button data-diary="feed">Питание</button><button class="active" data-diary="weight">Вес</button></div>${viewWeightDiary(p)}`;
+// Safety gate for therapeutic recommendations. The web client mirrors the
+// Python matcher: strict diagnoses never fall through to ordinary food.
+const strictCodesWeb=new Set(['ckd','liver','diabetes','heart','urolithiasis','gi']);
+const medicalAliasWeb={renal:'ckd',hepatic:'liver',gastrointestinal:'gi',urinary:'urolithiasis',obesity:'overweight',joint:'joints'};
+const medicalCodeWeb=f=>[...(f?.tags||[])].filter(t=>String(t).startsWith('medical:')).map(t=>medicalAliasWeb[t.slice(8)]||t.slice(8));
+const strictProfileWeb=p=>{const d=(p?.diagnoses||['healthy']).map(x=>String(x).toLowerCase()).filter(x=>x!=='healthy'&&strictCodesWeb.has(x));return {codes:d,blocked:d.length>1||d.length>0&&Number(p?.ageMonths||24)<3}};
+const foodRecommendationBeforeSafety=foodRecommendation;
+foodRecommendation=function(f,p=activePet()){
+  const strict=strictProfileWeb(p);
+  if(strict.blocked)return null;
+  if(strict.codes.length){
+    const codes=medicalCodeWeb(f);
+    if(f?.therapeutic!==true||!strict.codes.every(code=>codes.includes(code)))return null;
   }
-  return viewDiaryParityBase();
+  const rec=foodRecommendationBeforeSafety(f,p);
+  if(!rec)return null;
+  if(strict.codes.length){
+    rec.group='medical';
+    rec.badge='Ветеринарная диета';
+    rec.reason=`Рекомендован потому, что это ветеринарная диета для: ${strict.codes.map(x=>({ckd:'почек',liver:'печени',diabetes:'диабета',heart:'сердца',urolithiasis:'мочевыделительной системы',gi:'ЖКТ'})[x]||x).join(', ')}. Обычные корма скрыты.`;
+    rec.explanation=rec.reason;
+  }else if(!rec.reason)rec.reason='Рекомендован по виду, возрасту, активности и составу.';
+  return rec;
+};
+const viewFoodsBeforeSafety=viewFoods;
+viewFoods=function(){
+  const p=activePet(),strict=strictProfileWeb(p);
+  if(strict.blocked)return `${title('КАТАЛОГ','Корма','Нужна консультация ветеринара')}<div class="warning-card card"><h2>Автоматический подбор заблокирован</h2><p>${strict.codes.length>1?'Указано несколько строгих диагнозов. Нужен единый план питания от ветеринара.':'Для животного младше 3 месяцев со строгим диагнозом автоматическая рекомендация небезопасна.'}</p><p>Обычные корма не показываются.</p></div>`;
+  return viewFoodsBeforeSafety();
 };
 
-const viewTodayClearInstruction=viewToday;
-viewToday=function(){
-  const html=viewTodayClearInstruction(),p=activePet(),f=chosenFood();
-  if(!p||!f)return html;
-  const rows=mealRows(),r=rows[loggedToday().length]||rows[2];
-  const instruction=`<div class="today-clear-instruction"><strong>Для ${esc(p.name)}</strong><span>Дать сегодня: <b>${r.grams} г</b> · ${esc(f.brand)} · ${esc(f.name)}</span></div>`;
-  return html.replace('<div class="hero-row">',instruction+'<div class="hero-row">');
-};
-
-weightChartSvg=function(rows,period=weightPeriod){
-  const days={week:7,month:30,quarter:90,year:365,all:null}[period]??7,today=new Date();
-  today.setHours(0,0,0,0);
-  const cutoff=days?new Date(today.getTime()-(days-1)*86400000):null;
-  const pts=rows.map(x=>({date:String(x.date||''),kg:Number(x.kg)})).filter(x=>x.date&&Number.isFinite(x.kg)&&x.kg>0&&(!cutoff||new Date(`${x.date}T00:00:00`)>=cutoff)).sort((a,b)=>a.date.localeCompare(b.date));
-  if(!pts.length)return '<div class="chart chart-empty">Нет записей за этот период</div>';
-  const w=360,h=250,l=48,r=12,t=18,b=36,lo=Math.min(...pts.map(x=>x.kg)),hi=Math.max(...pts.map(x=>x.kg)),pad=Math.max(.15,(hi-lo)*.3),min=lo-pad,max=hi+pad,plotW=w-l-r,plotH=h-t-b,start=cutoff||new Date(`${pts[0].date}T00:00:00`),end=days?today:new Date(`${pts[pts.length-1].date}T00:00:00`),range=Math.max(86400000,end-start),x=i=>pts.length===1?l+plotW/2:l+(new Date(`${pts[i].date}T00:00:00`)-start)/range*plotW,y=v=>t+(max-v)/(max-min)*plotH,points=pts.map((p,i)=>`${x(i).toFixed(1)},${y(p.kg).toFixed(1)}`).join(' '),grid=[0,1,2,3,4].map(i=>{const yy=t+i*plotH/4,val=max-(max-min)*i/4;return `<line x1="${l}" y1="${yy}" x2="${w-r}" y2="${yy}"/><text x="2" y="${yy+5}">${val.toFixed(1).replace('.',',')}</text>`}).join(''),labels=pts.length===1?`<text x="${l}" y="${h-8}">${esc(pts[0].date)}</text>`:`<text x="${l}" y="${h-8}">${esc(pts[0].date)}</text><text x="${w-r-55}" y="${h-8}">${esc(pts[pts.length-1].date)}</text>`,dots=pts.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.kg)}" r="5"/>`).join('');
-  return `<div class="chart chart-svg"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="График веса">${grid}<polyline points="${points}"/>${dots}<text class="last-value" x="${Math.min(w-r-42,Math.max(l,x(pts.length-1)-12))}" y="${Math.max(14,y(pts[pts.length-1].kg)-12)}">${pts[pts.length-1].kg.toFixed(1).replace('.',',')} кг</text>${labels}</svg></div>`;
-};
-document.addEventListener('click',function(event){
-  const button=event.target.closest('[data-weight-period]');
-  if(!button)return;
-  event.preventDefault();
-  event.stopImmediatePropagation();
-  weightPeriod=button.dataset.weightPeriod; window.weightPeriod=weightPeriod;
-  render();
-},true);
-weightChartSvg=function(rows,period=weightPeriod){
-  const days={week:7,month:30,quarter:90,year:365,all:null}[period]??7,today=new Date();today.setHours(0,0,0,0);
-  const cutoff=days?new Date(today.getTime()-(days-1)*86400000):null,raw=rows.map(x=>({date:String(x.date||''),kg:Number(x.kg)})).filter(x=>x.date&&Number.isFinite(x.kg)&&x.kg>0).sort((a,b)=>a.date.localeCompare(b.date)),counts={};
-  raw.forEach(x=>counts[x.date]=(counts[x.date]||0)+1);
-  const seen={};
-  const pts=raw.map(x=>{const base=new Date(`${x.date}T00:00:00`),i=seen[x.date]||0;seen[x.date]=i+1;const n=counts[x.date],offset=(i-(n-1)/2)*86400000*.35;return {...x,base,plot:new Date(base.getTime()+offset)}}).filter(x=>!cutoff||x.base>=cutoff);
-  if(!pts.length)return '<div class="chart chart-empty">Нет записей за этот период</div>';
-  const w=360,h=250,l=48,r=12,t=18,b=36,lo=Math.min(...pts.map(x=>x.kg)),hi=Math.max(...pts.map(x=>x.kg)),pad=Math.max(.15,(hi-lo)*.3),min=lo-pad,max=hi+pad,plotW=w-l-r,plotH=h-t-b,start=cutoff||pts[0].base,end=days?today:pts[pts.length-1].base,range=Math.max(86400000,end-start),x=i=>pts.length===1?l+plotW/2:l+(pts[i].plot-start)/range*plotW,y=v=>t+(max-v)/(max-min)*plotH,points=pts.map((p,i)=>`${x(i).toFixed(1)},${y(p.kg).toFixed(1)}`).join(' '),grid=[0,1,2,3,4].map(i=>{const yy=t+i*plotH/4,val=max-(max-min)*i/4;return `<line x1="${l}" y1="${yy}" x2="${w-r}" y2="${yy}"/><text x="2" y="${yy+5}">${val.toFixed(1).replace('.',',')}</text>`}).join(''),labels=pts.length===1?`<text x="${l}" y="${h-8}">${esc(pts[0].date)}</text>`:`<text x="${l}" y="${h-8}">${esc(pts[0].date)}</text><text x="${w-r-55}" y="${h-8}">${esc(pts[pts.length-1].date)}</text>`,dots=pts.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.kg)}" r="5"/>`).join('');
-  return `<div class="chart chart-svg"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="График веса">${grid}<polyline points="${points}"/>${dots}<text class="last-value" x="${Math.min(w-r-42,Math.max(l,x(pts.length-1)-12))}" y="${Math.max(14,y(pts[pts.length-1].kg)-12)}">${pts[pts.length-1].kg.toFixed(1).replace('.',',')} кг</text>${labels}</svg></div>`;
-};
-const weightChartSvgDaily=weightChartSvg;
-weightChartSvg=function(rows,period=weightPeriod){
-  const byDate=new Map();
-  rows.forEach(row=>{if(row&&row.date)byDate.set(String(row.date),row);});
-  return weightChartSvgDaily([...byDate.values()].sort((a,b)=>String(a.date).localeCompare(String(b.date))),period);
-};
-weightChartSvg=weightChartSvgDaily;
-weightChartSvg=function(rows,period=weightPeriod){
-  const days={week:7,month:30,quarter:90,year:365,all:null}[period]??7,today=new Date();today.setHours(0,0,0,0),cutoff=days?new Date(today.getTime()-(days-1)*86400000):null;
-  const raw=rows.map((x,i)=>({date:String(x.date||''),kg:Number(x.kg),order:i})).filter(x=>x.date&&Number.isFinite(x.kg)&&x.kg>0).sort((a,b)=>a.date.localeCompare(b.date)||a.order-b.order),counts={};raw.forEach(x=>counts[x.date]=(counts[x.date]||0)+1);const seen={};
-  const pts=raw.map(x=>{const base=new Date(`${x.date}T00:00:00`),i=seen[x.date]||0;seen[x.date]=i+1;return {...x,base,plot:new Date(base.getTime()+(i-(counts[x.date]-1)/2)*86400000*.35)}}).filter(x=>!cutoff||x.base>=cutoff);
-  if(!pts.length)return '<div class="chart chart-empty">Нет записей за этот период</div>';
-const w=360,h=250,l=52,r=18,t=18,b=38,lo=Math.min(...pts.map(x=>x.kg)),hi=Math.max(...pts.map(x=>x.kg)),pad=Math.max(.15,(hi-lo)*.3),min=lo-pad,max=hi+pad,start=days?cutoff:new Date(`${weightRegistrationDate||pts[0].date}T00:00:00`),end=days?today:pts[pts.length-1].base,range=Math.max(86400000,end-start),pw=w-l-r,ph=h-t-b,x=i=>pts.length===1?l+pw/2:Math.max(l,Math.min(w-r,l+(pts[i].plot-start)/range*pw)),y=v=>t+(max-v)/(max-min)*ph,points=pts.map((p,i)=>`${x(i).toFixed(1)},${y(p.kg).toFixed(1)}`).join(' '),grid=[0,1,2,3,4].map(i=>{const yy=t+i*ph/4,val=max-(max-min)*i/4;return `<line x1="${l}" y1="${yy}" x2="${w-r}" y2="${yy}"/><text x="2" y="${yy+5}">${val.toFixed(1).replace('.',',')}</text>`}).join(''),labels=pts.length===1?`<text x="${l}" y="${h-8}">${esc(pts[0].date)}</text>`:`<text x="${l}" y="${h-8}">${esc(weightRegistrationDate||pts[0].date)}</text><text x="${w-r-58}" y="${h-8}">${esc(pts[pts.length-1].date)}</text>`,dots=pts.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.kg)}" r="5"/>`).join('');
-  return `<div class="chart chart-svg"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="График веса">${grid}<polyline points="${points}"/>${dots}<text class="last-value" x="${Math.min(w-r-45,Math.max(l,x(pts.length-1)-12))}" y="${Math.max(14,y(pts[pts.length-1].kg)-12)}">${pts[pts.length-1].kg.toFixed(1).replace('.',',')} кг</text>${labels}</svg></div>`;
-};
-weightChartSvg=weightChartSvgDaily;
-weightChartSvg=function(rows,period=weightPeriod){
-  const days={week:7,month:30,quarter:90,year:365,all:null}[period]??7,today=new Date();today.setHours(0,0,0,0);
-  const cutoff=days?new Date(today.getTime()-(days-1)*86400000):null,raw=rows.map(x=>({date:String(x.date||''),kg:Number(x.kg)})).filter(x=>x.date&&Number.isFinite(x.kg)&&x.kg>0).sort((a,b)=>a.date.localeCompare(b.date)),seen={},counts={};
-  raw.forEach(x=>counts[x.date]=(counts[x.date]||0)+1);
-  const pts=raw.map(x=>{const base=new Date(`${x.date}T00:00:00`),i=seen[x.date]||0;seen[x.date]=i+1;return {...x,base,plot:new Date(base.getTime()+(i-(counts[x.date]-1)/2)*86400000*.35)}}).filter(x=>!cutoff||x.base>=cutoff);
-  if(!pts.length)return '<div class="chart chart-empty">Нет записей за этот период</div>';
-  const w=360,h=250,l=52,r=18,t=18,b=38,lo=Math.min(...pts.map(x=>x.kg)),hi=Math.max(...pts.map(x=>x.kg)),pad=Math.max(.15,(hi-lo)*.3),min=lo-pad,max=hi+pad,start=cutoff||pts[0].base,end=days?today:pts[pts.length-1].base,range=Math.max(86400000,end-start),pw=w-l-r,ph=h-t-b,x=i=>pts.length===1?l+pw/2:Math.max(l,Math.min(w-r,l+(pts[i].plot-start)/range*pw)),y=v=>t+(max-v)/(max-min)*ph,points=pts.map((p,i)=>`${x(i).toFixed(1)},${y(p.kg).toFixed(1)}`).join(' '),grid=[0,1,2,3,4].map(i=>{const yy=t+i*ph/4,val=max-(max-min)*i/4;return `<line x1="${l}" y1="${yy}" x2="${w-r}" y2="${yy}"/><text x="2" y="${yy+5}">${val.toFixed(1).replace('.',',')}</text>`}).join(''),labels=pts.length===1?`<text x="${l}" y="${h-8}">${esc(pts[0].date)}</text>`:`<text x="${l}" y="${h-8}">${esc(pts[0].date)}</text><text x="${w-r-58}" y="${h-8}">${esc(pts[pts.length-1].date)}</text>`,dots=pts.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.kg)}" r="5"/>`).join('');
-  return `<div class="chart chart-svg"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="График веса">${grid}<polyline points="${points}"/>${dots}<text class="last-value" x="${Math.min(w-r-45,Math.max(l,x(pts.length-1)-12))}" y="${Math.max(14,y(pts[pts.length-1].kg)-12)}">${pts[pts.length-1].kg.toFixed(1).replace('.',',')} кг</text>${labels}</svg></div>`;
-};
-
-function currentFavorites(){
-  const pet=activePet();
-  const stored=pet&&state.favoritesByPet&&state.favoritesByPet[pet.id];
-  if(Array.isArray(stored))return stored;
-  return Array.isArray(state.favorites)?state.favorites:[];
-}
-function setCurrentFavorites(list){
-  const pet=activePet();
-  if(!pet)return;
-  state.favoritesByPet=state.favoritesByPet||{};
-  state.favoritesByPet[pet.id]=list;
-  state.favorites=list.slice();
-}
-function dayCostLabel(food){
-  const grams=dailyGrams(activePet(),food);
-  const price=Number(food&&food.pricePerKg);
-  if(!grams||!Number.isFinite(price)||price<=0)return '—';
-  return '≈ '+Math.round(grams*price/1000)+' ₽';
-}
-window.selectFood=function(id){
-  const pet=activePet(),food=foodById(id);
-  if(!pet)return toast('Сначала добавьте питомца');
-  if(!food)return toast('Корм не найден');
-  state.selectedFoods=state.selectedFoods||{};
-  state.selectedFoods[pet.id]=id;
-  state.foodChoiceConfirmed=state.foodChoiceConfirmed||{};
-  state.foodChoiceConfirmed[pet.id]=id;
-  state.foodSetAt=state.foodSetAt||{};
-  state.foodSetAt[pet.id]=new Date().toISOString();
-  if(state.foodClearedAt)delete state.foodClearedAt[pet.id];
-  if(state.ration?.[pet.id]?.secondaryId===id){state.ration[pet.id].secondaryId=null;state.ration[pet.id].share=100}
-  save();
-  document.getElementById('modal')?.close();
-  tab='today';
-  toast('Корм добавлен в рацион');
-  render();
-};
-const foodDetailsChoose=foodDetails;
-foodDetails=function(id){
-  foodDetailsChoose(id);
-  const button=document.querySelector('#modalContent button.primary');
-  if(!button)return;
-  const label=button.textContent.trim();
-  if(label==='Проверить этикетку'||label==='Добавить в рацион'){
-    button.textContent='Добавить в рацион';
-    button.onclick=()=>window.selectFood(id);
+// Canonical backend bridge. The UI renders this response; it does not own
+// recommendation or feeding formulas. Set NUTRIPATE_API_BASE to the deployed
+// backend origin in production.
+window.NUTRIPATE_API_BASE=window.NUTRIPATE_API_BASE||'http://127.0.0.1:8765';
+let canonicalCalculation=null,canonicalRequestKey='';
+function canonicalProfileKey(p,selectedId,treats){return JSON.stringify({p,selectedId,treats})}
+function todayTreatKcal(p){return (state.feedEntries||[]).filter(x=>x.petId===p?.id&&x.date===todayKey()&&x.kind==='treat').reduce((s,x)=>s+Number(x.kcal||0),0)}
+async function syncCanonicalEngine(p=activePet()){
+  if(!p)return;
+  const selectedId=state.selectedFoods?.[p.id]||null,treats=todayTreatKcal(p),key=canonicalProfileKey(p,selectedId,treats);
+  if(key===canonicalRequestKey)return;
+  canonicalRequestKey=key;
+  try{
+    const entry=breedData({id:p.breedId,name:p.breed});
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),1500);
+    const response=await fetch(`${window.NUTRIPATE_API_BASE}/v1/calculate`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pet:p,breed:entry,selected_food_id:selectedId,treats_kcal:treats}),signal:controller.signal}).finally(()=>clearTimeout(timeout));
+    if(!response.ok)throw new Error(`backend ${response.status}`);
+    canonicalCalculation=await response.json();
+    window.nutripateCanonicalCalculation=canonicalCalculation;
+    render();
+  }catch(error){
+    canonicalCalculation=null;
+    window.nutripateBackendError='Сервер рекомендаций недоступен';
   }
-};
-window.toggleFoodFavoriteWeb=id=>{
-  const list=currentFavorites();
-  const pet=activePet();
-  const on=list.includes(id);
-  setCurrentFavorites(on?list.filter(x=>x!==id):[...list,id]);
-  if(pet){
-    const now=new Date().toISOString();
-    state.favoriteOnAt=state.favoriteOnAt||{};
-    state.removedFavorites=state.removedFavorites||{};
-    state.favoriteOnAt[pet.id]=state.favoriteOnAt[pet.id]||{};
-    state.removedFavorites[pet.id]=state.removedFavorites[pet.id]||{};
-    if(on){state.removedFavorites[pet.id][id]=now;delete state.favoriteOnAt[pet.id][id];}
-    else{state.favoriteOnAt[pet.id][id]=now;delete state.removedFavorites[pet.id][id];}
-  }
-  save();
-  if(document.getElementById('modal')?.open)foodDetails(id);else render();
-};
-function compareModalFixed(){
-  const foods=currentFavorites().map(foodById).filter(Boolean).slice(0,3);
-  if(foods.length<2)return toast('Добавьте в избранное хотя бы два корма');
-  const cell=(value)=>`<b>${value}</b>`;
-  const row=(label,values)=>`<div class="compare-metric" style="grid-template-columns:minmax(88px,1.1fr) repeat(${foods.length},minmax(0,1fr))"><span>${label}</span>${values.map(cell).join('')}</div>`;
-  const verified=food=>food.custom?'вручную':(food.verifiedAt?esc(String(food.verifiedAt).slice(0,7)):'—');
-  openModal(`<div class="compare-parity"><div class="pet-menu-back" onclick="modal.close();tab='foods';render()">‹ <span>NutriPate</span></div><h2>Сравнить избранные корма</h2><p class="muted">${foods.length} корма · одна и та же порция по профилю</p><div class="compare-foods" style="grid-template-columns:repeat(${foods.length},minmax(0,1fr))">${foods.map(f=>`<article><div class="compare-food-image">${foodImage(f)?`<img src="${esc(foodImage(f))}" alt="">`:'🥫'}</div><h3>${esc(f.name)}</h3><p>${esc(f.brand)}</p></article>`).join('')}</div>${row('Белок',foods.map(f=>f.proteinPer100g!=null?esc(f.proteinPer100g)+'%':'—'))}${row('Жир',foods.map(f=>f.fatPer100g!=null?esc(f.fatPer100g)+'%':'—'))}${row('Ккал / 100 г',foods.map(f=>f.kcalPer100g!=null?esc(f.kcalPer100g):'—'))}${row('День питания',foods.map(dayCostLabel))}${row('Состав сверен',foods.map(verified))}<div class="card mint-card compare-note"><b>Цена не ставит корм выше</b><p>Порядок в подборе зависит от профиля. Здесь только сравнение избранных кормов.</p></div><button class="primary full" onclick="modal.close()">Готово</button><button class="soft-button full food-back-lower" onclick="modal.close();tab='foods';render()">Назад к кормам</button></div>`);
 }
-compareModal=compareModalFixed;
-const bindFavorites=bind;
-bind=function(){
-  bindFavorites();
-  document.querySelectorAll('[data-fav]').forEach(button=>{
-    button.onclick=event=>{
-      event.stopPropagation();
-      const id=button.dataset.fav;
-      const list=currentFavorites();
-      setCurrentFavorites(list.includes(id)?list.filter(x=>x!==id):[...list,id]);
-      save();
+const recommendedFoodsBeforeCanonical=recommendedFoods;
+recommendedFoods=function(p=activePet()){
+  const rows=canonicalCalculation?.all;
+  return rows&&canonicalCalculation.engine_version?rows:recommendedFoodsBeforeCanonical(p);
+};
+const foodRecommendationBeforeCanonical=foodRecommendation;
+foodRecommendation=function(f,p=activePet()){
+  const row=(canonicalCalculation?.all||[]).find(x=>x.food?.id===f?.id);
+  return row?.score!=null?row:foodRecommendationBeforeCanonical(f,p);
+};
+const dailyGramsBeforeCanonical=dailyGrams;
+dailyGrams=function(p=activePet(),food=chosenFood()){
+  const plan=canonicalCalculation?.feeding_plan;
+  if(plan&&food&&plan.food_id===food.id&&Number.isFinite(Number(plan.grams_day)))return Number(plan.grams_day);
+  return dailyGramsBeforeCanonical(p,food);
+};
+const kcalNeedBeforeCanonical=kcalNeed;
+kcalNeed=function(p=activePet()){const value=Number(canonicalCalculation?.feeding_plan?.kcal_day);return Number.isFinite(value)&&value>0?value:kcalNeedBeforeCanonical(p)};
+const renderBeforeCanonicalSync=render;
+render=function(){
+  renderBeforeCanonicalSync();
+  const p=activePet();
+  if(p)syncCanonicalEngine(p);
+};
+render();
+
+(function () {
+  const apiBase = () => window.NUTRIPATE_API_BASE || "http://127.0.0.1:8765";
+  state.account = Object.assign({ token: "", email: "", name: "" }, state.account || {});
+
+  function petToCloud(pet) {
+    const item = Object.assign({}, pet);
+    const weight = item.weightKg != null ? item.weightKg : item.weight;
+    if (weight != null) {
+      item.weight = weight;
+      item.weightKg = weight;
+    }
+    return item;
+  }
+
+  function cloudPayload() {
+    const copy = JSON.parse(JSON.stringify(state));
+    delete copy.account;
+    delete copy.authScreen;
+    if (Array.isArray(copy.pets)) copy.pets = copy.pets.map(petToCloud);
+    return copy;
+  }
+
+  function applyCloud(doc) {
+    const account = state.account;
+    const screen = state.authScreen;
+    // An empty cloud document is a real empty account. Do not merge another
+    // user's local pets, food or diary into it.
+    const next = Object.assign({
+      pets: [], activePetId: null,
+      owner: { name: "", email: "", privacyConsent: false },
+      selectedFoods: {}, favorites: [], feedEntries: [], weights: [], diaryDay: todayKey(),
+    }, doc || {});
+    next.account = account;
+    next.authScreen = screen;
+    next.pets = (doc.pets || []).map((pet) => normalizePet(petToCloud(pet)));
+    if (next.pets.length && !next.activePetId) next.activePetId = next.pets[0].id;
+    if (next.pets.length) next.onboardingDone = true;
+    state = next;
+  }
+
+  function supabaseConfig() {
+    const cfg = window.NUTRIPATE_SUPABASE;
+    return cfg && cfg.url && cfg.key ? cfg : null;
+  }
+
+  function userIdFromToken(token) {
+    const part = String(token || "").split(".")[1] || "";
+    const normalized = part.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized + "=".repeat((4 - normalized.length % 4) % 4);
+    return JSON.parse(atob(padded)).sub;
+  }
+
+  function supabaseMessage(data) {
+    const raw = (data && (data.msg || data.error_description || data.message || data.error)) || "Supabase отклонил запрос.";
+    const text = String(raw);
+    if (/expired|invalid/i.test(text) && /token|otp/i.test(text)) return "Неверный или просроченный код.";
+    if (/rate limit/i.test(text)) return "Слишком много писем. Подождите немного и запросите код снова.";
+    if (/confirmation email|error sending/i.test(text)) return "Письмо не ушло: Яндекс не принял пароль почты NutriPate@yandex.ru. В Supabase откройте Authentication → Emails → SMTP Settings и вставьте пароль приложения Яндекса.";
+    if (/not found/i.test(text)) return "Аккаунт с этой почтой не найден. Сначала зарегистрируйтесь.";
+    return text;
+  }
+
+  async function supabaseFetch(path, options) {
+    const cfg = supabaseConfig();
+    const headers = Object.assign({
+      "Content-Type": "application/json",
+      apikey: cfg.key,
+      Authorization: "Bearer " + ((options && options.token) || state.account.token || cfg.key),
+    }, (options && options.headers) || {});
+    let response;
+    try {
+      response = await fetch(cfg.url + path, { method: (options && options.method) || "GET", headers, body: options && options.body });
+    } catch (error) {
+      throw new Error("Supabase недоступен. Проверьте интернет.");
+    }
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(supabaseMessage(data));
+    return data;
+  }
+
+  async function supabaseApi(path, options) {
+    const body = options && options.body ? JSON.parse(options.body) : {};
+    if (path.endsWith("request-code")) {
+      const register = body.purpose === "register";
+      const payload = { email: body.email, create_user: register };
+      if (register && body.name) payload.data = { display_name: body.name, privacy_consent: true };
+      await supabaseFetch("/auth/v1/otp", { method: "POST", body: JSON.stringify(payload), token: "" });
+      return { ok: true };
+    }
+    if (path.endsWith("verify-code")) {
+      const register = body.purpose === "register";
+      if (register && String(body.name || "").trim().length < 2) throw new Error("Укажите имя.");
+      if (register && !body.privacyConsent) throw new Error("Нужно согласие на обработку персональных данных.");
+      const result = await supabaseFetch("/auth/v1/verify", {
+        method: "POST",
+        token: "",
+        body: JSON.stringify({ email: body.email, token: String(body.code || "").trim(), type: "email" }),
+      });
+      if (!result.access_token) throw new Error("Неверный или просроченный код.");
+      const user = result.user || {};
+      const name = String(body.name || (user.user_metadata && user.user_metadata.display_name) || "").trim();
+      if (register) {
+        await supabaseFetch("/auth/v1/user", {
+          method: "PUT",
+          token: result.access_token,
+          body: JSON.stringify({ data: { display_name: name, privacy_consent: true } }),
+        });
+        await supabaseFetch("/rest/v1/profiles?on_conflict=user_id", {
+          method: "POST",
+          token: result.access_token,
+          headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+          body: JSON.stringify({
+            user_id: user.id,
+            display_name: name,
+            email: user.email || body.email,
+            privacy_consent_at: new Date().toISOString(),
+          }),
+        });
+      }
+      return { token: result.access_token, user: { id: user.id, email: user.email || body.email, name } };
+    }
+    if (path === "/api/me/state" && (!options || !options.method || options.method === "GET")) {
+      const userId = userIdFromToken(state.account.token);
+      const rows = await supabaseFetch("/rest/v1/app_states?select=state,updated_at&user_id=eq." + encodeURIComponent(userId) + "&limit=1");
+      const row = Array.isArray(rows) ? rows[0] : null;
+      return { state: (row && row.state) || {}, updatedAt: row ? row.updated_at : null };
+    }
+    if (path === "/api/me/state") {
+      const current = await supabaseApi("/api/me/state");
+      const next = Object.assign({}, current.state || {}, body);
+      next.updatedAt = new Date().toISOString();
+      await supabaseFetch("/rest/v1/app_states?on_conflict=user_id", {
+        method: "POST",
+        headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+        body: JSON.stringify({ user_id: userIdFromToken(state.account.token), state: next, updated_at: next.updatedAt }),
+      });
+      return { ok: true, state: next, updatedAt: next.updatedAt };
+    }
+    throw new Error("Запрос к Supabase не поддержан.");
+  }
+
+  async function api(path, options) {
+    if (supabaseConfig() && path.indexOf("/v1/calculate") !== 0) return supabaseApi(path, options);
+    const headers = Object.assign({ "Content-Type": "application/json" }, (options && options.headers) || {});
+    if (state.account.token) headers.Authorization = "Bearer " + state.account.token;
+    let response;
+    try {
+      response = await fetch(apiBase() + path, Object.assign({}, options, { headers }));
+    } catch (error) {
+      throw new Error("Сервер аккаунтов недоступен. Запустите backend.");
+    }
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Сервер аккаунтов отклонил запрос.");
+    return data;
+  }
+
+  let pushTimer = 0;
+  let cloudSyncTimer = 0;
+  let cloudSyncBusy = false;
+  const cloudMoment = value => {
+    const time = Date.parse(String(value || ""));
+    return Number.isFinite(time) ? time : 0;
+  };
+  async function pullCloudState() {
+    if (!state.account?.token || state._applyingCloud || cloudSyncBusy) return;
+    cloudSyncBusy = true;
+    try {
+      const remote = await api("/api/me/state");
+      const remoteState = remote?.state || {};
+      const remoteAt = cloudMoment(remote.updatedAt || remoteState.updatedAt);
+      const localAt = cloudMoment(state.updatedAt);
+      if (remoteAt > localAt) {
+        state._applyingCloud = true;
+        applyCloud(remoteState);
+        state.updatedAt = remote.updatedAt || remoteState.updatedAt || new Date().toISOString();
+        save();
+        state._applyingCloud = false;
+        render();
+      }
+    } catch (error) {
+      // Offline is allowed; the local copy remains available until the next poll.
+    } finally {
+      cloudSyncBusy = false;
+    }
+  }
+  function startCloudSync() {
+    clearInterval(cloudSyncTimer);
+    if (!state.account?.token) return;
+    cloudSyncTimer = setInterval(pullCloudState, 4000);
+    pullCloudState();
+  }
+  window.nutripateAfterSave = function () {
+    if (!state.account.token || state._applyingCloud) return;
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(async () => {
+      if (cloudSyncBusy) return;
+      cloudSyncBusy = true;
+      try {
+        const remote = await api("/api/me/state");
+        const remoteAt = cloudMoment(remote?.updatedAt || remote?.state?.updatedAt);
+        const localAt = cloudMoment(state.updatedAt);
+        if (remoteAt > localAt) {
+          state._applyingCloud = true;
+          applyCloud(remote.state || {});
+          state.updatedAt = remote.updatedAt || remote.state?.updatedAt || new Date().toISOString();
+          save();
+          state._applyingCloud = false;
+          render();
+          return;
+        }
+        const result = await api("/api/me/state", { method: "PUT", body: JSON.stringify(cloudPayload()) });
+        if (result?.updatedAt) {
+          state._applyingCloud = true;
+          state.updatedAt = result.updatedAt;
+          save();
+          state._applyingCloud = false;
+        }
+      } catch (error) {
+        /* локальная копия уже записана */
+      } finally {
+        cloudSyncBusy = false;
+      }
+    }, 300);
+  };
+
+  function authView() {
+    const login = state.authScreen !== "register";
+    return `<section class="auth-screen"><div class="form">
+      <h1>${login ? "Вход" : "Регистрация"}</h1>
+      <p class="muted">${login ? "Почта и одноразовый код. Пароль не нужен." : "Имя, почта, одноразовый код и согласие на обработку персональных данных."}</p>
+      ${login ? "" : `<label>Имя<input id="authName" value="${esc(state.authName || "")}" placeholder="Как к вам обращаться"></label>`}
+      <label>Электронная почта<input id="authEmail" type="email" value="${esc(state.authEmail || "")}" placeholder="name@example.com"></label>
+      ${login ? "" : `<label class="consent-row"><input id="authConsent" type="checkbox" ${state.authConsent ? "checked" : ""}><span>Я согласен(на) на обработку персональных данных</span></label><a class="policy-link" href="privacy-policy.pdf" target="_blank" rel="noopener">Открыть политику обработки данных</a>`}
+      <button class="soft-button" id="authRequest" type="button">Получить код</button>
+      <label>Одноразовый код<input id="authCode" inputmode="numeric" maxlength="6" value="${esc(state.authCode || "")}" placeholder="6 цифр"></label>
+      ${state.authHint ? `<p class="auth-hint">${esc(state.authHint)}</p>` : ""}
+      ${state.authError ? `<p class="auth-error">${esc(state.authError)}</p>` : ""}
+      <button class="primary" id="authSubmit" type="button">${login ? "Войти" : "Создать аккаунт"}</button>
+      <button class="soft-button" id="authSwitch" type="button">${login ? "Нет аккаунта — зарегистрироваться" : "Уже есть аккаунт — войти"}</button>
+      <button class="link-button" id="authBack" type="button">Назад</button>
+    </div></section>`;
+  }
+
+  function readAuthFields() {
+    const email = document.getElementById("authEmail");
+    const name = document.getElementById("authName");
+    const code = document.getElementById("authCode");
+    const consent = document.getElementById("authConsent");
+    if (email) state.authEmail = email.value.trim();
+    if (name) state.authName = name.value.trim();
+    if (code) state.authCode = code.value.trim();
+    if (consent) state.authConsent = consent.checked;
+  }
+
+  function bindAuth() {
+    const request = document.getElementById("authRequest");
+    const submit = document.getElementById("authSubmit");
+    const back = document.getElementById("authBack");
+    const swap = document.getElementById("authSwitch");
+    if (request) request.onclick = requestAuthCode;
+    if (submit) submit.onclick = submitAuth;
+    if (back) back.onclick = () => { readAuthFields(); state.authScreen = null; render(); };
+    if (swap) swap.onclick = () => {
+      readAuthFields();
+      state.authScreen = state.authScreen === "register" ? "login" : "register";
+      state.authError = "";
       render();
     };
-  });
-  document.querySelectorAll('.food-card').forEach(card=>{
-    const opener=card.querySelector('[data-food]');
-    if(!opener)return;
-    card.onclick=event=>{if(event.target.closest('button'))return;foodDetails(opener.dataset.food)};
-  });
-};
-function mealCodeWeb(value){
-  const text=String(value||'').trim().toLowerCase();
-  if(text==='morning'||text.startsWith('утр'))return 'morning';
-  if(text==='day'||text.startsWith('дн'))return 'day';
-  if(text==='evening'||text.startsWith('веч'))return 'evening';
-  return '';
-}
-function feedsTodayWeb(){
-  const pet=activePet();
-  return (state.feedEntries||[]).filter(x=>pet&&x.petId===pet.id&&x.date===todayKey()&&(x.kind||'feed')==='feed');
-}
-function nextMealSlot(){
-  const rows=mealRows();
-  const done=new Set(feedsTodayWeb().map(x=>mealCodeWeb(x.meal)).filter(Boolean));
-  let index=done.size?['morning','day','evening'].findIndex(code=>!done.has(code)):Math.min(feedsTodayWeb().length,3);
-  if(index<0)index=3;
-  return {index,row:rows[index]||null};
-}
-const actionsFeedGap=actions;
-actions=function(a){
-  if(a==='open-diary'){tab='diary';render();return}
-  if(a==='feed'){
-    const left=Math.ceil((30000-(Date.now()-(window.__feedAt||0)))/1000);
-    if(window.__feedAt&&left>0){toast('Вы сможете повторно запустить корм через '+left+' секунд');return}
-    const slot=nextMealSlot();
-    const food=chosenFood();
-    if(!food){toast('Сначала выберите корм');tab='foods';render();return}
-    if(!slot.row){toast('На сегодня порции уже записаны');return}
-    const code=['morning','day','evening'][slot.index];
-    state.feedEntries.push({id:'f'+Math.random().toString(16).slice(2,10),petId:activePet().id,date:todayKey(),meal:code,kind:'feed',grams:slot.row.grams,time:new Date().toTimeString().slice(0,5),foodId:food.id,foodName:food.brand+' · '+food.name,name:food.name});
-    save();
-    window.__feedAt=Date.now();
-    toast('Порция записана');
-    render();
-    return;
   }
-  if(a==='undo-feed'){
-    const rows=feedsTodayWeb();
-    const last=rows[rows.length-1];
-    if(!last){toast('Сегодня ещё нет порций');return}
-    const code=mealCodeWeb(last.meal);
-    const removed=new Set(state.removedFeedIds||[]);
-    state.feedEntries=state.feedEntries.filter(row=>{
-      if(!row||row.petId!==last.petId||row.date!==last.date||(row.kind||'feed')!=='feed')return true;
-      const drop=code?mealCodeWeb(row.meal)===code:row===last;
-      if(drop){
-        const key=String(row.id||[row.petId,row.date,row.time||'',row.kind||'feed',row.meal||'',row.grams||'',row.text||''].join('|'));
-        removed.add(key);
-        removed.add([row.petId,row.date,'feed',mealCodeWeb(row.meal),row.foodId||row.name||''].join('|'));
-      }
-      return !drop;
-    });
-    state.removedFeedIds=[...removed];
-    save();
-    toast('Последняя порция убрана');
-    render();
-    return;
-  }
-  return actionsFeedGap(a);
-};
-const viewTodayFeedSync=viewToday;
-viewToday=function(){
-  let html=viewTodayFeedSync();
-  if(feedsTodayWeb().length && !html.includes('data-action="undo-feed"'))html+='<button type="button" class="kv danger-row" data-action="undo-feed"><span>Отменить последнюю порцию</span><span>›</span></button>';
-  const slot=nextMealSlot();
-  const pet=activePet(),food=chosenFood();
-  if(!pet||!food)return html;
-  if(!slot.row){
-    html=html.replace(/<div class="meal-top">[^<]*<\/div>/,'<div class="meal-top">ВСЕ ТРИ ПОРЦИИ ЗАПИСАНЫ</div>');
-    html=html.replace(/<h2>[^<]*<\/h2>/,'<h2>На сегодня всё</h2>');
-    html=html.replace(/(<div class="grams">)\d+/,'$10');
-    html=html.replace('data-action="feed">Покормил','data-action="open-diary">Открыть дневник');
-  }else{
-    html=html.replace(/<div class="meal-top">[^<]*<\/div>/,'<div class="meal-top">СЛЕДУЮЩЕЕ · '+slot.row.time+'</div>');
-    html=html.replace(/<h2>[^<]*<\/h2>/,'<h2>'+slot.row.name+'</h2>');
-    html=html.replace(/(<div class="grams">)\d+/,'$1'+slot.row.grams);
-  }
-  html=html.replace(/Дать сегодня: <b>\d+ г<\/b>/,'Норма '+dailyGrams()+' г / день · эта порция <b>'+(slot.row?slot.row.grams:0)+' г</b>');
-  if(!feedsTodayWeb().length)html=html.replace(/<button[^>]*data-action="undo-feed"[\s\S]*?<\/button>/,'');
-  else if(!html.includes('data-action="undo-feed"'))html+='<button type="button" class="kv danger-row" data-action="undo-feed"><span>Отменить последнюю порцию</span><span>›</span></button>';
-  return html;
-};
-const savePetStamp=window.savePet;
-window.savePet=function(id){
-  const result=savePetStamp.apply(this, arguments);
-  const pet=id?state.pets.find(x=>x.id===id):state.pets[state.pets.length-1];
-  if(pet){pet.updatedAt=new Date().toISOString();pet.weightKg=Number(pet.weightKg||pet.weight)||pet.weightKg;state.activePetAt=pet.updatedAt;save()}
-  return result;
-};
-const choosePetStamp=window.choosePet;
-window.choosePet=function(id){state.activePetAt=new Date().toISOString();return choosePetStamp(id)};
-function canonPet(p){
-  if(!p)return p;
-  const w=Number(p.weightKg!=null?p.weightKg:p.weight);
-  const weight=Number.isFinite(w)&&w>0?w:4;
-  const copy=Object.assign({},p,{weight,weightKg:weight});
-  const raw=p.targetWeightKg!=null?p.targetWeightKg:p.targetWeight;
-  const target=Number(raw);
-  if(Number.isFinite(target)){copy.targetWeight=target;copy.targetWeightKg=target}
-  return copy;
-}
-const dailyGramsSame=dailyGrams;
-function appDayGrams(p=activePet(),food=chosenFood()){
-  p=canonPet(p);
-  if(!p||!food)return 0;
-  const per=Number(food.kcalPer100g||food.kcal100||food.kcal_per_100g||0);
-  if(!per)return 0;
-  const need=kcalNeed(p);
-  const budget=Math.max(need*0.75,need);
-  return Math.max(0,Math.round(budget/per*100/5)*5);
-}
-dailyGrams=function(p=activePet(),food=chosenFood()){return appDayGrams(p,food)};
-petPhoto=function(p){
-  if(p&&p.photo)return p.photo;
-  const list=[...((breedCatalogData&&breedCatalogData.cats)||[]),...((breedCatalogData&&breedCatalogData.dogs)||[])];
-  const id=String(p&&p.breedId||'');
-  const name=String(p&&(p.breedLabel||p.breed)||'').toLowerCase().replaceAll('ё','е');
-  const found=list.find(x=>x.id===id)||list.find(x=>String(x.name||'').toLowerCase().replaceAll('ё','е')===name)||list.find(x=>name&&String(x.name||'').toLowerCase().replaceAll('ё','е').includes(name));
-  const file=found?.id||(name.includes('британ')||name.includes('british')?'cat-01':'');
-  if(file)return 'assets/breeds/'+file+'.png?v=breed-photo-4';
-  return p&&p.species==='dog'?'assets/dachshund.png':'assets/report_cat.jpg';
-};
-const kcalNeedSame=kcalNeed;
-kcalNeed=function(p){return kcalNeedSame(canonPet(p))};
-const derFactorSame=derFactor;
-derFactor=function(p){return derFactorSame(canonPet(p))};
-function split3Grams(total){
-  total=Math.max(0,Number(total)||0);
-  const morning=Math.round(total/3);
-  const day=Math.round(total/3);
-  let evening=total-morning-day;
-  if(evening<0){day+=evening;evening=0}
-  return {morning,day,evening};
-}
-mealRows=function(){
-  const total=dailyGrams();
-  const parts=split3Grams(total);
-  const r=state.reminders||{};
-  return [
-    {name:'Утро',code:'morning',time:r.morning||'08:00',grams:parts.morning},
-    {name:'День',code:'day',time:r.day||'13:00',grams:parts.day},
-    {name:'Вечер',code:'evening',time:r.evening||'19:00',grams:parts.evening},
-  ];
-};
-const viewTodaySameNumber=viewToday;
-viewToday=function(){
-  let html=viewTodaySameNumber();
-  const day=appDayGrams();
-  const given=feedsTodayWeb().reduce((sum,row)=>sum+Number(row.grams||0),0);
-  html=html.replace(/(Питание сегодня<\/span><strong>)\d+ из \d+ г/,'$1'+given+' из '+day+' г');
-  return html;
-};
-const renderFavoriteSync=render;
-render=function(){
-  const pet=typeof activePet==='function'?activePet():null;
-  if(pet&&state.favoritesByPet&&Array.isArray(state.favoritesByPet[pet.id]))state.favorites=state.favoritesByPet[pet.id].slice();
-  return renderFavoriteSync();
-};
 
-(function(){
-  if(document.querySelector('script[src*="webversion-auth-placeholder.js"]'))return;
-  const lib=document.createElement('script');
-  lib.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js';
-  lib.onload=()=>{const app=document.createElement('script');app.src='webversion-auth-placeholder.js?v=4';document.body.appendChild(app);};
-  document.body.appendChild(lib);
+  async function requestAuthCode() {
+    readAuthFields();
+    state.authError = "";
+    state.authHint = "";
+    try {
+      const data = await api("/api/auth/request-code", {
+        method: "POST",
+        body: JSON.stringify({ email: state.authEmail, purpose: state.authScreen === "register" ? "register" : "login", name: state.authName || "" }),
+      });
+      state.authHint = data.devCode ? "Код отправлен. Для этой сборки код: " + data.devCode : "Код отправлен на почту.";
+    } catch (error) {
+      state.authError = error.message;
+    }
+    render();
+  }
+
+  async function submitAuth() {
+    readAuthFields();
+    const purpose = state.authScreen === "register" ? "register" : "login";
+    const previousAccount = Object.assign({}, state.account || {});
+    const previousOwnerEmail = String(state.owner?.email || "").trim().toLowerCase();
+    const localDraft = JSON.parse(JSON.stringify(state));
+    state.authError = "";
+    try {
+      const data = await api("/api/auth/verify-code", {
+        method: "POST",
+        body: JSON.stringify({
+          email: state.authEmail,
+          code: state.authCode,
+          purpose,
+          name: state.authName || "",
+          privacyConsent: Boolean(state.authConsent),
+        }),
+      });
+      state.account = { token: data.token, email: data.user.email, name: data.user.name || "" };
+      const remote = await api("/api/me/state");
+      const cloud = (remote && remote.state) || {};
+      const hasCloudData = Boolean(cloud.updatedAt || cloud.savedAt || (cloud.pets || []).length || cloud.owner?.email);
+      // Only a brand-new registration may claim the anonymous onboarding draft.
+      // Existing accounts always load their own cloud state, including empty state.
+      const canClaimDraft = purpose === "register" && !previousAccount.token && !previousOwnerEmail && !hasCloudData;
+      if (!canClaimDraft) {
+        state._applyingCloud = true;
+        applyCloud(cloud);
+        state.owner = Object.assign({}, state.owner, { name: data.user.name || state.owner.name || "", email: data.user.email, privacyConsent: true });
+        state._applyingCloud = false;
+      } else {
+        state = Object.assign({}, localDraft, { account: state.account, authScreen: state.authScreen });
+        state.owner = Object.assign({}, state.owner, { name: data.user.name || state.owner.name || "", email: data.user.email, privacyConsent: true });
+      }
+      state.authScreen = null;
+      state.authCode = "";
+      state.authHint = "";
+      save();
+      startCloudSync();
+      toast(state.pets.length ? "Аккаунт открыт, питомцы подтянулись" : (purpose === "register" ? "Аккаунт сохранён" : "Вы вошли"));
+    } catch (error) {
+      state.authError = error.message;
+    }
+    render();
+  }
+
+  const renderBeforeAccount = render;
+  render = function () {
+    if (state.authScreen) {
+      const nav = document.querySelector(".bottom-nav");
+      const switcher = document.getElementById("petSwitcher");
+      if (!activePet()) {
+        document.querySelector(".app-shell")?.classList.add("no-pet");
+        if (nav) { nav.hidden = true; nav.style.setProperty("display", "none", "important"); }
+        if (switcher) switcher.style.display = "none";
+      }
+      document.getElementById("appMain").innerHTML = authView();
+      bindAuth();
+      return;
+    }
+    renderBeforeAccount();
+  };
+
+  const actionsBeforeAccount = actions;
+  actions = function (name) {
+    if (name === "login") { state.authScreen = "login"; state.authError = ""; render(); return; }
+    if (name === "register") { state.authScreen = "register"; state.authError = ""; render(); return; }
+    if (name === "logout") {
+      state.account = { token: "", email: "", name: "" };
+      state.pets = [];
+      state.activePetId = null;
+      state.selectedFoods = {};
+      state.favorites = [];
+      state.feedEntries = [];
+      state.weights = [];
+      state.owner = { name: "", email: "", privacyConsent: false };
+      state.onboardingDone = false;
+      clearInterval(cloudSyncTimer);
+      save();
+      toast("Вы вышли из аккаунта");
+      render();
+      return;
+    }
+    return actionsBeforeAccount(name);
+  };
+
+  const viewMoreBeforeAccount = viewMore;
+  viewMore = function () {
+    const html = viewMoreBeforeAccount();
+    const signed = Boolean(state.account && state.account.token);
+    const row = signed
+      ? `<button class="kv" data-action="logout"><span>Аккаунт</span><strong>${esc(state.account.email)}</strong><span>Выйти</span></button>`
+      : `<button class="kv" data-action="login"><span>Войти</span><strong>Почта и код</strong><span>›</span></button><button class="kv" data-action="register"><span>Регистрация</span><strong>Имя, почта, согласие</strong><span>›</span></button>`;
+    return html.replace('<button class="kv" data-action="owner">', row + '<button class="kv" data-action="owner">');
+  };
+  // One final save handler. Earlier versions wrapped savePet several times;
+  // any validation failure in one wrapper silently stopped the whole chain.
+  window.savePet = function (id) {
+    try {
+      const name = $('petInputName')?.value.trim() || '';
+      const species = $('petInputSpecies')?.value || 'cat';
+      const selectedBreed = $('petInputBreed')?.value || '';
+      const age = readNumber('petInputAge');
+      const weight = readNumber('petInputWeight');
+      const target = readNumber('petInputTarget');
+      const sex = $('petInputSex')?.value || 'female';
+      const activity = document.querySelector('input[name="activity"]:checked')?.value || 'medium';
+      const sterilized = document.querySelector('input[name="sterilized"]:checked')?.value === 'yes';
+      const diagnoses = [...document.querySelectorAll('input[name="diagnosis"]:checked')].map(x => x.value);
+      const allergens = [...document.querySelectorAll('input[name="allergen"]:checked')].map(x => x.value);
+      if (diagnoses.length > 1 && diagnoses.includes('healthy')) diagnoses.splice(diagnoses.indexOf('healthy'), 1);
+      if (!diagnoses.length) diagnoses.push('healthy');
+      if (!name) return formError('Укажите имя питомца.');
+      if (!Number.isFinite(weight) || weight <= 0 || weight > 120) return formError('Вес должен быть от 0,1 до 120 кг.');
+      if (!Number.isFinite(age) || age < 0 || age > 360) return formError('Возраст должен быть от 0 до 360 месяцев.');
+      if (target !== null && (!Number.isFinite(target) || target <= 0 || target > 120)) return formError('Проверьте целевой вес.');
+      if (target !== null && Math.abs(target - weight) > 80) return formError('Целевой вес слишком сильно отличается от текущего.');
+      if (!diagnoses.includes('allergy') && allergens.length) return formError('Чтобы указать аллерген, отметьте диагноз «Аллергия».');
+
+      const entry = breedEntries(species).find(x => x.value === selectedBreed || x.id === selectedBreed || x.name === selectedBreed);
+      if (!entry) return formError('Выберите породу питомца.');
+      const existing = id ? state.pets.find(x => x.id === id) : null;
+      const normalized = {
+        name, species, breedId: entry.id, breed: entry.name, breedLabel: entry.name,
+        sex, ageMonths: Math.round(age), weight, targetWeight: target,
+        sterilized, activity, diagnoses, allergens
+      };
+      const hasUploadedPhoto = typeof petPhotoDraft === 'string' && /^data:image\//i.test(petPhotoDraft);
+      if (hasUploadedPhoto) {
+        normalized.photo = petPhotoDraft;
+        normalized.photoSource = 'user';
+      } else if (existing && (existing.photoSource === 'user' || /^data:image\//i.test(existing.photo || ''))) {
+        normalized.photo = existing.photo;
+        normalized.photoSource = 'user';
+      } else {
+        normalized.photo = null;
+        normalized.photoSource = 'breed';
+      }
+      const saved = existing || Object.assign({ id: 'pet-' + Date.now() }, normalized);
+      if (existing) Object.assign(saved, normalized);
+      if (!existing) {
+        state.pets.push(saved);
+        state.selectedFoods[saved.id] = '__not_selected__';
+      }
+      state.activePetId = saved.id;
+      save();
+      petPhotoDraft = null;
+      $('modal')?.close();
+      toast('Профиль сохранён');
+      render();
+    } catch (error) {
+      console.error('savePet failed', error);
+      formError('Не удалось сохранить профиль. Попробуйте ещё раз.');
+    }
+  };
+  startCloudSync();
 })();
