@@ -288,7 +288,7 @@
     const list = catalogBreeds(pet.species);
     const id = String(pet.breedId || "");
     const label = String(pet.breedLabel || pet.breed || "").trim();
-    const found = list.find((item) => item.id === id) || list.find((item) => item.name === label || item.name === String(pet.breed || "").trim());
+    const found = list.find((item) => item.name === label) || list.find((item) => item.id === id);
     if (!found) return pet;
     pet.breedId = found.id;
     pet.breed = found.name;
@@ -351,7 +351,14 @@
         const takeIncoming = incomingStamp !== previousStamp ? incomingStamp > previousStamp : sideSaved >= (petSide.get(pet.id) || '');
         const winner = takeIncoming ? pet : previous;
         const other = takeIncoming ? previous : pet;
-        byId.set(pet.id, Object.assign({}, winner, { photo: winner.photo || other.photo || null }));
+        const mergedPet = Object.assign({}, winner, { photo: winner.photo || other.photo || null });
+        if (String(other.breedSetAt || "") > String(winner.breedSetAt || "")) {
+          mergedPet.breed = other.breed;
+          mergedPet.breedId = other.breedId;
+          mergedPet.breedLabel = other.breedLabel;
+          mergedPet.breedSetAt = other.breedSetAt;
+        }
+        byId.set(pet.id, mergedPet);
         if (takeIncoming) petSide.set(pet.id, sideSaved);
       }
     }
