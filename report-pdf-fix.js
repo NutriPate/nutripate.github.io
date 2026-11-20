@@ -7,6 +7,8 @@
     const entries = state.feedEntries.filter(x => x.petId === p.id);
     const feeds = entries.filter(x => (x.kind || 'feed') === 'feed');
     const notes = entries.filter(x => x.kind === 'note');
+    const selectedFood = typeof chosenFood === 'function' ? chosenFood() : null;
+    const dailyRation = typeof dailyGrams === 'function' ? dailyGrams() : 0;
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const W = 1200, H = 1700;
@@ -32,13 +34,14 @@
     const page = () => { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); text('NutriPate', 80, 70, 34, '#07383a', true); };
     const draw = photo => {
       page();
-      text('Отчёт о питомце', 80, 150, 54); text(`${p.name || 'Питомец'} - питание и изменения состояния`, 80, 220, 28, '#53716f');
+      text('Отчёт для ветеринара', 80, 150, 54); text(`${p.name || 'Питомец'} - питание и изменения состояния`, 80, 220, 28, '#53716f');
       box(300, 470, true); text('01 ПАСПОРТ ПИТОМЦА', 95, 340, 20, '#53716f');
       if (photo) { const maxW = 270, maxH = 270, scale = Math.min(maxW / photo.naturalWidth, maxH / photo.naturalHeight), iw = photo.naturalWidth * scale, ih = photo.naturalHeight * scale; ctx.drawImage(photo, 95 + (maxW - iw) / 2, 385 + (maxH - ih) / 2, iw, ih); }
       text(p.name || 'Питомец', 420, 405, 34);
       block(`${p.species === 'dog' ? 'Собака' : 'Кошка'} · ${ru(p.breedLabel || p.breed || 'Порода не указана')}`, 420, 450, 650, 23);
       text(`Текущий вес: ${p.weight || p.kg || '—'} кг`, 420, 550, 25);
       text(`Целевой вес: ${p.targetWeight || '—'} кг`, 790, 550, 25);
+      block(`Рацион: ${selectedFood ? `${selectedFood.brand} ${selectedFood.name}` : 'не выбран'} · ${dailyRation || 0} г / день`, 420, 610, 650, 21, '#53716f');
       block(`Аллергии: ${ru(p.allergens || 'не указаны')}`, 105, 680, 980, 21);
       block(`Особенности: ${ru(p.diagnoses || 'не указаны')}`, 105, 720, 980, 21);
       text('Данные внесены владельцем и не заменяют консультацию ветеринара.', 105, 760, 18, '#53716f');
@@ -55,7 +58,7 @@
       let y = 260; if (feeds.length) feeds.forEach(r => { box(y, 100); text(r.date || 'Дата не указана', 105, y + 22, 20, '#53716f'); text(`${r.foodName || 'Корм'} · ${r.grams || 0} г`, 105, y + 60, 25, '#07383a', true); y += 125; }); else text('Записей кормлений пока нет.', 105, y, 24, '#53716f');
       box(y + 30, 210); text('04 АЛЛЕРГИИ И ИЗМЕНЕНИЯ СОСТОЯНИЯ', 95, y + 65, 20, '#53716f'); text(`Аллергии: ${ru(p.allergens || 'не указаны')}`, 95, y + 115, 24); text(notes.length ? notes.map(x => ru(x.text || x.name || 'Наблюдение')).join(' | ') : 'Наблюдений владельца пока нет.', 95, y + 160, 21);
       box(y + 280, 210, true); text('05 ИТОГОВАЯ СВОДКА', 95, y + 315, 20, '#53716f'); text(`Текущий вес: ${last.toFixed(1).replace('.', ',')} кг`, 95, y + 365, 26); text(`Кормлений: ${feeds.length} · записей веса: ${weights.length}`, 95, y + 410, 24); text('Отчёт содержит только внесённые данные.', 95, y + 465, 19, '#53716f');
-      doc.addPage(); doc.addImage(canvas.toDataURL('image/jpeg', .95), 'JPEG', 0, 0, 595, 842); doc.save(`nutripate-report-${p.name || 'pet'}.pdf`); toast('PDF-отчёт скачан');
+      doc.addPage(); doc.addImage(canvas.toDataURL('image/jpeg', .95), 'JPEG', 0, 0, 595, 842); doc.save(`nutripate-vet-report-${p.name || 'pet'}.pdf`); toast('PDF-отчёт скачан');
     };
     const photo = new Image(); photo.onload = () => draw(photo); photo.onerror = () => draw(null); photo.src = typeof petPhoto === 'function' ? petPhoto(p) : '';
     if (photo.complete && photo.naturalWidth) draw(photo);
