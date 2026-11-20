@@ -36,6 +36,14 @@
       }
     });
     const labelButton = [...detail.querySelectorAll('button')].find((button) => button.textContent.trim() === 'Этикетка');
+    if (labelButton && !labelButton.dataset.purchaseFixed) {
+      labelButton.dataset.purchaseFixed = '1';
+      labelButton.type = 'button';
+      labelButton.onclick = () => {
+        const target = productUrl || `https://market.yandex.ru/search?text=${encodeURIComponent(foodName)}`;
+        window.open(target, '_blank', 'noopener,noreferrer');
+      };
+    }
     const action = [...detail.querySelectorAll('button')].find((button) => {
       const text = button.textContent.trim();
       return text === 'Добавить в рацион' || text === 'Добавить вторым кормом' || text.startsWith('Убрать');
@@ -43,6 +51,10 @@
     if (labelButton && action && action.nextElementSibling !== labelButton) action.after(labelButton);
     const back = detail.querySelector('.food-detail-back');
     if (labelButton && back && labelButton.nextElementSibling !== back) labelButton.after(back);
+    if (back) {
+      back.style.marginTop = '18px';
+      back.style.display = 'inline-flex';
+    }
   }
   new MutationObserver(fixFoodControls).observe(document.documentElement, {subtree: true, childList: true, attributes: true, attributeFilter: ['open']});
   setTimeout(fixFoodControls, 0);
