@@ -18,6 +18,17 @@
     if (anchor) anchor.after(button);
     else detail.appendChild(button);
   }
-  new MutationObserver(addBackButton).observe(document.documentElement, {subtree: true, childList: true, attributes: true, attributeFilter: ['open']});
+  function updateParameterLabel() {
+    const detail = document.querySelector('#modal[open] .food-detail');
+    if (!detail) return;
+    const heading = [...detail.querySelectorAll('.mint-card h3')].find((item) => /Подойд[её]т ли|Подойдет ли/i.test(item.textContent));
+    if (!heading) return;
+    heading.textContent = 'Подходит под ваши параметры';
+    const description = heading.parentElement.querySelector('p');
+    if (description) description.textContent = 'Корм соответствует выбранным параметрам питомца.';
+  }
+  const refresh = () => { addBackButton(); updateParameterLabel(); };
+  new MutationObserver(refresh).observe(document.documentElement, {subtree: true, childList: true, attributes: true, attributeFilter: ['open']});
   setTimeout(addBackButton, 0);
+  setTimeout(updateParameterLabel, 0);
 }());
