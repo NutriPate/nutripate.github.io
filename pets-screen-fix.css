@@ -1,0 +1,25 @@
+.pets-parity { padding-bottom: 20px; }
+.pets-meal-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 -2px 10px; padding:10px 15px; border-radius:18px; background:var(--mint); color:var(--teal); font-size:13px; }
+.pets-meal-bar button { border:0; padding:0; background:transparent; color:var(--teal); font-weight:700; cursor:pointer; }
+.pets-parity-title { padding:0 0 14px; }
+.pets-parity-title h1 { margin:0; font:700 30px/1.1 Georgia,"Times New Roman",serif; letter-spacing:-.04em; }
+.pets-hero-card { display:grid; grid-template-columns:1fr 126px; gap:12px; align-items:center; margin-bottom:18px; padding:18px 16px 16px; border:0; border-radius:20px; background:var(--mint); }
+.pets-hero-card h2 { margin:0 0 5px; font:400 27px/1.05 Georgia,"Times New Roman",serif; letter-spacing:-.04em; }
+.pets-hero-card p { margin:0 0 4px; color:var(--muted); font-size:14px; }
+.pets-hero-card .soft-button { margin-top:7px; min-height:36px; padding:7px 14px; border:0; border-radius:18px; font-size:13px; }
+.pets-hero-photo { width:126px; height:142px; object-fit:contain; align-self:end; }
+.pets-info-list { margin-bottom:16px; }
+.pets-info-row { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:66px; padding:15px 0; border-bottom:1px solid var(--line); }
+.pets-info-row span { color:var(--muted); }
+.pets-info-row strong { font-weight:400; text-align:right; }
+.pets-info-row b { color:var(--teal); font-size:20px; font-weight:400; }
+.pets-ration-card { margin:16px 0; padding:17px 15px; border:1px solid var(--line); border-radius:18px; background:#fff; }
+.pets-ration-card h3 { margin:0 0 4px; font:700 17px/1.2 Georgia,"Times New Roman",serif; }
+.pets-ration-card p { margin:3px 0; color:var(--muted); }
+.pets-report-card { margin:16px 0 18px; padding:17px 15px 16px; border:0; border-radius:20px; background:var(--mint); }
+.pets-report-card h3 { margin:0 0 8px; font:700 18px/1.2 Georgia,"Times New Roman",serif; }
+.pets-report-card p { margin:0 0 12px; color:var(--muted); }
+.pets-report-card .primary { width:100%; min-height:48px; border-radius:17px; }
+.pets-add { margin-top:16px; padding:15px 0; border:0; border-bottom:1px solid var(--line); border-radius:0; background:transparent; color:var(--ink); text-align:left; font-weight:700; }
+.pets-disclaimer { margin:14px 0 0; padding-bottom:8px; border-bottom:1px solid var(--line); font-size:12px; }
+@media(max-width:480px){.pets-hero-card{grid-template-columns:1fr 112px}.pets-hero-photo{width:112px;height:132px}}
