@@ -159,6 +159,7 @@ h3 { margin-bottom: 8px; font-size: 26px; }
   gap: 16px 20px;
   margin: 28px 0 32px;
 }
+.hero-web-version-button { padding: 18px 30px; font-size: 15px; }
 .facts {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
