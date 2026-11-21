@@ -123,6 +123,10 @@
     const more = document.querySelector(".nav-item[data-tab='more']");
     if (!more) return;
     let badge = more.querySelector(".nav-alert");
+    if (AUTH_FROZEN) {
+      if (badge) badge.remove();
+      return;
+    }
     if (accountEmail) {
       if (badge) badge.remove();
       return;
@@ -144,8 +148,7 @@
   }
 
   function accountPointer() {
-    if (accountEmail) return "";
-    return `<div class="account-pointer"><b>↓</b><span>Зарегистрируйтесь внизу экрана</span></div>`;
+    return "";
   }
 
   if (typeof viewMore === 'function') {
