@@ -911,5 +911,16 @@ render();
     };
     speciesInput?.addEventListener('change', updateBodyConditionImage);
   };
+  const petFormWithReadableBodyGuide = petForm;
+  petForm = function (raw) {
+    petFormWithReadableBodyGuide(raw);
+    const guide = document.querySelector('#modalContent .body-condition-guide');
+    if (!guide || guide.querySelector('.body-condition-steps')) return;
+    guide.querySelector('.body-condition-figure')?.remove();
+    const lead = guide.querySelector('.body-condition-lead');
+    if (lead) lead.textContent = 'Проверьте три простых признака. Это ориентир, а не диагноз.';
+    const list = guide.querySelector('ol');
+    if (list) list.insertAdjacentHTML('beforebegin', '<div class="body-condition-steps"><div><b>1. Рёбра</b><span>Прощупываются ладонью, но не выступают наружу.</span></div><div><b>2. Талия</b><span>Если смотреть сверху, за рёбрами заметно сужение.</span></div><div><b>3. Живот</b><span>Если смотреть сбоку, он немного подтянут, а не округлён и не свисает.</span></div></div>');
+  };
   startCloudSync();
 })();
