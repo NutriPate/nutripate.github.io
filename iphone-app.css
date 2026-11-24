@@ -40,7 +40,7 @@ html,body,button,input,select,textarea{font-family:"Times New Roman",Times,serif
 .app-logo,.welcome-brand,.screen-title h1{font-family:"Times New Roman",Times,serif!important}
 @media(max-width:420px){.app-shell{width:100%!important;max-width:none!important}}
 .app-shell.no-pet .bottom-nav{display:none!important;visibility:hidden!important}
-.pet-photo-field{display:none!important}
+.pet-photo-field{display:grid!important;grid-template-columns:88px 1fr;align-items:center;gap:10px;margin:0 0 18px;padding-bottom:16px;border-bottom:1px solid var(--line)}
 .pet-form-header{display:flex;align-items:center;gap:10px;margin:0 0 14px;color:var(--teal);font-family:"Times New Roman",Times,serif;font-size:20px}
 .pet-form-header .back-button{width:28px;height:28px;font-size:32px;color:var(--ink)}
 .pet-photo-row{display:flex;align-items:center;gap:12px;margin:8px 0 14px}
@@ -125,7 +125,7 @@ html,body,button,input,select,textarea{font-family:"Times New Roman",Times,serif
 .choice-chip-button.active{border-color:var(--teal);background:var(--mint)}
 html,body,body *{font-family:Montserrat,Arial,sans-serif!important}
 .breed-guide-card{grid-template-columns:96px 1fr 22px;min-height:116px;overflow:visible}
-.breed-guide-card img{width:96px;height:96px;max-width:none;max-height:none;object-fit:contain;object-position:center;overflow:visible;border-radius:14px}
+.breed-guide-card img{width:96px;height:96px;max-width:none;max-height:none;object-fit:contain;object-position:center;overflow:visible;border-radius:14px;background:var(--mint)}
 .breed-detail-image{height:auto!important;min-height:320px!important;padding:24px!important;overflow:visible!important;display:flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important}
 .breed-detail-image img{position:static!important;width:auto!important;height:auto!important;max-width:100%!important;max-height:none!important;object-fit:contain!important;object-position:center!important;flex:0 1 auto!important}
 /* Final app QA override: keep layout stable at every viewport. */
