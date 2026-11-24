@@ -23,15 +23,8 @@ function breedPhotoId(p){
   const direct=String(p?.breedId||'');
   const normalize=value=>String(value||'').toLowerCase().replace(/ё/g,'е').replace(/[‐‑‒–—-]/g,' ').replace(/[^a-zа-я0-9]+/g,' ').trim();
   const wanted=[p?.breedLabel,p?.breed].map(normalize).filter(Boolean);
-  const directDogPhotos={
-    'аляскинский маламут':'assets/breeds/аляскинский маламут.png','американский булли':'assets/breeds/американский булли.png','английский бульдог':'assets/breeds/английский бульдог.png','английский кокер спаниель':'assets/breeds/английский кокер спаниель.png','бернский зенненхунд':'assets/breeds/бернский зенненхунд.png','бигль':'assets/breeds/бигль.png','боксер':'assets/breeds/боксер.png','бордер колли':'assets/breeds/бордер колли.png','вельш корги пемброк':'assets/breeds/вельш-корги пемброк.png','далматин':'assets/breeds/далматин.png','джек рассел терьер':'assets/breeds/джек рассел терьер.png','доберман':'assets/breeds/доберман.png','золотистый ретривер':'assets/breeds/золотистый ретривер.png','йоркширский терьер':'assets/breeds/йоркширский терьер.png','кавалер кинг чарльз спаниель':'assets/breeds/кавалер кинг чарльз спаниель.png','кавказская овчарка':'assets/breeds/кавказская овчарка.png','кане корсо':'assets/breeds/кане корсо.png','лабрадор ретривер':'assets/breeds/лабрадор ретривер.png','мальтийская болонка':'assets/breeds/мальтийская болонка.png','мопс':'assets/breeds/мопс.png','немецкая овчарка':'assets/breeds/немецкая овчарка.png','пекинес':'assets/breeds/пекинес.png','померанский шпиц':'assets/breeds/померанский шпиц.png','пудель':'assets/breeds/пудель.png','ротвейлер':'assets/breeds/ротвейлер.png','русский той':'assets/breeds/русский той.png','самоедская собака':'assets/breeds/самоедская.png','сиба ину':'assets/breeds/сиба-ину.png','сибирский хаски':'assets/breeds/сибирский хаски.png','среднеазиатская овчарка':'assets/breeds/среднеазиатская овчарка.png','стаффордширский бультерьер':'assets/breeds/стаффордширский терьер.png','такса':'assets/breeds/такса.png','французский бульдог':'assets/breeds/французский бульдог.png','чау чау':'assets/breeds/чау-чау.png','чихуахуа':'assets/breeds/чихуахуа.png','шарпей':'assets/breeds/шарпей.png','швергшнауцер':'assets/breeds/швергшнауцер.png','цвергшнауцер':'assets/breeds/швергшнауцер.png','ши тцу':'assets/breeds/ши тцу.png','эрдельтерьер':'assets/breeds/эрдельтерьер.png'
-  };
   if(typeof breedAssetByName!=='undefined'){
     const found=Object.entries(breedAssetByName).find(([name])=>wanted.includes(normalize(name)));
-    if(found)return found[1];
-  }
-  if(p?.species==='dog'){
-    const found=Object.entries(directDogPhotos).find(([name])=>wanted.includes(name));
     if(found)return found[1];
   }
   if(/^(cat|dog)-\d+$/.test(direct))return direct;
