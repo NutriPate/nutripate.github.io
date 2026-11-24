@@ -192,5 +192,6 @@ body .screen-title h1,body .food-parity .screen-title h1,body .diary-parity .scr
 .pet-paw-placeholder.has-photo::before{display:none}
 .pet-paw-placeholder::before{display:none!important}
 .pet-paw-reference{display:block;width:42px;height:42px;object-fit:contain;filter:invert(61%) sepia(86%) saturate(860%) hue-rotate(132deg) brightness(87%) contrast(90%)}
+.photo-clear-inline{font-size:14px;white-space:nowrap}
 .nav-item{color:var(--muted)!important}
 .nav-item.active{color:var(--ink)!important}

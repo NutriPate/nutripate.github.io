@@ -931,6 +931,10 @@ function updatePetPhotoVisual(){
   if(!placeholder.dataset.defaultMarkup)placeholder.dataset.defaultMarkup=placeholder.innerHTML;
   const hasPhoto=typeof petPhotoDraft==='string'&&/^data:image\//i.test(petPhotoDraft);
   placeholder.classList.toggle('has-photo',hasPhoto);
+  const row=placeholder.closest('.pet-photo-row');
+  const clearButton=row?.querySelector('.photo-clear-inline');
+  if(hasPhoto&&!clearButton)row?.insertAdjacentHTML('beforeend','<button type="button" class="link-button photo-clear-inline">Убрать фото</button>');
+  if(!hasPhoto)clearButton?.remove();
   if(hasPhoto){
     placeholder.innerHTML=`<img class="pet-photo-thumb" src="${esc(petPhotoDraft)}" alt="Фото питомца">`;
   }else{
@@ -941,5 +945,15 @@ const petPhotoHandlerWithVisual=handlePetPhoto;
 handlePetPhoto=function(file){petPhotoHandlerWithVisual(file);setTimeout(updatePetPhotoVisual,0)};
 const petFormWithPhotoVisual=petForm;
 petForm=function(raw){petFormWithPhotoVisual(raw);setTimeout(updatePetPhotoVisual,0)};
+document.addEventListener('click',event=>{
+  const clearButton=event.target.closest('.photo-clear-inline');
+  if(!clearButton)return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  petPhotoDraft=null;
+  const input=document.getElementById('petPhotoInput');
+  if(input)input.value='';
+  updatePetPhotoVisual();
+},true);
 
 
