@@ -929,7 +929,9 @@ function updatePetPhotoVisual(){
   const placeholder=document.querySelector('#modalContent .pet-photo-row .pet-paw-placeholder');
   if(!placeholder)return;
   if(!placeholder.dataset.defaultMarkup)placeholder.dataset.defaultMarkup=placeholder.innerHTML;
-  if(typeof petPhotoDraft==='string'&&/^data:image\//i.test(petPhotoDraft)){
+  const hasPhoto=typeof petPhotoDraft==='string'&&/^data:image\//i.test(petPhotoDraft);
+  placeholder.classList.toggle('has-photo',hasPhoto);
+  if(hasPhoto){
     placeholder.innerHTML=`<img class="pet-photo-thumb" src="${esc(petPhotoDraft)}" alt="Фото питомца">`;
   }else{
     placeholder.innerHTML=placeholder.dataset.defaultMarkup;
