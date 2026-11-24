@@ -924,4 +924,20 @@ render();
   startCloudSync();
 })();
 
+// Reflect the selected pet photo in the compact photo action.
+function updatePetPhotoVisual(){
+  const placeholder=document.querySelector('#modalContent .pet-photo-row .pet-paw-placeholder');
+  if(!placeholder)return;
+  if(!placeholder.dataset.defaultMarkup)placeholder.dataset.defaultMarkup=placeholder.innerHTML;
+  if(typeof petPhotoDraft==='string'&&/^data:image\//i.test(petPhotoDraft)){
+    placeholder.innerHTML=`<img class="pet-photo-thumb" src="${esc(petPhotoDraft)}" alt="Фото питомца">`;
+  }else{
+    placeholder.innerHTML=placeholder.dataset.defaultMarkup;
+  }
+}
+const petPhotoHandlerWithVisual=handlePetPhoto;
+handlePetPhoto=function(file){petPhotoHandlerWithVisual(file);setTimeout(updatePetPhotoVisual,0)};
+const petFormWithPhotoVisual=petForm;
+petForm=function(raw){petFormWithPhotoVisual(raw);setTimeout(updatePetPhotoVisual,0)};
+
 
