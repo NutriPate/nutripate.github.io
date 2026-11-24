@@ -190,5 +190,7 @@ body .screen-title h1,body .food-parity .screen-title h1,body .diary-parity .scr
 .pet-paw-placeholder::before{content:"";display:block;width:42px;height:42px;background:var(--teal);-webkit-mask:url("assets/paw-reference-transparent.png") center/contain no-repeat;mask:url("assets/paw-reference-transparent.png") center/contain no-repeat}
 .pet-paw-placeholder .pet-paw-mark{display:none}
 .pet-paw-placeholder.has-photo::before{display:none}
+.pet-paw-placeholder::before{display:none!important}
+.pet-paw-reference{display:block;width:42px;height:42px;object-fit:contain;filter:invert(61%) sepia(86%) saturate(860%) hue-rotate(132deg) brightness(87%) contrast(90%)}
 .nav-item{color:var(--muted)!important}
 .nav-item.active{color:var(--ink)!important}
