@@ -921,6 +921,20 @@ render();
     const list = guide.querySelector('ol');
     if (list) list.insertAdjacentHTML('beforebegin', '<div class="body-condition-steps"><div><b>1. Рёбра</b><span>Прощупываются ладонью, но не выступают наружу.</span></div><div><b>2. Талия</b><span>Если смотреть сверху, за рёбрами заметно сужение.</span></div><div><b>3. Живот</b><span>Если смотреть сбоку, он немного подтянут, а не округлён и не свисает.</span></div></div>');
   };
+  // The map is embedded into the web app. It reuses the same 4 Лапы dataset
+  // and the same lightweight tile/cluster interaction as the desktop app.
+  const viewFoodsBeforeStoreMap = viewFoods;
+  viewFoods = function () {
+    return `${viewFoodsBeforeStoreMap()}<button class="store-map-card" data-action="store-map" type="button"><span class="store-map-icon" aria-hidden="true">⌖</span><span><b>Магазины 4 Лапы</b><small>Все магазины России · карта внутри приложения</small></span><strong>Открыть карту&nbsp;›</strong></button>`;
+  };
+  const actionsBeforeStoreMap = actions;
+  actions = function (name) {
+    if (name === 'store-map') {
+      openModal('<div class="store-map-modal"><div class="store-map-modal-head"><div><h2>Магазины 4 Лапы</h2><p>Нажмите на точку, чтобы увидеть адрес</p></div><button class="icon-button" type="button" onclick="modal.close()" aria-label="Закрыть">×</button></div><iframe class="store-map-frame" src="store-map.html?v=20261124-2" title="Карта магазинов 4 Лапы" loading="eager"></iframe></div>');
+      return;
+    }
+    return actionsBeforeStoreMap(name);
+  };
   startCloudSync();
 })();
 
