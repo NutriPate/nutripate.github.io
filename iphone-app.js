@@ -932,7 +932,7 @@ render();
   const actionsBeforeStoreMap = actions;
   actions = function (name) {
     if (name === 'store-map') {
-      openModal('<div class="store-map-modal"><div class="store-map-modal-head"><div><h2>Магазины 4 Лапы</h2><p>Нажмите на точку, чтобы увидеть адрес</p></div><button class="icon-button" type="button" onclick="modal.close()" aria-label="Закрыть">×</button></div><iframe class="store-map-frame" src="store-map.html?v=20261124-2" title="Карта магазинов 4 Лапы" loading="eager"></iframe></div>');
+      openModal('<div class="store-map-modal"><div class="store-map-modal-head"><div><h2>Магазины 4 Лапы</h2><p>Нажмите на точку, чтобы увидеть адрес</p></div><button class="icon-button" type="button" onclick="modal.close()" aria-label="Закрыть">×</button></div><iframe class="store-map-frame" src="store-map.html?v=20261125-geo1" title="Карта магазинов 4 Лапы" loading="eager"></iframe></div>');
       return;
     }
     return actionsBeforeStoreMap(name);
