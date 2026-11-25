@@ -352,7 +352,9 @@ viewFoods=function(){
 // Canonical backend bridge. The UI renders this response; it does not own
 // recommendation or feeding formulas. Set NUTRIPATE_API_BASE to the deployed
 // backend origin in production.
-window.NUTRIPATE_API_BASE=window.NUTRIPATE_API_BASE||'http://127.0.0.1:8765';
+// The public web build must never probe localhost: on a phone, 127.0.0.1 is
+// the phone itself and the timeout makes the first screen feel frozen.
+window.NUTRIPATE_API_BASE=window.NUTRIPATE_API_BASE||'';
 let canonicalCalculation=null,canonicalRequestKey='';
 function canonicalProfileKey(p,selectedId,treats){return JSON.stringify({p,selectedId,treats})}
 function todayTreatKcal(p){return (state.feedEntries||[]).filter(x=>x.petId===p?.id&&x.date===todayKey()&&x.kind==='treat').reduce((s,x)=>s+Number(x.kcal||0),0)}
@@ -361,6 +363,8 @@ async function syncCanonicalEngine(p=activePet()){
   const selectedId=state.selectedFoods?.[p.id]||null,treats=todayTreatKcal(p),key=canonicalProfileKey(p,selectedId,treats);
   if(key===canonicalRequestKey)return;
   canonicalRequestKey=key;
+  const canonicalBase=String(window.NUTRIPATE_API_BASE||'').trim();
+  if(!canonicalBase)return;
   try{
     const entry=breedData({id:p.breedId,name:p.breed});
     const canonicalPet=Object.assign({},p,{weightKg:petWeight(p),targetWeightKg:petTargetWeight(p),ageMonths:ageMonths(p)});

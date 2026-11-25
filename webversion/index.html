@@ -45,7 +45,8 @@
   <script src="food-detail-controls-fix.js?v=6" defer></script>
   <script src="weight-chart-fix.js?v=13" defer></script>
   <script src="/pets-screen-fix.js?v=2" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
+  <!-- Auth is paused in this build. The first screen must not depend on a
+       third-party Supabase bundle, especially on mobile or through a VPN. -->
   <script src="webversion-auth-placeholder.js?v=auth-freeze-clean-0ca713a" defer></script>
 </body>
 </html>
