@@ -215,7 +215,7 @@ const petFormWithTopSpecies=petForm;petForm=function(raw){petFormWithTopSpecies(
 window.deletePetWeb=id=>{const p=state.pets.find(x=>x.id===id);if(!p||!confirm(`Удалить профиль «${p.name||'Питомец'}» и его дневник?`))return;state.pets=state.pets.filter(x=>x.id!==id);state.feedEntries=state.feedEntries.filter(x=>x.petId!==id);state.weights=state.weights.filter(x=>x.petId!==id);delete state.selectedFoods[id];if(state.activePetId===id)state.activePetId=state.pets[0]?.id||null;save();modal.close();toast('Питомец удалён');render()};
 	let petPhotoDraft=null;let petFormDraftId='';let petPhotoRemoved=false;
 	function handlePetPhoto(file){if(!file)return;petPhotoRemoved=false;const reader=new FileReader();reader.onload=()=>{petPhotoDraft=String(reader.result||'');const preview=$('petPhotoPreview');if(preview)preview.src=petPhotoDraft;if(typeof updatePetPhotoVisual==='function')updatePetPhotoVisual()};reader.readAsDataURL(file)}
-	const petFormWithPhoto=petForm;petForm=function(raw){petFormDraftId=raw?.id||'';petPhotoDraft=raw?.photo||null;petPhotoRemoved=false;petFormWithPhoto(raw);const first=document.querySelector('#modalContent .form-section');if(!first)return;first.insertAdjacentHTML('afterbegin',`<input id="petPhotoInput" type="file" accept="image/*" hidden>`);const input=$('petPhotoInput');if(input)input.onchange=()=>handlePetPhoto(input.files?.[0])};
+const petFormWithPhoto=petForm;petForm=function(raw){petFormDraftId=raw?.id||'';petPhotoDraft=raw?.photo||null;petPhotoRemoved=false;window.__nutripatePhotoRemoved=false;petFormWithPhoto(raw);const first=document.querySelector('#modalContent .form-section');if(!first)return;first.insertAdjacentHTML('afterbegin',`<input id="petPhotoInput" type="file" accept="image/*" hidden>`);const input=$('petPhotoInput');if(input)input.onchange=()=>handlePetPhoto(input.files?.[0])};
 window.switchPetSpeciesWeb=species=>{const draft=captureBreedDraft();draft.species=species;draft.breed='';draft.breedId='';draft.breedLabel='';petForm(draft)};
 const petFormWithSpecies=petForm;petForm=function(raw){petFormWithSpecies(raw);const select=$('petInputSpecies');const label=select?.parentElement;if(!select||!label)return;label.style.display='none';label.insertAdjacentHTML('beforebegin',`<div class="pet-species-chips"><button type="button" class="choice-chip-button ${select.value==='cat'?'active':''}" onclick="switchPetSpeciesWeb('cat')">Кошка</button><button type="button" class="choice-chip-button ${select.value==='dog'?'active':''}" onclick="switchPetSpeciesWeb('dog')">Собака</button></div>`)};
 const savePetWithPhoto=window.savePet;window.savePet=function(id){savePetWithPhoto(id);const dialog=$('modal');const saved=id?state.pets.find(x=>x.id===id):state.pets[state.pets.length-1];if(saved&&!dialog?.open){saved.photo=petPhotoDraft||null;save();render();petPhotoDraft=null}};
@@ -835,7 +835,7 @@ render();
       if (hasUploadedPhoto) {
         normalized.photo = petPhotoDraft;
         normalized.photoSource = 'user';
-      } else if (petPhotoRemoved) {
+      } else if (petPhotoRemoved || window.__nutripatePhotoRemoved) {
         normalized.photo = null;
         normalized.photoSource = 'breed';
       } else if (existing && (existing.photoSource === 'user' || /^data:image\//i.test(existing.photo || ''))) {
@@ -855,6 +855,7 @@ render();
       save();
       petPhotoDraft = null;
       petPhotoRemoved = false;
+      window.__nutripatePhotoRemoved = false;
       $('modal')?.close();
       toast('Профиль сохранён');
       render();
