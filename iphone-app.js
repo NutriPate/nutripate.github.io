@@ -925,7 +925,9 @@ render();
   // and the same lightweight tile/cluster interaction as the desktop app.
   const viewFoodsBeforeStoreMap = viewFoods;
   viewFoods = function () {
-    return `${viewFoodsBeforeStoreMap()}<button class="store-map-card" data-action="store-map" type="button"><span class="store-map-icon" aria-hidden="true">⌖</span><span><b>Магазины 4 Лапы</b><small>Все магазины России · карта внутри приложения</small></span><strong>Открыть карту&nbsp;›</strong></button>`;
+    const card='<button class="store-map-card" data-action="store-map" type="button"><span class="store-map-icon" aria-hidden="true">⌖</span><span><b>Магазины 4 Лапы</b><small>Карта магазинов встроена в приложение.</small><em>Россия · 675 точек 4 Лапы</em></span><strong>Открыть карту&nbsp;›</strong></button>';
+    const html=viewFoodsBeforeStoreMap();
+    return html.includes('food-parity-intro')?html.replace(/(<p class="muted food-parity-intro">)/,card+'$1'):html+card;
   };
   const actionsBeforeStoreMap = actions;
   actions = function (name) {
