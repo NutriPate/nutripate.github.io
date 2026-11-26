@@ -163,6 +163,7 @@
   }
 
   function note(text, isError) {
+    window.__authNote = text;
     const el = document.getElementById('webAuthNote');
     if (!el) { if (typeof toast === 'function') toast(text); return; }
     el.textContent = text;
@@ -625,8 +626,8 @@
     window.__codeSentAt = Date.now();
     pendingEmail = email;
     pendingMode = createUser ? 'signup' : 'login';
-    if (createUser) note('Код отправлен на ' + email + '. Аккаунт будет создан только для этой почты. Введите код.');
-    else note('Код для входа отправлен на ' + email + '.');
+    if (createUser) note('Код отправлен на ' + email + '. Если письма нет во входящих, откройте спам. Аккаунт будет создан только для этой почты.');
+    else note('Код отправлен на ' + email + '. Если письма нет во входящих, откройте спам.');
   }
 
   async function verifyCode() {
@@ -640,6 +641,7 @@
     note('Проверяем код…');
     const { error } = await client.auth.verifyOtp({ email, token, type: 'email' });
     if (error) return note(explain(error), true);
+    window.__authNote = '';
     await pullAccount();
     if (typeof toast === 'function') toast(pendingMode === 'signup' ? 'Аккаунт создан' : 'Вы вошли');
     document.getElementById('webAuthEmail')?.blur();
@@ -798,8 +800,6 @@
       const focused = document.activeElement;
       if (focused && (focused.id === "webAuthEmail" || focused.id === "webAuthCode")) return;
       if (alignAllBreeds() && !syncing && typeof save === "function") save();
-      const noPet = typeof activePet === "function" && !activePet();
-      if (noPet) state.authScreen = null;
       if (state.authScreen) {
         const nav = document.querySelector(".bottom-nav");
         if (nav) {
@@ -808,7 +808,9 @@
           nav.style.setProperty("visibility", "visible", "important");
         }
         const main = document.getElementById("appMain");
-        if (main) main.innerHTML = authScreen();
+        if (main && !main.querySelector("#webAuthEmail")) main.innerHTML = authScreen();
+        const kept = document.getElementById("webAuthNote");
+        if (kept && window.__authNote) kept.textContent = window.__authNote;
         return;
       }
       renderBeforeAccount();
