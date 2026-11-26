@@ -1,6 +1,6 @@
 // Safety switch: accounts and OTP login stay enabled, but account state never
 // leaves this device and cloud state is never pulled while this is true.
-const SYNC_FROZEN=true;
+const SYNC_FROZEN=false;
 const stateKey='nutripate-web-state-v1';
 const fallbackFoods=[
  {id:'demo-1',name:'Sterilised 37',brand:'Royal Canin',species:'cat',form:'dry',kcalPer100g:367,proteinPer100g:37,fatPer100g:12,tier:'premium',image:'assets/foods_white/catalog-rcat-ajo01.jpg',composition:'Белок, рис, кукуруза, жиры и функциональные добавки.'},
@@ -13,7 +13,7 @@ const loadState=()=>{try{return JSON.parse(localStorage.getItem(stateKey))||{}}c
 let state=Object.assign({pets:[],activePetId:null,owner:{name:'',email:'',privacyConsent:false},selectedFoods:{},favorites:[],feedEntries:[],weights:[],diaryDay:null},loadState());state.pets=Array.isArray(state.pets)?state.pets:[];state.feedEntries=Array.isArray(state.feedEntries)?state.feedEntries:[];state.weights=Array.isArray(state.weights)?state.weights:[];state.favorites=Array.isArray(state.favorites)?state.favorites:[];state.selectedFoods=state.selectedFoods&&typeof state.selectedFoods==='object'?state.selectedFoods:{};
 function normalizePet(p){const q=petDefaults(p);q.weight=Number(p?.weightKg??p?.weight??q.weight)||4.2;q.weightKg=q.weight;q.targetWeight=p?.targetWeightKg??p?.targetWeight??null;q.targetWeightKg=q.targetWeight;q.ageMonths=Number(p?.ageMonths??q.ageMonths??24);q.diagnoses=q.diagnoses?.length?q.diagnoses:['healthy'];q.allergens=q.allergens||[];q.activity=q.activity||'medium';q.sterilized=q.sterilized!==false;return q}
 state.pets=(state.pets||[]).map(normalizePet);state.owner=Object.assign({name:'',email:'',privacyConsent:false},state.owner||{});if(state.pets.length===1&&state.pets[0].id==='luna'&&state.pets[0].name==='Луна'&&!state.feedEntries.length&&!state.weights.length){state.pets=[];state.activePetId=null;localStorage.setItem(stateKey,JSON.stringify(state));}
-const save=()=>{const screen=state.authScreen;delete state.authScreen;localStorage.setItem(stateKey,JSON.stringify(state));if(screen)state.authScreen=screen;if(window.nutripateAfterSave)window.nutripateAfterSave()};
+const save=()=>{const now=new Date().toISOString();state.pets=(state.pets||[]).map(pet=>{const snap=JSON.stringify(Object.assign({},pet,{updatedAt:null}));const prev=(window.__petSnap||{})[pet.id];if(prev&&prev!==snap)pet.updatedAt=now;if(!pet.updatedAt)pet.updatedAt=now;window.__petSnap=window.__petSnap||{};window.__petSnap[pet.id]=JSON.stringify(Object.assign({},pet,{updatedAt:null}));return pet});const screen=state.authScreen;delete state.authScreen;localStorage.setItem(stateKey,JSON.stringify(state));if(screen)state.authScreen=screen;if(window.nutripateAfterSave)window.nutripateAfterSave()};
 const activePet=()=>state.pets.find(p=>p.id===state.activePetId)||state.pets[0];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const rub=n=>new Intl.NumberFormat('ru-RU').format(Math.round(n||0));
@@ -50,15 +50,15 @@ function pyRound(value){const n=Number(value)||0;if(!Number.isFinite(n))return 0
 function petWeight(p){return Number(p?.weightKg??p?.weight)||4}
 function petTargetWeight(p){const raw=p?.targetWeightKg??p?.targetWeight;if(raw===null||raw===undefined||raw==='')return null;const n=Number(raw);return Number.isFinite(n)?n:null}
 function ageMonths(p){if(p?.ageMonths!==null&&p?.ageMonths!==undefined&&p?.ageMonths!=='')return Math.max(0,Math.trunc(Number(p.ageMonths)));const raw=String(p?.birthDate||'').slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(raw))return 24;const born=new Date(`${raw}T00:00:00`),now=new Date();let months=(now.getFullYear()-born.getFullYear())*12+now.getMonth()-born.getMonth();if(now.getDate()<born.getDate())months-=1;return Math.max(0,months)}
-function rer(p){return 70*Math.pow(Math.max(petWeight(p),.3),.75)}
+function rer(p){return window.NutriPateNutrition?window.NutriPateNutrition.rer(petWeight(p)):70*Math.pow(Math.max(petWeight(p),.3),.75)}
 function goalWeight(p){const w=petWeight(p),target=petTargetWeight(p);return target!==null&&target>0&&target<w*.95?Math.round(target*100)/100:null}
 function isLosing(p){return goalWeight(p)!==null&&ageMonths(p)>=12}
 function isSenior(p){const m=ageMonths(p),w=petWeight(p);return p?.species==='cat'?m>=84:(w>40?m>=72:w>25?m>=84:w>10?m>=96:m>=108)}
  function derFactor(p){const m=ageMonths(p),w=petWeight(p),cat=p?.species==='cat',d=p?.diagnoses||[],a=p?.activity||'medium',losing=isLosing(p);let f;if(cat){if(m<4)f=2.5;else if(m<8)f=2;else if(m<12)f=1.8;else if(losing)f=.8;else if(d.includes('overweight'))f=1;else if(p?.sterilized)f=1.2;else f=1.4;if(!losing){if(a==='high')f+=.1;else if(a==='very_high')f+=.2}}else{if(m<4)f=3;else if(m<12)f=2;else if(losing)f=1;else if(d.includes('overweight'))f=1.2;else if(p?.sterilized)f=1.4;else f=1.6;if(!losing){if(a==='high')f+=.15;else if(a==='very_high')f+=.3}if(m>=12&&w>40)f*=.95}if(m>=12&&!losing&&isSenior(p))f*=cat?(m>=144?1.05:.95):.9;return f}
 function kcalAdjust(p){const n=pyRound(Number(p?.kcalAdjust)||0);return Math.max(-30,Math.min(30,n))}
- function kcalNeed(p){if(!p)return 0;const goal=goalWeight(p),baseWeight=goal!==null&&ageMonths(p)>=12?goal:petWeight(p);const kcal=rer({...p,weightKg:baseWeight})*derFactor(p);return pyRound(kcal*(1+kcalAdjust(p)/100))}
+ function kcalNeed(p){if(!p)return 0;if(window.NutriPateNutrition)return window.NutriPateNutrition.kcalNeed(p);const goal=goalWeight(p),baseWeight=goal!==null&&ageMonths(p)>=12?goal:petWeight(p);const kcal=rer({...p,weightKg:baseWeight})*derFactor(p);return pyRound(kcal*(1+kcalAdjust(p)/100))}
 function foodBudgetKcal(p){const need=kcalNeed(p),treats=(state.feedEntries||[]).filter(x=>x.petId===p?.id&&x.date===todayKey()&&x.kind==='treat').reduce((s,x)=>s+Number(x.kcal||0),0);return pyRound(Math.max(need*.75,need-treats))}
-function dailyGrams(p=activePet(),food=chosenFood()){if(!p||!food)return 0;const raw=foodBudgetKcal(p)/(Number(food.kcalPer100g)||370)*100;return Math.max(0,pyRound(raw/5)*5)}
+function dailyGrams(p=activePet(),food=chosenFood()){if(!p||!food)return 0;if(window.NutriPateNutrition)return window.NutriPateNutrition.portionGrams(p,food);const raw=foodBudgetKcal(p)/(Number(food.kcalPer100g)||370)*100;return Math.max(0,pyRound(raw/5)*5)}
 function mealRows(){const total=dailyGrams(),one=pyRound(total/3),two=pyRound(total/3),three=Math.max(0,total-one-two),r=state.reminders||{};return [{name:'Утро',time:r.morning||'08:00',grams:one},{name:'День',time:r.day||'13:00',grams:two},{name:'Вечер',time:r.evening||'19:00',grams:three}]}
 function loggedToday(){return state.feedEntries.filter(x=>x.petId===activePet()?.id&&x.date===todayKey()&&(x.kind||'feed')==='feed')}
 function startOnboarding(){petForm();}
@@ -199,8 +199,8 @@ dailyGrams=function(p,food){if(arguments.length>1)return dailyGramsSingle(p,food
 window.setRationShare=share=>{const p=activePet();if(!p)return;state.ration[p.id]=Object.assign({},state.ration[p.id]||{},{share:Number(share)});save();modal.close();toast('Доля рациона сохранена');render()};window.startSecondaryFood=()=>{const p=activePet();if(!p)return;state.secondaryPicking=true;save();modal.close();tab='foods';render()};window.removeSecondaryFood=()=>{const p=activePet();if(!p)return;state.ration[p.id]={secondaryId:null,share:100};save();modal.close();toast('Второй корм убран');render()};
 const selectFoodWithSecondary=window.selectFood;window.selectFood=id=>{const f=foodById(id);if(state.secondaryPicking){if(!foodRecommendation(f,activePet()))return toast('Проверьте состав на упаковке');const p=activePet();state.ration[p.id]={secondaryId:id,share:70};state.secondaryPicking=false;save();modal.close();tab='today';toast('Второй корм добавлен');render();return}return selectFoodWithSecondary(id)};
 const calcModalOriginal=calcModal;calcModal=function(){const p=activePet(),f=chosenFood(),items=rationItems(),r=rationConfig(p);if(!p||!f)return toast('Сначала выберите корм');openModal(`<h2>Как рассчитана порция</h2><div class="card mint-card"><b>${dailyGrams()} г / день</b><p>${kcalNeed(p)} ккал в сутки</p></div><div class="more-section"><h3>Рацион</h3>${items.map(x=>`<div class="kv"><span>${esc(x.food.brand)} · ${esc(x.food.name)}</span><strong>${x.grams} г · ${x.share}%</strong></div>`).join('')}<div class="chips"><button class="chip ${r.share===100?'active':''}" onclick="setRationShare(100)">100%</button>${r.secondary?`<><button class="chip ${r.share===70?'active':''}" onclick="setRationShare(70)">70 / 30</button><button class="chip ${r.share===50?'active':''}" onclick="setRationShare(50)">50 / 50</button><button class="chip ${r.share===30?'active':''}" onclick="setRationShare(30)">30 / 70</button></>`:''}</div>${r.secondary?`<button class="soft-button full" onclick="removeSecondaryFood()">Убрать второй корм</button>`:`<button class="soft-button full" onclick="startSecondaryFood()">Добавить второй корм</button>`}</div><p class="muted">Учитываются вес, возраст, активность, стерилизация, целевой вес и калорийность корма. Это ориентир, а не назначение врача.</p><button class="primary full" onclick="modal.close()">Понятно</button>`) };
-function proModal(){const isPro=Boolean(state.pro);openModal(`<h2>Больше заботы с PRO</h2><div class="pro-hero"><b>NutriPate PRO</b><p>Для большой семьи и более подробной истории заботы.</p></div><div class="pro-table"><div><b>Возможности</b><b>Бесплатно</b><b>PRO</b></div>${[['Питомцы','1','2+'],['Расчёт и выбранный корм','✓','✓'],['Дневник и история веса','Базовые','Полные'],['Сравнение кормов','—','✓'],['Сканер упаковок','—','✓'],['Отчёты и анализ','—','Расшир.'],['Напоминания','Базовые','Больше']].map(r=>`<div><span>${r[0]}</span><span>${r[1]}</span><strong>${r[2]}</strong></div>`).join('')}</div><p class="muted">Без подписки остаются расчёт нормы, один питомец и основной дневник.</p><div class="pro-plan"><b>Месяц</b><strong>199 ₽</strong><button class="primary" onclick="enablePro('month')">${isPro?'Выбран':'Выбрать'}</button></div><div class="pro-plan"><b>Год</b><strong>1 490 ₽</strong><button class="primary" onclick="enablePro('year')">${isPro?'Выбран':'Выбрать'}</button></div>${isPro?`<div class="mint-card card"><b>PRO включён на этом устройстве</b><p>Это местный переключатель, не покупка.</p><button class="soft-button" onclick="disablePro()">Выключить PRO</button></div>`:''}<button class="soft-button full" onclick="modal.close()">Продолжить бесплатно</button>`)}
-window.enablePro=plan=>{state.pro=true;state.proPlan=plan;save();modal.close();toast(`Тариф ${plan==='year'?'«Год»':'«Месяц»'} включён на этом устройстве`);render()};window.disablePro=()=>{state.pro=false;state.proPlan=null;save();modal.close();toast('Снова бесплатная версия');render()};
+function proModal(){const isPro=Boolean(state.pro);openModal(`<h2>Больше заботы с PRO</h2><div class="pro-hero"><b>NutriPate PRO</b><p>Для большой семьи и более подробной истории заботы.</p></div><div class="pro-table"><div><b>Возможности</b><b>Бесплатно</b><b>PRO</b></div>${[['Питомцы','1','2+'],['Расчёт и выбранный корм','✓','✓'],['Дневник и история веса','Базовые','Полные'],['Сравнение кормов','—','✓'],['Сканер упаковок','—','✓'],['Отчёты и анализ','—','Расшир.'],['Напоминания','Базовые','Больше']].map(r=>`<div><span>${r[0]}</span><span>${r[1]}</span><strong>${r[2]}</strong></div>`).join('')}</div><p class="muted">Без подписки остаются расчёт нормы, один питомец и основной дневник.</p><div class="pro-plan"><b>Месяц</b><strong>299 ₽</strong><button class="primary" onclick="enablePro('month')">${isPro?'Выбран':'Выбрать'}</button></div><div class="pro-plan"><b>Год</b><strong>2 999 ₽</strong><button class="primary" onclick="enablePro('year')">${isPro?'Выбран':'Выбрать'}</button></div>${isPro?`<div class="mint-card card"><b>PRO включён на этом устройстве</b><p>Это местный переключатель, не покупка.</p><button class="soft-button" onclick="disablePro()">Выключить PRO</button></div>`:''}<button class="soft-button full" onclick="modal.close()">Продолжить бесплатно</button>`)}
+window.enablePro=plan=>{const code={month:'month',half:'half_year',half_year:'half_year',year:'year'}[plan]||'month';location.href='payment.html?plan='+encodeURIComponent(code);};window.disablePro=()=>{toast('Отмена PRO не предусмотрена');};
 const actionsWithPro=actions;actions=function(a){if(a==='pro')return proModal();return actionsWithPro(a)};
 const viewFoodsWithSecondFood=viewFoods;viewFoods=function(){const html=viewFoodsWithSecondFood();return state.secondaryPicking?`<div class="card mint-card"><b>Второй корм</b><p class="muted">Выберите корм, который закроет оставшуюся долю рациона.</p><button class="soft-button" data-action="cancel-secondary">Отмена</button></div>${html}`:html};const actionsWithSecondary=actions;actions=function(a){if(a==='cancel-secondary'){state.secondaryPicking=false;save();render();return}return actionsWithSecondary(a)};
 const viewTodayWithAppRows=viewToday;viewToday=function(){let html=viewTodayWithAppRows();html=html.replace('</section><button class="kv" data-action="weight">',`</section><button class="kv" data-action="reminders"><span>Напоминания о кормлении</span><strong>${state.reminders.enabled?'Настроены':'Настроить'}</strong><span>›</span></button><button class="kv" data-action="weight">`);if(loggedToday().length)html=html.replace('</div>`}',`</div><button class="kv danger-row" data-action="undo-feed"><span>Отменить последнюю порцию</span><span>›</span></button>`);return html};
@@ -212,8 +212,8 @@ function calcModalDetailed(){const p=activePet(),f=chosenFood(),items=rationItem
 calcModal=calcModalDetailed;
 const petFormWithDelete=petForm;petForm=function(raw){petFormWithDelete(raw);if(!raw?.id)return;const actionsBox=document.querySelector('#modalContent .form-actions');if(actionsBox)actionsBox.insertAdjacentHTML('afterend','<button type="button" class="danger-button" onclick="deletePetWeb(\''+esc(raw.id)+'\')">Удалить питомца</button>')};
 const petFormWithTopSpecies=petForm;petForm=function(raw){petFormWithTopSpecies(raw);const content=document.querySelector('#modalContent');const first=content?.querySelector('.form-section');if(!content||!first)return;/* keep pet photo field and its file input */const title=content.querySelector(':scope > h2');if(title&&!content.querySelector('.pet-form-header'))title.insertAdjacentHTML('beforebegin','<div class="pet-form-header"><button type="button" class="back-button" onclick="modal.close()">‹</button><span>NutriPate</span></div>');const chips=first.querySelector('.pet-species-chips');if(chips){first.insertBefore(chips,first.firstElementChild);if(!first.querySelector('.pet-photo-row'))chips.insertAdjacentHTML('afterend','<div class="pet-photo-row"><span class="pet-paw-placeholder" aria-hidden="true"><img class="pet-paw-reference" src="assets/paw-reference-transparent.png" alt=""></span><button type="button" class="link-button">Фото</button></div>')}};
-window.deletePetWeb=id=>{const p=state.pets.find(x=>x.id===id);if(!p||!confirm(`Удалить профиль «${p.name||'Питомец'}» и его дневник?`))return;state.pets=state.pets.filter(x=>x.id!==id);state.feedEntries=state.feedEntries.filter(x=>x.petId!==id);state.weights=state.weights.filter(x=>x.petId!==id);delete state.selectedFoods[id];if(state.activePetId===id)state.activePetId=state.pets[0]?.id||null;save();modal.close();toast('Питомец удалён');render()};
-	let petPhotoDraft=null;let petFormDraftId='';let petPhotoRemoved=false;
+window.deletePetWeb=id=>{const p=state.pets.find(x=>x.id===id);if(!p||!confirm(`Удалить профиль «${p.name||'Питомец'}» и его дневник?`))return;const stamp=new Date().toISOString();state.petTombstones=Object.assign({},state.petTombstones,{[id]:stamp});state.removedPetIds=Array.from(new Set([].concat(state.removedPetIds||[],[id])));state.pets=state.pets.filter(x=>x.id!==id);state.feedEntries=state.feedEntries.filter(x=>x.petId!==id);state.weights=state.weights.filter(x=>x.petId!==id);delete state.selectedFoods[id];if(state.activePetId===id)state.activePetId=state.pets[0]?.id||null;save();modal.close();toast('Питомец удалён');render()};
+let petPhotoDraft=null;let petFormDraftId='';let petPhotoRemoved=false;
 	function handlePetPhoto(file){if(!file)return;petPhotoRemoved=false;const reader=new FileReader();reader.onload=()=>{petPhotoDraft=String(reader.result||'');const preview=$('petPhotoPreview');if(preview)preview.src=petPhotoDraft;if(typeof updatePetPhotoVisual==='function')updatePetPhotoVisual()};reader.readAsDataURL(file)}
 const petFormWithPhoto=petForm;petForm=function(raw){petFormDraftId=raw?.id||'';petPhotoDraft=raw?.photo||null;petPhotoRemoved=false;window.__nutripatePhotoRemoved=false;petFormWithPhoto(raw);const first=document.querySelector('#modalContent .form-section');if(!first)return;first.insertAdjacentHTML('afterbegin',`<input id="petPhotoInput" type="file" accept="image/*" hidden>`);const input=$('petPhotoInput');if(input)input.onchange=()=>handlePetPhoto(input.files?.[0])};
 window.switchPetSpeciesWeb=species=>{const draft=captureBreedDraft();draft.species=species;draft.breed='';draft.breedId='';draft.breedLabel='';petForm(draft)};
@@ -445,7 +445,8 @@ render();
     }, doc || {});
     next.account = account;
     next.authScreen = screen;
-    next.pets = (doc.pets || []).map((pet) => normalizePet(petToCloud(pet)));
+    const gone = new Set([].concat(next.removedPetIds || [], Object.keys(next.petTombstones || {})));
+    next.pets = (doc.pets || []).map((pet) => normalizePet(petToCloud(pet))).filter((pet) => !gone.has(String(pet.id)));
     if (next.pets.length && !next.activePetId) next.activePetId = next.pets[0].id;
     if (next.pets.length) next.onboardingDone = true;
     state = next;
@@ -588,25 +589,38 @@ render();
       // account state, including the selected food and feeding norm.
       if (!cloudHydrated || remoteAt > localAt) {
         state._applyingCloud = true;
+        window.nutripateApplyingCloud = true;
         applyCloud(remoteState);
         state.updatedAt = remote.updatedAt || remoteState.updatedAt || new Date().toISOString();
         save();
         state._applyingCloud = false;
+        window.nutripateApplyingCloud = false;
         render();
       }
       cloudHydrated = true;
+      await pullPetRows();
     } catch (error) {
       // Offline is allowed; the local copy remains available until the next poll.
     } finally {
       cloudSyncBusy = false;
     }
   }
+  async function pullPetRows() {
+    if (SYNC_FROZEN || !state.account?.token || typeof window.nutripateApplyRemote !== 'function') return;
+    const rows = await supabaseFetch('/rest/v1/pets?select=*&order=updated_at.desc');
+    if (!Array.isArray(rows)) return;
+    window.nutripateApplyRemote(rows.map((row) => ({ table: 'pets', new: row })));
+  }
   function startCloudSync() {
     clearInterval(cloudSyncTimer);
     if (SYNC_FROZEN || !state.account?.token) return;
-    cloudSyncTimer = setInterval(pullCloudState, 4000);
+    if (typeof window.nutripateListen === 'function') window.nutripateListen();
     pullCloudState();
+    if (window.NUTRIPATE_REALTIME) return;
+    cloudSyncTimer = setInterval(pullCloudState, 4000);
   }
+  window.nutripateStartCloudSync = startCloudSync;
+  window.nutripateAccountToken = () => (state.account && state.account.token) || '';
   window.nutripateAfterSave = function () {
     if (SYNC_FROZEN || !state.account.token || state._applyingCloud) return;
     clearTimeout(pushTimer);
@@ -619,10 +633,12 @@ render();
         const localAt = cloudMoment(state.updatedAt);
         if (remoteAt > localAt) {
           state._applyingCloud = true;
+          window.nutripateApplyingCloud = true;
           applyCloud(remote.state || {});
           state.updatedAt = remote.updatedAt || remote.state?.updatedAt || new Date().toISOString();
           save();
           state._applyingCloud = false;
+          window.nutripateApplyingCloud = false;
           render();
           return;
         }
@@ -741,6 +757,7 @@ render();
       state.authCode = "";
       state.authHint = "";
       save();
+      supabaseFetch('/rest/v1/rpc/claim_pending_subscriptions', { method: 'POST', body: '{}' }).catch(() => {});
       startCloudSync();
       toast(SYNC_FROZEN ? "Аккаунт открыт · синхронизация приостановлена" : (state.pets.length ? "Аккаунт открыт, питомцы подтянулись" : (purpose === "register" ? "Аккаунт сохранён" : "Вы вошли")));
     } catch (error) {
@@ -945,6 +962,89 @@ render();
       return;
     }
     return actionsBeforeStoreMap(name);
+  };
+  window.nutripateApplyRemote = function (events) {
+    const moment = value => {
+      const time = Date.parse(String(value || ''));
+      return Number.isFinite(time) ? time : 0;
+    };
+    let changed = false;
+    events.forEach((event) => {
+      const row = event.new || {};
+      if (event.table === 'subscriptions' && row.status === 'active' && moment(row.ends_at) > Date.now()) {
+        state.pro = true;
+        state.proUntil = row.ends_at;
+        state.proPlan = row.plan_code || state.proPlan;
+        changed = true;
+      }
+      if (event.table !== 'pets') return;
+      const id = String(row.client_id || '');
+      if (!id) return;
+      state.pets = Array.isArray(state.pets) ? state.pets : [];
+      const index = state.pets.findIndex((pet) => String(pet.id) === id);
+      if (row.deleted_at) {
+        const alreadyGone = index < 0 && state.petTombstones && state.petTombstones[id];
+        state.petTombstones = Object.assign({}, state.petTombstones, { [id]: row.deleted_at });
+        state.removedPetIds = Array.from(new Set([].concat(state.removedPetIds || [], [id])));
+        if (index >= 0) state.pets.splice(index, 1);
+        if (String(state.activePetId) === id) state.activePetId = state.pets[0] ? state.pets[0].id : null;
+        if (!alreadyGone) changed = true;
+        return;
+      }
+      const local = index >= 0 ? state.pets[index] : null;
+      if (local && moment(local.updatedAt) > moment(row.updated_at)) return;
+      if (local && moment(row.updated_at) > 0 && moment(local.updatedAt) === moment(row.updated_at)) return;
+      const payload = row.payload && typeof row.payload === 'object' ? row.payload : {};
+      const next = normalizePet(Object.assign({}, payload, {
+        id, name: row.name, species: row.species || payload.species, breed: row.breed || payload.breed,
+        breedId: row.breed_id || payload.breedId, weightKg: row.weight_kg, weight: row.weight_kg,
+        ageMonths: row.age_months, activity: row.activity_level || payload.activity, sterilized: row.sterilized,
+        diagnoses: row.diagnoses || payload.diagnoses || [], allergens: row.allergens || payload.allergens || [],
+        targetWeightKg: row.target_weight_kg, kcalAdjust: row.kcal_adjust, updatedAt: row.updated_at,
+        photo: (local && local.photo) || payload.photo || null,
+      }));
+      if (index >= 0) state.pets[index] = next;
+      else state.pets.push(next);
+      changed = true;
+    });
+    if (!changed) return;
+    state._applyingCloud = true;
+    window.nutripateApplyingCloud = true;
+    save();
+    state._applyingCloud = false;
+    window.nutripateApplyingCloud = false;
+    render();
+  };
+  window.nutripatePushPets = function () {
+    const access = window.nutripateAccountToken();
+    const cfg = window.NUTRIPATE_SUPABASE;
+    if (!access || !cfg || state._applyingCloud) return;
+    let uid = '';
+    try {
+      const part = access.split('.')[1] || '';
+      uid = JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((part.length + 3) % 4))).sub || '';
+    } catch (error) { return; }
+    const rows = (state.pets || []).filter((pet) => pet && pet.id).map((pet) => {
+      const payload = Object.assign({}, pet);
+      if (String(payload.photo || '').startsWith('data:')) delete payload.photo;
+      return {
+        user_id: uid, client_id: String(pet.id), name: pet.name || 'Питомец', species: pet.species || null,
+        breed: pet.breed || pet.breedLabel || null, breed_id: pet.breedId || null,
+        weight_kg: pet.weightKg != null ? pet.weightKg : pet.weight, age_months: pet.ageMonths != null ? pet.ageMonths : null,
+        activity_level: pet.activity || null, sterilized: Boolean(pet.sterilized), diagnoses: pet.diagnoses || [],
+        allergens: pet.allergens || [], target_weight_kg: pet.targetWeightKg != null ? pet.targetWeightKg : null,
+        kcal_adjust: Number(pet.kcalAdjust) || 0, payload, updated_at: pet.updatedAt || new Date().toISOString(), deleted_at: null,
+      };
+    });
+    Object.keys(state.petTombstones || {}).forEach((id) => rows.push({
+      user_id: uid, client_id: id, name: 'Удалён', payload: {}, updated_at: state.petTombstones[id], deleted_at: state.petTombstones[id],
+    }));
+    if (!rows.length) return;
+    fetch(cfg.url.replace(/\/$/, '') + '/rest/v1/pets?on_conflict=user_id,client_id', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: cfg.key, Authorization: 'Bearer ' + access, Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(rows),
+    }).catch(() => {});
   };
   startCloudSync();
 })();
