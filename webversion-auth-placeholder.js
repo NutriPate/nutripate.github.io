@@ -778,6 +778,8 @@
   if (typeof render === "function") {
     const renderBeforeAccount = render;
     render = function () {
+      const focused = document.activeElement;
+      if (focused && (focused.id === "webAuthEmail" || focused.id === "webAuthCode")) return;
       if (alignAllBreeds() && !syncing && typeof save === "function") save();
       const noPet = typeof activePet === "function" && !activePet();
       if (noPet) state.authScreen = null;
