@@ -53,6 +53,8 @@
     .web-own-name{display:grid;gap:6px;color:#53716f;font:14px Montserrat,sans-serif}
     .web-own-name input{width:100%;box-sizing:border-box;border:1px solid #d8e5e1;border-radius:14px;padding:14px 15px;background:#fff;color:#07383a;font:16px Montserrat,sans-serif}
     #accountAnchor .primary,#accountAnchor .soft-button{width:100%;min-height:48px;margin-top:8px}
+    #appMain{padding-bottom:140px}
+    #accountAnchor{scroll-margin-bottom:140px}
   `;
   document.head.appendChild(style);
 
@@ -149,7 +151,7 @@
 
   if (typeof viewMore === 'function') {
     const previousViewMore = viewMore;
-    viewMore = function () { return accountPointer() + previousViewMore() + accountSection(); };
+    viewMore = function () { return accountSection() + previousViewMore(); };
   }
 
   function note(text, isError) {
