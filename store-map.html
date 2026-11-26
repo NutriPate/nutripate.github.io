@@ -11,6 +11,9 @@
   <style>
     .nearby-item.nearest{border:2px solid #d94b4b;background:#fff1f1;box-shadow:0 2px 8px #d94b4b33}.nearby-item.nearest em{display:block;margin-top:3px;color:#c03939;font-size:11px;font-style:normal;font-weight:700}.nearby-item.nearest strong{color:#c03939}.marker.nearest-marker{background:#df3f3f;border-color:#fff;width:24px;height:24px;line-height:20px;z-index:8;box-shadow:0 0 0 5px #df3f3f33,0 2px 8px #7d1e1e99}.marker.selected-marker{background:#16a085;border-color:#fff;box-shadow:0 0 0 5px #16a08533,0 2px 8px #08705f99;z-index:7}
   </style>
+  <style>
+    .nearby-panel{padding-top:6px}.nearby-toggle{display:block;width:100%;height:28px;border:0;background:transparent;color:#092f32;font-size:25px;line-height:22px;font-weight:700;cursor:pointer}.nearby-toggle:focus-visible{outline:2px solid #13b5b5;outline-offset:2px}.selected.nearby-collapsed .nearby-list,.selected.nearby-collapsed .radius-row{display:none}.selected.nearby-collapsed{padding-bottom:7px}
+  </style>
 </head>
 <body>
   <div id="map"><div id="layer" class="layer"></div></div>
@@ -20,13 +23,15 @@
   <script>
   (()=>{
     const map=document.getElementById('map'),layer=document.getElementById('layer'),selected=document.getElementById('selected'),count=document.getElementById('count'),locateButton=document.getElementById('locate'),T=256;
-    let zoom=5,center=[55.75,37.62],points=[],drag=null,raf=0,tx=0,ty=0,originX=0,originY=0,userPosition=null,nearbyRadiusKm=3,selectedStoreId=null;const cache=new Map();
+    let zoom=5,center=[55.75,37.62],points=[],drag=null,raf=0,tx=0,ty=0,originX=0,originY=0,userPosition=null,nearbyRadiusKm=3,selectedStoreId=null,nearbyCollapsed=false;const cache=new Map();
     const world=(lon,lat)=>{const s=T*2**zoom,r=Math.sin(lat*Math.PI/180);return[(lon+180)/360*s,(.5-Math.log((1+r)/(1-r))/(4*Math.PI))*s]};
     const lngLat=(x,y)=>{const s=T*2**zoom,n=Math.PI-2*Math.PI*Math.max(0,Math.min(s,y))/s;return[180/Math.PI*Math.atan(Math.sinh(n)),x/s*360-180]};
     const isRussia=p=>Number.isFinite(+p.lat)&&Number.isFinite(+p.lon)&&+p.lat>=41&&+p.lat<=82&&+p.lon>=19&&+p.lon<=180;
     let mapProvider='osm',mapKey='';
     const tileUrl=(x,y)=>mapProvider==='2gis'?`https://tile${(x+y)%5}.maps.2gis.com/v2/tiles/online/${zoom}/${x}/${y}.png?key=${encodeURIComponent(mapKey)}`:mapProvider==='yandex'?`https://tiles.api-maps.yandex.ru/v1/tiles/?x=${x}&y=${y}&z=${zoom}&lang=ru_RU&l=map&apikey=${encodeURIComponent(mapKey)}`:`https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
     async function loadMapProvider(){for(const [name,file] of [['2gis','2gis_maps_api_key.txt'],['yandex','yandex_maps_api_key.txt']]){try{const r=await fetch(file,{cache:'no-store'});const key=(await r.text()).trim();if(r.ok&&key&& !/PASTE_YOUR/i.test(key)){mapProvider=name;mapKey=key;document.querySelector('.credit').textContent=name==='2gis'?'© 2ГИС': '© Яндекс';render();return}}catch(_){}}}
+    const showNearbyBase=showNearby;
+    showNearby=function(){showNearbyBase();if(!userPosition)return;selected.classList.add('nearby-panel');selected.classList.toggle('nearby-collapsed',nearbyCollapsed);const toggle=document.createElement('button');toggle.type='button';toggle.className='nearby-toggle';toggle.textContent=nearbyCollapsed?'▲':'▼';toggle.setAttribute('aria-label',nearbyCollapsed?'Развернуть список адресов':'Свернуть список адресов');toggle.onclick=e=>{e.stopPropagation();nearbyCollapsed=!nearbyCollapsed;selected.classList.toggle('nearby-collapsed',nearbyCollapsed);toggle.textContent=nearbyCollapsed?'▲':'▼';toggle.setAttribute('aria-label',nearbyCollapsed?'Развернуть список адресов':'Свернуть список адресов')};selected.prepend(toggle)};
     function distanceKm(a,b){const rad=Math.PI/180,dLat=(b.lat-a.lat)*rad,dLon=(b.lon-a.lon)*rad,lat1=a.lat*rad,lat2=b.lat*rad;const h=Math.sin(dLat/2)**2+Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;return 6371*2*Math.atan2(Math.sqrt(h),Math.sqrt(1-h))}
     function formatDistance(km){return km<1?`${Math.round(km*1000)} м`:`${km.toFixed(1).replace('.',',')} км`}
     function nearestStores(){if(!userPosition)return[];return points.map(p=>({...p,distanceKm:distanceKm(userPosition,{lat:+p.lat,lon:+p.lon})})).filter(p=>p.distanceKm<=nearbyRadiusKm).sort((a,b)=>a.distanceKm-b.distanceKm).slice(0,5)}
