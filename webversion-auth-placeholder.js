@@ -76,7 +76,7 @@
   }
 
   const authScreen = () => {
-    if (accountEmail) {
+    if (authMode === 'account' && accountEmail) {
       return `<section class="web-auth-screen"><button class="web-auth-back" type="button" data-web-auth="back">‹ Назад</button><h1>Аккаунт</h1><p>Имя, питомцы и дневник открываются на любом устройстве, где вы войдёте по этой почте.</p><div class="web-auth-form">${ownNameForm()}<p>Почта <b>${htmlEscape(accountEmail)}</b></p><button class="soft-button full" type="button" data-web-auth="logout">Выйти</button></div></section>`;
     }
     if (authMode === 'signup') {
@@ -674,7 +674,8 @@
     if (!button) return;
     event.preventDefault();
     const action = button.dataset.webAuth;
-    if (action === 'open' || action === 'open-login' || action === 'show-login') { showAuth('login'); return; }
+    if (action === 'open') { showAuth(accountEmail ? 'account' : 'login'); return; }
+    if (action === 'open-login' || action === 'show-login') { showAuth('login'); return; }
     if (action === 'open-signup' || action === 'show-signup') { showAuth('signup'); return; }
     if (action === 'back') { state.authScreen = null; if (typeof render === 'function') render(); return; }
     if (action === 'signup') { sendCode(true).catch((error) => note(explain(error), true)); return; }
