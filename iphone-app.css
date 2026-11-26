@@ -39,7 +39,7 @@ html,body,button,input,select,textarea{font-family:"Times New Roman",Times,serif
 .app-shell{width:min(100%,420px)!important;max-width:420px!important}
 .app-logo,.welcome-brand,.screen-title h1{font-family:"Times New Roman",Times,serif!important}
 @media(max-width:420px){.app-shell{width:100%!important;max-width:none!important}}
-.app-shell.no-pet .bottom-nav{display:none!important;visibility:hidden!important}
+.app-shell.no-pet .bottom-nav{display:grid!important;visibility:visible!important}
 .pet-photo-field{display:grid!important;grid-template-columns:88px 1fr;align-items:center;gap:10px;margin:0 0 18px;padding-bottom:16px;border-bottom:1px solid var(--line)}
 .pet-form-header{display:flex;align-items:center;gap:10px;margin:0 0 14px;color:var(--teal);font-family:"Times New Roman",Times,serif;font-size:20px}
 .pet-form-header .back-button{width:28px;height:28px;font-size:32px;color:var(--ink)}

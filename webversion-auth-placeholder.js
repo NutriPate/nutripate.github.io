@@ -788,8 +788,9 @@
       if (state.authScreen) {
         const nav = document.querySelector(".bottom-nav");
         if (nav) {
-          nav.hidden = true;
-          nav.style.setProperty("display", "none", "important");
+          nav.hidden = false;
+          nav.style.setProperty("display", "grid", "important");
+          nav.style.setProperty("visibility", "visible", "important");
         }
         const main = document.getElementById("appMain");
         if (main) main.innerHTML = authScreen();
@@ -800,8 +801,9 @@
       if (typeof activePet === "function" && !activePet()) {
         const nav = document.querySelector(".bottom-nav");
         if (nav) {
-          nav.hidden = true;
-          nav.style.setProperty("display", "none", "important");
+          nav.hidden = false;
+          nav.style.setProperty("display", "grid", "important");
+          nav.style.setProperty("visibility", "visible", "important");
         }
         decorateWelcome();
       }
