@@ -627,6 +627,8 @@
     if (error) return note(explain(error), true);
     await pullAccount();
     if (typeof toast === 'function') toast(pendingMode === 'signup' ? 'Аккаунт создан' : 'Вы вошли');
+    document.getElementById('webAuthEmail')?.blur();
+    document.getElementById('webAuthCode')?.blur();
     if (typeof render === 'function') render();
   }
 
