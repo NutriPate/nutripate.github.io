@@ -38,10 +38,15 @@ plans.forEach((plan) => {
     planPrice.textContent = plan.dataset.price;
     planNote.textContent = plan.dataset.note;
     planSaving.textContent = plan.dataset.saving;
-    subscribeNote.textContent = 'Оплата пока не подключена. Выбранный период сохранён только для демонстрации будущего сценария.';
+    subscribeNote.textContent = 'Дальше понадобится почта для чека. Сумма на странице ЮKassa совпадает с выбранным тарифом.';
   });
 });
 
+subscribeButton.textContent = 'Перейти к оплате';
+subscribeNote.textContent = 'Нужна почта для чека. Оплата откроется на защищённой странице ЮKassa.';
 subscribeButton.addEventListener('click', () => {
-  subscribeNote.textContent = 'Скоро здесь появится оформление подписки. Сейчас это демонстрационная кнопка без оплаты.';
+  const cards = [...document.querySelectorAll('.plan')];
+  const index = Math.max(0, cards.findIndex((item) => item.classList.contains('active')));
+  const code = ['month', 'half_year', 'year'][index] || 'month';
+  location.href = 'payment.html?plan=' + code;
 });

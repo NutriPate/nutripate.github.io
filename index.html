@@ -114,7 +114,7 @@
       <div class="section-head">
         <p class="eyebrow">NutriPate Pro</p>
         <h2>Больше деталей, меньше сомнений.</h2>
-        <p>Оплату подключим позже. Цена уже видна, чтобы можно было выбрать период. После входа Pro запишется на почту и откроется на телефоне, в Windows и в браузере.</p>
+        <p>Выберите период и перейдите к оплате. Чек придёт на почту, и Pro откроется на телефоне, в Windows и в браузере, когда вы войдёте с этим адресом.</p>
       </div>
       <div class="pro-grid">
         <ul class="benefits">
@@ -128,27 +128,27 @@
           <h3>Выберите период</h3>
           <div class="plans">
             <label>
-              <input type="radio" name="plan" value="1 месяц" data-sum="299 ₽" data-note="299 ₽ в месяц" checked>
+              <input type="radio" name="plan" value="1 месяц" data-plan="month" data-sum="299 ₽" data-note="299 ₽ в месяц" checked>
               <span>1 месяц</span>
               <b>299 ₽</b>
               <small>без скидки</small>
             </label>
             <label>
-              <input type="radio" name="plan" value="6 месяцев" data-sum="1 599 ₽" data-note="266 ₽ в месяц">
+              <input type="radio" name="plan" value="6 месяцев" data-plan="half_year" data-sum="1 599 ₽" data-note="266 ₽ в месяц">
               <span>6 месяцев</span>
               <b>1 599 ₽</b>
               <small>экономия 11%</small>
             </label>
             <label>
-              <input type="radio" name="plan" value="12 месяцев" data-sum="2 999 ₽" data-note="250 ₽ в месяц">
+              <input type="radio" name="plan" value="12 месяцев" data-plan="year" data-sum="2 999 ₽" data-note="250 ₽ в месяц">
               <span>12 месяцев</span>
               <b>2 999 ₽</b>
               <small>выгоднее всего</small>
             </label>
           </div>
           <p class="chosen" id="chosen">1 месяц · 299 ₽</p>
-          <button class="button button-dark" type="button" disabled>Подключить позже</button>
-          <p class="fine">Оплата пока не подключена. Кнопка оставлена под будущую оплату.</p>
+          <button class="button button-dark" id="payNow" type="button">Перейти к оплате</button>
+          <p class="fine">Дальше понадобится почта для чека. ЮKassa спишет ровно выбранную сумму: 299 ₽, 1 599 ₽ или 2 999 ₽.</p>
         </form>
       </div>
     </section>
@@ -231,6 +231,14 @@
           siteNav.classList.remove("open");
           menuButton.setAttribute("aria-expanded", "false");
         });
+      });
+    }
+    const payNow = document.getElementById("payNow");
+    if (payNow) {
+      payNow.addEventListener("click", () => {
+        const chosen = document.querySelector('input[name="plan"]:checked');
+        const code = (chosen && chosen.dataset.plan) || "month";
+        location.href = "/payment.html?plan=" + encodeURIComponent(code);
       });
     }
   </script>

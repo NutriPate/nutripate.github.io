@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Оплата NutriPate PRO</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { margin: 0; background: #f6f4ef; color: #1d1a17; font-family: Montserrat, Arial, sans-serif; }
+    main { max-width: 520px; margin: 0 auto; padding: 32px 20px 64px; }
+    h1 { font-size: 32px; line-height: 1.15; margin: 0 0 8px; }
+    .lead { color: #5d574f; margin: 0 0 24px; }
+    .plans { display: grid; gap: 10px; }
+    .plan { display: block; border: 1px solid #ddd6cc; border-radius: 16px; padding: 14px 16px; background: #fff; cursor: pointer; }
+    .plan.active { border: 2px solid #1f6f5b; padding: 13px 15px; }
+    .plan b { display: block; font-size: 22px; margin-top: 4px; }
+    label.field { display: block; margin: 18px 0; font-size: 14px; }
+    input[type="email"] { width: 100%; box-sizing: border-box; margin-top: 6px; border: 1px solid #ddd6cc; border-radius: 12px; padding: 12px 14px; font: inherit; }
+    button.pay { width: 100%; border: 0; border-radius: 14px; background: #1f6f5b; color: white; font: inherit; font-weight: 600; padding: 14px; cursor: pointer; }
+    button.pay:disabled { opacity: .6; cursor: wait; }
+    .note { color: #5d574f; font-size: 14px; }
+    .error { color: #9b2c2c; min-height: 1.2em; }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="note">NutriPate PRO</p>
+    <h1>Оплатить PRO</h1>
+    <p class="lead">Почта нужна для чека и чтобы подписка открылась в аккаунте с этим адресом.</p>
+    <div class="plans" id="plans">
+      <button class="plan" type="button" data-plan="month"><span>1 месяц</span><b>299 ₽</b><small>299 ₽ / месяц</small></button>
+      <button class="plan" type="button" data-plan="half_year"><span>6 месяцев</span><b>1 599 ₽</b><small>266 ₽ / месяц</small></button>
+      <button class="plan" type="button" data-plan="year"><span>12 месяцев</span><b>2 999 ₽</b><small>250 ₽ / месяц</small></button>
+    </div>
+    <label class="field">Эл. почта
+      <input id="email" type="email" autocomplete="email" required placeholder="name@example.com">
+    </label>
+    <p class="error" id="error"></p>
+    <button class="pay" id="pay" type="button">Перейти к оплате</button>
+    <p class="note">Дальше откроется страница ЮKassa. Сумму на ней считаем на сервере, не в браузере.</p>
+  </main>
+  <script src="supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
+  <script src="payment.js"></script>
+</body>
+</html>

@@ -555,6 +555,14 @@
         return;
       }
       accountEmail = data.user.email || '';
+      let serverPro = null;
+      try {
+        await client.rpc('claim_pending_subscriptions');
+        const subs = await client.from('subscriptions').select('ends_at, plan_code, status').eq('status', 'active').order('ends_at', { ascending: false }).limit(1);
+        const row = subs.data && subs.data[0];
+        if (row && Date.parse(row.ends_at) > Date.now()) serverPro = { pro: true, proUntil: row.ends_at, proPlan: row.plan_code || '' };
+        else if (!subs.error) serverPro = { pro: false, proUntil: null, proPlan: null };
+      } catch (e) {}
       const rev = localRev;
       const stored = await client.from('app_states').select('state, updated_at').limit(1);
       const row = stored.data && stored.data[0];
@@ -570,6 +578,13 @@
         merged.changed = true;
         pendingMode = '';
         pendingName = '';
+      }
+      if (serverPro) {
+        const same = Boolean(merged.state.pro) === serverPro.pro && merged.state.proUntil === serverPro.proUntil && (merged.state.proPlan || '') === (serverPro.proPlan || '');
+        merged.state.pro = serverPro.pro;
+        merged.state.proUntil = serverPro.proUntil;
+        merged.state.proPlan = serverPro.proPlan;
+        if (!same) merged.changed = true;
       }
       window.nutripateReplaceState(merged.state);
       syncing = false;
