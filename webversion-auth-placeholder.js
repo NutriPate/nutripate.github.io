@@ -42,7 +42,7 @@
     .web-auth-error{color:#9b3b3b}
     .web-auth-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .web-auth-actions .primary,.web-auth-actions .soft-button{width:100%;min-height:48px}
-    .web-auth-consent{display:flex;align-items:flex-start;gap:10px;color:#07383a;font:14px Montserrat,sans-serif}
+    .web-auth-form label.web-auth-consent{display:flex;align-items:flex-start;gap:10px;color:#07383a;font-size:14px}
     .web-auth-consent input{width:18px;height:18px;margin-top:2px;accent-color:#12b6b8;flex:none}
     .web-auth-consent a{color:#0a8f8c}
     .web-auth-start{margin:18px 0 0;padding:14px;border:1px solid #d8e5e1;border-radius:16px;background:#f3fffd}
@@ -81,7 +81,7 @@
       return `<section class="web-auth-screen"><button class="web-auth-back" type="button" data-web-auth="back">‹ Назад</button><h1>Аккаунт</h1><p>Укажите почту и запросите одноразовый код. Пароль не нужен.</p><div class="web-auth-form"><label>Почта<input id="webAuthEmail" type="email" autocomplete="email" value="${htmlEscape(accountEmail)}" placeholder="you@example.com"></label><label>Одноразовый код<input id="webAuthCode" class="web-auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><button class="soft-button full" type="button" data-web-auth="login">Получить код</button><button class="primary full" type="button" data-web-auth="enter">Войти</button>${ownNameForm()}<button class="soft-button full" type="button" data-web-auth="logout">Выйти</button></div><p class="web-auth-note" id="webAuthNote">Код приходит письмом от NutriPate.</p></section>`;
     }
     if (authMode === 'signup') {
-      return `<section class="web-auth-screen"><button class="web-auth-back" type="button" data-web-auth="back">‹ Назад</button><h1>Создать аккаунт</h1><p>Имя, почта и одноразовый пароль из письма.</p><div class="web-auth-form"><label>Имя<input id="webAuthName" type="text" autocomplete="name" placeholder="Как к вам обращаться"></label><label>Почта<input id="webAuthEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Одноразовый пароль<input id="webAuthCode" class="web-auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><button class="soft-button full" type="button" data-web-auth="signup">Получить код</button><button class="primary full" type="button" data-web-auth="create">Создать аккаунт</button></div><p class="web-auth-note" id="webAuthNote">Код придёт письмом на эту почту.</p></section>`;
+      return `<section class="web-auth-screen"><button class="web-auth-back" type="button" data-web-auth="back">‹ Назад</button><h1>Создать аккаунт</h1><p>Имя, почта и одноразовый пароль из письма.</p><div class="web-auth-form"><label>Имя<input id="webAuthName" type="text" autocomplete="name" placeholder="Как к вам обращаться"></label><label>Почта<input id="webAuthEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Одноразовый пароль<input id="webAuthCode" class="web-auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><label class="web-auth-consent"><input id="webAuthConsent" type="checkbox"><span>Я согласен(на) на обработку персональных данных</span></label><a class="policy-link" href="/privacy-policy.pdf" target="_blank" rel="noopener">Открыть политику</a><button class="soft-button full" type="button" data-web-auth="signup">Получить код</button><button class="primary full" type="button" data-web-auth="create">Создать аккаунт</button></div><p class="web-auth-note" id="webAuthNote">Без галочки аккаунт не создаётся.</p></section>`;
     }
     return `<section class="web-auth-screen"><button class="web-auth-back" type="button" data-web-auth="back">‹ Назад</button><h1>Вход</h1><p>Почта и одноразовый код из письма.</p><div class="web-auth-form"><label>Почта<input id="webAuthEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Одноразовый код<input id="webAuthCode" class="web-auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><button class="soft-button full" type="button" data-web-auth="login">Получить код</button><div class="web-auth-actions"><button class="primary full" type="button" data-web-auth="enter">Войти</button><button class="soft-button full" type="button" data-web-auth="open-signup">Создать аккаунт</button></div></div><p class="web-auth-note" id="webAuthNote">Код приходит письмом от NutriPate.</p></section>`;
   };
@@ -574,7 +574,7 @@
       let merged = mergeStates(window.nutripateReadState(), remote || {}, accountEmail, proOnAccount);
       if (localRev !== rev) merged = mergeStates(window.nutripateReadState(), remote || {}, accountEmail, proOnAccount);
       if (pendingMode === 'signup' && pendingName) {
-        merged.state.owner = Object.assign({}, merged.state.owner, { name: pendingName, email: accountEmail });
+        merged.state.owner = Object.assign({}, merged.state.owner, { name: pendingName, email: accountEmail, privacyConsent: true, privacyConsentAt: new Date().toISOString() });
         merged.changed = true;
         pendingMode = '';
         pendingName = '';
@@ -594,6 +594,13 @@
     }
   }
 
+  function signupConsent() {
+    const box = document.getElementById('webAuthConsent');
+    if (box && box.checked) return true;
+    note('Поставьте галочку согласия. Без неё аккаунт не создаётся.', true);
+    return false;
+  }
+
   function signupName() {
     const name = (document.getElementById('webAuthName').value || '').trim();
     if (name.length < 2) {
@@ -610,6 +617,7 @@
     if (window.__codeSentAt && again > 0) return note('Вы сможете повторно запросить код через ' + again + ' секунд.', true);
     if (!email.includes('@') || !email.includes('.')) return note('Проверьте адрес почты.', true);
     if (createUser && !signupName()) return;
+    if (createUser && !signupConsent()) return;
     note('Отправляем код…');
     const { error } = await client.auth.signInWithOtp({
       email,
@@ -633,6 +641,7 @@
     const email = (document.getElementById('webAuthEmail').value || '').trim().toLowerCase();
     const token = (document.getElementById('webAuthCode').value || '').replace(/\s/g, '');
     if (authMode === 'signup' && !signupName()) return;
+    if (authMode === 'signup' && !signupConsent()) return;
     if (authMode === 'signup') pendingMode = 'signup';
     if (!email.includes('@')) return note('Сначала укажите почту.', true);
     if (pendingEmail && email !== pendingEmail) return note('Код запрошен для ' + pendingEmail, true);
@@ -797,7 +806,7 @@
     const renderBeforeAccount = render;
     render = function () {
       const focused = document.activeElement;
-      if (focused && (focused.id === "webAuthEmail" || focused.id === "webAuthCode" || focused.id === "webAuthName")) return;
+      if (focused && (focused.id === "webAuthEmail" || focused.id === "webAuthCode" || focused.id === "webAuthName" || focused.id === "webAuthConsent")) return;
       if (alignAllBreeds() && !syncing && typeof save === "function") save();
       if (state.authScreen) {
         const nav = document.querySelector(".bottom-nav");
