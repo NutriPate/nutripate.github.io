@@ -24,7 +24,7 @@
   let pendingMode = '';
   let pendingName = '';
   let authMode = 'login';
-  const AUTH_FROZEN = true;
+  const AUTH_FROZEN = false;
 
   const style = document.createElement('style');
   style.textContent = `
@@ -99,24 +99,20 @@
 
   window.nutripateOpenAuth = showAuth;
 
-  const welcomeScreen = () => `<section class="welcome-screen"><div class="welcome-brand">Nutri<span>Pate</span></div><h1>Добро пожаловать!</h1><img class="welcome-art" src="assets/welcome_pets.png" alt="Питомцы рядом"><h2>Здесь будет день<br>вашего питомца</h2><p class="welcome-lead">Всего один профиль — и важное всегда под рукой: корм, порция и время кормления.</p><button class="primary" data-action="start-onboarding">Добавить первого питомца</button><div class="welcome-example"><b>Что понадобится</b><p>Возраст, вес, активность и особенности здоровья.</p></div><div class="web-auth-actions web-auth-login">${accountEmail ? `<button class="soft-button" type="button" data-web-auth="open-login">Аккаунт</button>` : `<button class="soft-button full" type="button" disabled>Регистрация и вход временно приостановлены</button>`}</div><p class="welcome-note">Один питомец и основной дневник — бесплатно.</p></section>`;
+  const welcomeScreen = () => `<section class="welcome-screen"><div class="welcome-brand">Nutri<span>Pate</span></div><h1>Добро пожаловать!</h1><img class="welcome-art" src="assets/welcome_pets.png" alt="Питомцы рядом"><h2>Здесь будет день<br>вашего питомца</h2><p class="welcome-lead">Всего один профиль — и важное всегда под рукой: корм, порция и время кормления.</p><button class="primary" data-action="start-onboarding">Добавить первого питомца</button><div class="welcome-example"><b>Что понадобится</b><p>Возраст, вес, активность и особенности здоровья.</p></div><div class="web-auth-actions web-auth-login">${accountEmail ? `<button class="soft-button" type="button" data-web-auth="open-login">Аккаунт</button>` : `<button class="primary" type="button" data-web-auth="open-login">Войти</button><button class="soft-button" type="button" data-web-auth="open-signup">Зарегистрироваться</button>`}</div><p class="welcome-note">Один питомец и основной дневник — бесплатно.</p></section>`;
 
   try { viewWelcome = welcomeScreen; } catch (e) {}
 
   function accountButtons() {
     if (accountEmail) return `<button class="soft-button" type="button" data-web-auth="open-login">Аккаунт</button>`;
-    return `<button class="soft-button full" type="button" disabled>Регистрация и вход временно приостановлены</button>`;
+    return `<button class="primary" type="button" data-web-auth="open-login">Войти</button><button class="soft-button" type="button" data-web-auth="open-signup">Зарегистрироваться</button>`;
   }
 
   function decorateWelcome() {
     const main = document.getElementById("appMain");
     if (!main) return;
     const section = main.querySelector(".welcome-screen");
-    if (!section || section.querySelector("[data-web-auth='open-signup']")) return;
-    const box = document.createElement("div");
-    box.className = "web-auth-start";
-    box.innerHTML = `<p class="web-auth-start-title">Регистрация и вход временно приостановлены</p><p class="welcome-note">Мы временно отключили вход по одноразовому коду. Данные существующих аккаунтов не удалены.</p>`;
-    section.append(box);
+    if (!AUTH_FROZEN || !section || section.querySelector("[data-web-auth='open-signup']")) return;
   }
 
   function markAccountNav() {
@@ -144,7 +140,7 @@
     if (accountEmail) {
       return `<section class="more-section" id="accountAnchor"><h2>Аккаунт</h2><p class="muted">Почта ${htmlEscape(accountEmail)}</p>${ownNameForm()}<button class="soft-button full" type="button" data-web-auth="logout">Выйти</button></section>`;
     }
-    return `<section class="more-section" id="accountAnchor"><h2>Аккаунт</h2><p class="muted">Регистрация и вход временно приостановлены. Данные существующих аккаунтов не удалены.</p></section>`;
+    return `<section class="more-section" id="accountAnchor"><h2>Аккаунт</h2><p class="muted">Почта и одноразовый код из письма.</p><button class="primary full" type="button" data-web-auth="open-login">Войти</button><button class="soft-button full" type="button" data-web-auth="open-signup">Зарегистрироваться</button></section>`;
   }
 
   function accountPointer() {

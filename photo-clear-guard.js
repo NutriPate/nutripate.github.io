@@ -5,6 +5,7 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     window.__nutripatePhotoRemoved = true;
+    if (typeof window.nutripateClearPetPhoto === 'function') window.nutripateClearPetPhoto();
     const placeholder = button.closest('.pet-photo-row')?.querySelector('.pet-paw-placeholder');
     if (placeholder) {
       placeholder.classList.remove('has-photo');

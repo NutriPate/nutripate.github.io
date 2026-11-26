@@ -15,7 +15,7 @@ function normalizePet(p){const q=petDefaults(p);q.weight=Number(p?.weightKg??p?.
 state.pets=(state.pets||[]).map(normalizePet);state.owner=Object.assign({name:'',email:'',privacyConsent:false},state.owner||{});if(state.pets.length===1&&state.pets[0].id==='luna'&&state.pets[0].name==='Луна'&&!state.feedEntries.length&&!state.weights.length){state.pets=[];state.activePetId=null;localStorage.setItem(stateKey,JSON.stringify(state));}
 const save=()=>{const now=new Date().toISOString();state.pets=(state.pets||[]).map(pet=>{const snap=JSON.stringify(Object.assign({},pet,{updatedAt:null}));const prev=(window.__petSnap||{})[pet.id];if(prev&&prev!==snap)pet.updatedAt=now;if(!pet.updatedAt)pet.updatedAt=now;window.__petSnap=window.__petSnap||{};window.__petSnap[pet.id]=JSON.stringify(Object.assign({},pet,{updatedAt:null}));return pet});const screen=state.authScreen;delete state.authScreen;localStorage.setItem(stateKey,JSON.stringify(state));if(screen)state.authScreen=screen;if(window.nutripateAfterSave)window.nutripateAfterSave()};
 window.nutripateReadState=function(){return JSON.parse(JSON.stringify(state));};
-window.nutripateReplaceState=function(next){const account=state.account;const screen=state.authScreen;state=Object.assign({},next||{});state.account=account||{token:'',email:'',name:''};if(screen)state.authScreen=screen;state.pets=Array.isArray(state.pets)?state.pets.map(normalizePet):[];const keep=window.nutripateAfterSave;window.nutripateAfterSave=null;save();window.nutripateAfterSave=keep;if(typeof render==='function')render();};
+window.nutripateReplaceState=function(next){const account=state.account;const screen=state.authScreen;const tombs=Object.assign({},state.petTombstones||{},(next&&next.petTombstones)||{});const removed=new Set([].concat(state.removedPetIds||[],(next&&next.removedPetIds)||[],Object.keys(tombs)).map(String));state=Object.assign({},next||{});state.account=account||{token:'',email:'',name:''};if(screen)state.authScreen=screen;state.petTombstones=tombs;state.removedPetIds=[...removed];state.pets=(Array.isArray(state.pets)?state.pets:[]).filter((pet)=>pet&&!removed.has(String(pet.id))).map(normalizePet);const keep=window.nutripateAfterSave;window.nutripateAfterSave=null;save();window.nutripateAfterSave=keep;if(typeof render==='function')render();};
 const activePet=()=>state.pets.find(p=>p.id===state.activePetId)||state.pets[0];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const rub=n=>new Intl.NumberFormat('ru-RU').format(Math.round(n||0));
@@ -1056,7 +1056,7 @@ function updatePetPhotoVisual(){
   const placeholder=document.querySelector('#modalContent .pet-photo-row .pet-paw-placeholder');
   if(!placeholder)return;
   if(!placeholder.dataset.defaultMarkup)placeholder.dataset.defaultMarkup=placeholder.innerHTML;
-  const hasPhoto=typeof petPhotoDraft==='string'&&/^data:image\//i.test(petPhotoDraft);
+  const hasPhoto=typeof petPhotoDraft==='string'&&petPhotoDraft.length>0&&!petPhotoRemoved&&!window.__nutripatePhotoRemoved;
   placeholder.classList.toggle('has-photo',hasPhoto);
   const row=placeholder.closest('.pet-photo-row');
   const clearButton=row?.querySelector('.photo-clear-inline');
@@ -1077,11 +1077,15 @@ document.addEventListener('click',event=>{
   if(!clearButton)return;
   event.preventDefault();
   event.stopImmediatePropagation();
+  window.nutripateClearPetPhoto();
+},true);
+window.nutripateClearPetPhoto=function(){
   petPhotoDraft=null;
   petPhotoRemoved=true;
+  window.__nutripatePhotoRemoved=true;
   const input=document.getElementById('petPhotoInput');
   if(input)input.value='';
   updatePetPhotoVisual();
-},true);
+};
 
 
