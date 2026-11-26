@@ -81,9 +81,9 @@
       return `<section class="web-auth-screen"><button class="web-auth-back" type="button" data-web-auth="back">‹ Назад</button><h1>Аккаунт</h1><p>Укажите почту и запросите одноразовый код. Пароль не нужен.</p><div class="web-auth-form"><label>Почта<input id="webAuthEmail" type="email" autocomplete="email" value="${htmlEscape(accountEmail)}" placeholder="you@example.com"></label><label>Одноразовый код<input id="webAuthCode" class="web-auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><button class="soft-button full" type="button" data-web-auth="login">Получить код</button><button class="primary full" type="button" data-web-auth="enter">Войти</button>${ownNameForm()}<button class="soft-button full" type="button" data-web-auth="logout">Выйти</button></div><p class="web-auth-note" id="webAuthNote">Код приходит письмом от NutriPate.</p></section>`;
     }
     if (authMode === 'signup') {
-      return `<section class="web-auth-screen"><button class="web-auth-back" type="button" data-web-auth="back">‹ Назад</button><h1>Регистрация</h1><p>Аккаунт создаётся только на почту, которую вы укажете. Код придёт письмом.</p><div class="web-auth-form"><label>Имя<input id="webAuthName" type="text" autocomplete="name" placeholder="Как к вам обращаться"></label><label>Почта<input id="webAuthEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Одноразовый код<input id="webAuthCode" class="web-auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><button class="soft-button full" type="button" data-web-auth="signup">Получить код</button><button class="primary full" type="button" data-web-auth="create">Создать аккаунт</button><button class="soft-button full" type="button" data-web-auth="show-login">Уже есть аккаунт — войти</button></div><p class="web-auth-note" id="webAuthNote">Сначала имя и почта, затем код из письма.</p></section>`;
+      return `<section class="web-auth-screen"><button class="web-auth-back" type="button" data-web-auth="back">‹ Назад</button><h1>Создать аккаунт</h1><p>Имя, почта и одноразовый пароль из письма.</p><div class="web-auth-form"><label>Имя<input id="webAuthName" type="text" autocomplete="name" placeholder="Как к вам обращаться"></label><label>Почта<input id="webAuthEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Одноразовый пароль<input id="webAuthCode" class="web-auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><button class="soft-button full" type="button" data-web-auth="signup">Получить код</button><button class="primary full" type="button" data-web-auth="create">Создать аккаунт</button></div><p class="web-auth-note" id="webAuthNote">Код придёт письмом на эту почту.</p></section>`;
     }
-    return `<section class="web-auth-screen"><button class="web-auth-back" type="button" data-web-auth="back">‹ Назад</button><h1>Вход</h1><p>Почта и одноразовый код из письма.</p><div class="web-auth-form"><label>Почта<input id="webAuthEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Одноразовый код<input id="webAuthCode" class="web-auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><button class="soft-button full" type="button" data-web-auth="login">Получить код</button><button class="primary full" type="button" data-web-auth="enter">Войти</button></div><p class="web-auth-note" id="webAuthNote">Код приходит письмом от NutriPate.</p></section>`;
+    return `<section class="web-auth-screen"><button class="web-auth-back" type="button" data-web-auth="back">‹ Назад</button><h1>Вход</h1><p>Почта и одноразовый код из письма.</p><div class="web-auth-form"><label>Почта<input id="webAuthEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Одноразовый код<input id="webAuthCode" class="web-auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><button class="soft-button full" type="button" data-web-auth="login">Получить код</button><div class="web-auth-actions"><button class="primary full" type="button" data-web-auth="enter">Войти</button><button class="soft-button full" type="button" data-web-auth="open-signup">Создать аккаунт</button></div></div><p class="web-auth-note" id="webAuthNote">Код приходит письмом от NutriPate.</p></section>`;
   };
 
   function showAuth(mode) {
@@ -102,7 +102,7 @@
 
   window.nutripateOpenAuth = showAuth;
 
-  const welcomeScreen = () => `<section class="welcome-screen"><div class="welcome-brand">Nutri<span>Pate</span></div><h1>Добро пожаловать!</h1><img class="welcome-art" src="assets/welcome_pets.png" alt="Питомцы рядом"><h2>Здесь будет день<br>вашего питомца</h2><p class="welcome-lead">Всего один профиль — и важное всегда под рукой: корм, порция и время кормления.</p><button class="primary" data-action="start-onboarding">Добавить первого питомца</button><div class="web-auth-form welcome-login-form"><label>Почта<input id="webAuthEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Одноразовый код<input id="webAuthCode" class="web-auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><button class="soft-button full" type="button" data-web-auth="login">Получить код</button><button class="primary full" type="button" data-web-auth="enter">Войти</button><p class="web-auth-note" id="webAuthNote">Код приходит письмом от NutriPate.</p></div><div class="welcome-example"><b>Что понадобится</b><p>Возраст, вес, активность и особенности здоровья.</p></div></section>`;
+  const welcomeScreen = () => `<section class="welcome-screen"><div class="welcome-brand">Nutri<span>Pate</span></div><h1>Добро пожаловать!</h1><img class="welcome-art" src="assets/welcome_pets.png" alt="Питомцы рядом"><h2>Здесь будет день<br>вашего питомца</h2><p class="welcome-lead">Всего один профиль — и важное всегда под рукой: корм, порция и время кормления.</p><button class="primary" data-action="start-onboarding">Добавить первого питомца</button><div class="web-auth-form welcome-login-form"><label>Почта<input id="webAuthEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Одноразовый код<input id="webAuthCode" class="web-auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><button class="soft-button full" type="button" data-web-auth="login">Получить код</button><div class="web-auth-actions"><button class="primary full" type="button" data-web-auth="enter">Войти</button><button class="soft-button full" type="button" data-web-auth="open-signup">Создать аккаунт</button></div><p class="web-auth-note" id="webAuthNote">Код приходит письмом от NutriPate.</p></div><div class="welcome-example"><b>Что понадобится</b><p>Возраст, вес, активность и особенности здоровья.</p></div></section>`;
 
   try { viewWelcome = welcomeScreen; } catch (e) {}
 
@@ -114,14 +114,13 @@
   function decorateWelcome() {
     const main = document.getElementById("appMain");
     if (!main) return;
-    main.querySelectorAll("[data-web-auth='open-signup'],[data-web-auth='show-signup'],[data-action='register']").forEach((node) => node.remove());
     const section = main.querySelector(".welcome-screen");
     if (!section || section.querySelector("#webAuthCode")) return;
     const addPet = section.querySelector("[data-action='start-onboarding']");
     if (!addPet) return;
     const box = document.createElement("div");
     box.className = "web-auth-form welcome-login-form";
-    box.innerHTML = '<label>Почта<input id="webAuthEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Одноразовый код<input id="webAuthCode" class="web-auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><button class="soft-button full" type="button" data-web-auth="login">Получить код</button><button class="primary full" type="button" data-web-auth="enter">Войти</button><p class="web-auth-note" id="webAuthNote">Код приходит письмом от NutriPate.</p>';
+    box.innerHTML = '<label>Почта<input id="webAuthEmail" type="email" autocomplete="email" placeholder="you@example.com"></label><label>Одноразовый код<input id="webAuthCode" class="web-auth-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><button class="soft-button full" type="button" data-web-auth="login">Получить код</button><div class="web-auth-actions"><button class="primary full" type="button" data-web-auth="enter">Войти</button><button class="soft-button full" type="button" data-web-auth="open-signup">Создать аккаунт</button></div><p class="web-auth-note" id="webAuthNote">Код приходит письмом от NutriPate.</p>';
     addPet.insertAdjacentElement("afterend", box);
   }
 
@@ -150,7 +149,7 @@
     if (accountEmail) {
       return `<section class="more-section" id="accountAnchor"><h2>Аккаунт</h2><p class="muted">Почта ${htmlEscape(accountEmail)}</p>${ownNameForm()}<button class="soft-button full" type="button" data-web-auth="logout">Выйти</button></section>`;
     }
-    return `<section class="more-section" id="accountAnchor"><h2>Аккаунт</h2><p class="muted">Почта и одноразовый код из письма.</p><button class="primary full" type="button" data-web-auth="open-login">Войти</button></section>`;
+    return `<section class="more-section" id="accountAnchor"><h2>Аккаунт</h2><p class="muted">Имя, почта и одноразовый пароль из письма.</p><div class="web-auth-actions"><button class="primary full" type="button" data-web-auth="open-login">Войти</button><button class="soft-button full" type="button" data-web-auth="open-signup">Создать аккаунт</button></div></section>`;
   }
 
   function accountPointer() {
@@ -798,7 +797,7 @@
     const renderBeforeAccount = render;
     render = function () {
       const focused = document.activeElement;
-      if (focused && (focused.id === "webAuthEmail" || focused.id === "webAuthCode")) return;
+      if (focused && (focused.id === "webAuthEmail" || focused.id === "webAuthCode" || focused.id === "webAuthName")) return;
       if (alignAllBreeds() && !syncing && typeof save === "function") save();
       if (state.authScreen) {
         const nav = document.querySelector(".bottom-nav");
