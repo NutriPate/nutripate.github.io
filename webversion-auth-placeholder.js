@@ -340,6 +340,8 @@
     const isolated = otherPerson || closed;
     const remoteWins = isolated || (stampOf(remote) > 0 && stampOf(remote) >= stampOf(local));
     const removedPets = new Set([...(local.removedPetIds || []), ...(remote.removedPetIds || [])].map(String));
+    const tombs = Object.assign({}, remote.petTombstones || {}, isolated ? {} : (local.petTombstones || {}));
+    Object.keys(tombs).forEach((id) => removedPets.add(String(id)));
     const petSource = isolated ? [[remote, remote.savedAt || remote.updatedAt || '']] : [[local, local.savedAt || local.updatedAt || ''], [remote, remote.savedAt || remote.updatedAt || '']];
     const byId = new Map();
     const petSide = new Map();
@@ -474,6 +476,7 @@
       removedFavorites,
       favorites: [],
       removedPetIds: isolated ? (remote.removedPetIds || []) : [...removedPets],
+      petTombstones: tombs,
       removedFeedIds: history.removedFeedIds || [],
       feedEntries: (history.feedEntries || []).filter((item) => item && petIds.has(item.petId)),
       weights: (history.weights || []).filter((item) => item && petIds.has(item.petId)),
