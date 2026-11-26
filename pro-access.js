@@ -5,9 +5,9 @@
     return Boolean(state.pro);
   }
 
-  function needPro(text) {
+  function needPro() {
     if (isPro()) return false;
-    if (typeof toast === 'function') toast(text);
+    if (typeof toast === 'function') toast('Эта функция доступна только с PRO');
     if (typeof proModal === 'function') proModal();
     return true;
   }
@@ -41,20 +41,18 @@
     const previousFoods = viewFoods;
     viewFoods = function () {
       const html = previousFoods();
-      const ids = freeIds();
-      if (!ids) return html;
+      freeIds();
       const holder = document.createElement('div');
       holder.innerHTML = html;
-      holder.querySelectorAll('[data-food]').forEach((button) => {
-        const card = button.closest('article, .food-card') || button.parentElement;
-        if (card && ids.indexOf(button.getAttribute('data-food')) < 0) card.remove();
-      });
-      holder.querySelectorAll('[data-action="more-foods"]').forEach((button) => button.remove());
-      if (!holder.querySelector('.free-food-note')) {
-        const note = document.createElement('p');
-        note.className = 'muted free-food-note';
-        note.textContent = 'Бесплатно три корма в месяц, со ссылкой в магазин у каждого. Остальной подбор — в PRO.';
-        holder.appendChild(note);
+      if (!holder.querySelector('[data-action="scan"]')) {
+        const button = document.createElement('button');
+        button.className = 'soft-button full';
+        button.type = 'button';
+        button.setAttribute('data-action', 'scan');
+        button.textContent = 'Сканер упаковки';
+        const search = holder.querySelector('.search');
+        if (search) search.insertAdjacentElement('afterend', button);
+        else holder.insertBefore(button, holder.firstChild);
       }
       return holder.innerHTML;
     };
@@ -63,13 +61,13 @@
   if (typeof window.selectFood === 'function') {
     const previousSelect = window.selectFood;
     window.selectFood = function (id) {
-      if (state.secondaryPicking && needPro('Сухой и влажный корм вместе есть в PRO.')) {
+      if (state.secondaryPicking && needPro()) {
         state.secondaryPicking = false;
         return;
       }
       const ids = freeIds();
       if (ids && ids.indexOf(id) < 0) {
-        needPro('В этом месяце бесплатно три корма. Следующий подбор — в PRO.');
+        needPro();
         return;
       }
       return previousSelect.apply(this, arguments);
@@ -79,31 +77,22 @@
   if (typeof actions === 'function') {
     const previousActions = actions;
     actions = function (name) {
-      if (name === 'add-pet' && Array.isArray(state.pets) && state.pets.length >= 1 && needPro('Второй питомец есть в PRO.')) return;
-      const gates = {
-        reminders: 'Напоминания есть в PRO.',
-        treat: 'Учёт лакомств есть в PRO.',
-        note: 'Записи о самочувствии есть в PRO.',
-        report: 'Отчёт для ветеринара есть в PRO.',
-        stock: 'Расчёт, на сколько дней хватит пачки, есть в PRO.',
-        weight: 'Дневник веса есть в PRO.',
-        'add-weight': 'Дневник веса есть в PRO.',
-        'more-foods': 'Остальные корма открываются в PRO.',
-      };
-      if (gates[name] && needPro(gates[name])) return;
+      if (name === 'add-pet' && Array.isArray(state.pets) && state.pets.length >= 1 && needPro()) return;
+      const gates = ['reminders', 'treat', 'note', 'report', 'stock', 'weight', 'add-weight', 'scan'];
+      if (gates.indexOf(name) >= 0 && needPro()) return;
       return previousActions(name);
     };
   }
 
   document.addEventListener('click', function (event) {
     const day = event.target.closest('[data-day]');
-    if (day && needPro('История кормления по дням есть в PRO. Сегодняшняя отметка «Покормил» остаётся на главном экране.')) {
+    if (day && needPro()) {
       event.preventDefault();
       event.stopPropagation();
       return;
     }
     const weightTab = event.target.closest('[data-diary="weight"]');
-    if (weightTab && needPro('Дневник веса с графиком есть в PRO.')) {
+    if (weightTab && needPro()) {
       event.preventDefault();
       event.stopPropagation();
     }
