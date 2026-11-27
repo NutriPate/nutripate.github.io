@@ -411,5 +411,17 @@ window.selectPlan = applyPlan;
     if (value.textContent.trim() === 'Один аккаунт') value.textContent = '1 аккаунт';
   });
 </script>
+<script id="legal-document-links">
+  (() => {
+    const privacy = document.querySelector('.privacy-pdf');
+    if (privacy) privacy.href = './privacy-policy-2026.pdf';
+    const card = document.querySelector('.legal-card:first-of-type');
+    if (!card || card.querySelector('.offer-pdf')) return;
+    const links = document.createElement('p');
+    links.className = 'legal-doc-links';
+    links.innerHTML = '<a class="privacy-pdf offer-pdf" href="./public-offer.pdf" target="_blank" rel="noopener">Открыть публичную оферту · PDF</a>';
+    card.appendChild(links);
+  })();
+</script>
 </body>
 </html>

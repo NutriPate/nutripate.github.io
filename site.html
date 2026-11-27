@@ -407,5 +407,17 @@ window.selectPlan = applyPlan;
   .legal-card { background:#FFFFFF !important; border-color:#DCE5DE !important; }
   .tier-card.tier-pro .tier-label { background:#13B5B5 !important; color:#FFFFFF !important; }
 </style>
+<script id="legal-document-links">
+  (() => {
+    const privacy = document.querySelector('.privacy-pdf');
+    if (privacy) privacy.href = './privacy-policy-2026.pdf';
+    const card = document.querySelector('.legal-card:first-of-type');
+    if (!card || card.querySelector('.offer-pdf')) return;
+    const links = document.createElement('p');
+    links.className = 'legal-doc-links';
+    links.innerHTML = '<a class="privacy-pdf offer-pdf" href="./public-offer.pdf" target="_blank" rel="noopener">Открыть публичную оферту · PDF</a>';
+    card.appendChild(links);
+  })();
+</script>
 </body>
 </html>

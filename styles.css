@@ -334,6 +334,8 @@ body { overflow-x: hidden; }
 .legal .eyebrow, .legal p, .legal .fine { color: var(--muted); }
 .legal h2, .legal h3, .legal b { color: var(--ink); }
 .legal a { color: var(--brand-dark); }
+.legal-doc-links { margin-top: 14px; }
+.legal-doc-links a { font-weight: 700; }
 .legal article {
   padding: 0;
   border: 0;
