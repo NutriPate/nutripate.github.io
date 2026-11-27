@@ -391,5 +391,13 @@ window.selectPlan = applyPlan;
   .legal-card { background:#FFFFFF !important; border-color:#DCE5DE !important; }
   .tier-card.tier-pro .tier-label { background:#13B5B5 !important; color:#FFFFFF !important; }
 </style>
+<script id="hero-facts-numeric-fix">
+  document.querySelectorAll('.facts li').forEach((item) => {
+    const value = item.querySelector('b');
+    if (!value) return;
+    if (value.textContent.trim() === 'Граммы') value.textContent = '3 порции';
+    if (value.textContent.trim() === 'Один аккаунт') value.textContent = '1 аккаунт';
+  });
+</script>
 </body>
 </html>
