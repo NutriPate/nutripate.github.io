@@ -33,5 +33,9 @@
   }
   function install(){const switcher=document.getElementById('petSwitcher');if(!switcher)return;switcher.onclick=function(event){event.preventDefault();const modal=document.getElementById('modal');if(modal?.open)modal.close();renderPetPicker()}}
   install();
-  document.addEventListener('click',event=>{if(event.target.closest('[data-tab="pets"]')&&!window.__petPickerRoute)leavePicker(false)});
+  document.addEventListener('click',event=>{
+    const target=event.target.closest('#petSwitcher');
+    if(target){event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();const modal=document.getElementById('modal');if(modal?.open)modal.close();renderPetPicker();return}
+    if(event.target.closest('[data-tab="pets"]')&&!window.__petPickerRoute)leavePicker(false);
+  },true);
 })();
