@@ -27,8 +27,9 @@
     const main=document.getElementById('appMain');
     main.innerHTML=`<section class="pets-picker-screen" aria-label="Мои питомцы"><button class="pets-picker-back" type="button" data-picker-back><span class="arrow">‹</span><span>NutriPate</span></button><h1>Мои питомцы</h1><p class="pets-picker-subtitle">У каждого свой рацион и дневник.</p><div class="pets-picker-card"><div class="pets-picker-card-copy"><h2>${esc(p.name||'Питомец')}</h2><p>${esc(species)} · ${Number.isFinite(weight)?`${weight.toLocaleString('ru-RU',{minimumFractionDigits:1,maximumFractionDigits:1})} кг`:'вес не указан'}</p>${breed?`<p>${esc(breed)}</p>`:''}<p class="selected">Выбран</p></div><img class="pets-picker-photo" src="${esc(petPhoto(p))}" alt="${esc(p.name||'Питомец')}"></div><button class="pets-picker-add" type="button" data-picker-add>Добавить питомца · PRO</button><p class="pets-picker-note">Один питомец бесплатно. Остальные — в PRO,<br>текущий никуда не денется.</p><button class="pets-picker-edit" type="button" data-picker-edit>Редактировать ${esc(p.name||'питомца')}</button></section>`;
     main.querySelector('[data-picker-back]').onclick=()=>leavePicker();
-    main.querySelector('[data-picker-add]').onclick=()=>{leavePicker(false);petForm()};
-    main.querySelector('[data-picker-edit]').onclick=()=>{leavePicker(false);petForm(p)};
+    const openEditor=pet=>{leavePicker(true);requestAnimationFrame(()=>petForm(pet))};
+    main.querySelector('[data-picker-add]').onclick=()=>openEditor();
+    main.querySelector('[data-picker-edit]').onclick=()=>openEditor(p);
   }
   function install(){const switcher=document.getElementById('petSwitcher');if(!switcher)return;switcher.onclick=function(event){event.preventDefault();const modal=document.getElementById('modal');if(modal?.open)modal.close();renderPetPicker()}}
   install();
