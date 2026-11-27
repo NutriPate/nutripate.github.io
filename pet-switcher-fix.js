@@ -31,6 +31,13 @@
     main.querySelector('[data-picker-add]').onclick=()=>openEditor();
     main.querySelector('[data-picker-edit]').onclick=()=>openEditor(p);
   }
+  const originalRender=window.render;
+  if(typeof originalRender==='function'){
+    window.render=function(){
+      if(window.__petPickerRoute){renderPetPicker();return}
+      return originalRender.apply(this,arguments);
+    };
+  }
   function install(){const switcher=document.getElementById('petSwitcher');if(!switcher)return;switcher.onclick=function(event){event.preventDefault();const modal=document.getElementById('modal');if(modal?.open)modal.close();renderPetPicker()}}
   install();
   document.addEventListener('click',event=>{
