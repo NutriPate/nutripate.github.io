@@ -327,7 +327,7 @@ function petMenuAppParity(){
   openModal(`<div class="pet-menu-parity"><div class="pet-menu-back" onclick="modal.close()">‹ <span>NutriPate</span></div><h2>Мои питомцы</h2><p class="muted">У каждого свой рацион и дневник.</p>${pets.map(p=>`<button class="pet-menu-card ${p.id===state.activePetId?'selected':''}" onclick="choosePet('${p.id}')"><div><strong>${esc(p.name)}</strong><span>${p.species==='dog'?'Собака':'Кошка'} · ${Number(p.weight||0).toLocaleString('ru-RU',{minimumFractionDigits:1,maximumFractionDigits:1})} кг</span><em>${p.id===state.activePetId?'Выбран':'Выбрать'}</em></div><img src="${petPhoto(p)}" alt=""></button>`).join('')||'<p class="empty">Питомцев пока нет.</p>'}<button class="primary full" onclick="modal.close();petForm()">Добавить питомца</button>${active?`<button class="soft-button full pet-menu-edit" onclick="modal.close();petForm(state.pets.find(x=>x.id==='${active.id}'))">Редактировать ${esc(active.name)}</button>`:''}</div>`)
 }
 petMenu=petMenuAppParity;
-$('petSwitcher').onclick=()=>{tab='pets';render()};
+$('petSwitcher').onclick=()=>{window.__petPickerRoute=true;document.body.classList.add('pet-picker-route');tab='pets';render();requestAnimationFrame(()=>{const back=document.querySelector('.pets-tab-back');if(back)back.onclick=()=>{window.__petPickerRoute=false;document.body.classList.remove('pet-picker-route');tab='today';render()}})};
 function viewFoodsAppParity(){
   const p=activePet(),species=p?.species==='dog'?'собаки':'кошки';
   const rows=recommendedFoods(p).filter(x=>{const f=x.food;return(!query||`${f.brand} ${f.name} ${f.composition||''}`.toLowerCase().includes(query.toLowerCase()))&&(foodFilter==='all'||(foodFilter==='fav'?state.favorites.includes(f.id):f.form===foodFilter))}).slice(0,foodLimitWeb);
