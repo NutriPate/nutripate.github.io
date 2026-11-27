@@ -35,14 +35,14 @@
 }
 
 :root {
-  --ink: #07383a;
-  --brand: #0f9d9a;
-  --brand-dark: #0b7c7a;
-  --mint: #e5f6f3;
-  --paper: #f6fbfa;
+  --ink: #000000;
+  --brand: #13B5B5;
+  --brand-dark: #109C9C;
+  --mint: #D9F3F2;
+  --paper: #F5F5F5;
   --white: #ffffff;
-  --line: #d5e6e2;
-  --muted: #53716f;
+  --line: #DCE5DE;
+  --muted: #667F80;
   --shadow: 0 18px 50px rgba(7, 56, 58, 0.12);
   --radius: 28px;
 }
@@ -150,7 +150,7 @@ h3 { margin-bottom: 8px; font-size: 26px; }
   gap: 28px;
   background:
     radial-gradient(circle at 80% 20%, #ffffff 0 18%, transparent 19%),
-    linear-gradient(180deg, #dff4f0 0%, var(--paper) 78%);
+    linear-gradient(180deg, #D9F3F2 0%, var(--paper) 78%);
 }
 .lead, .section-head p, .about p, .web p, .legal p { color: var(--muted); max-width: 640px; }
 .hero-actions {
@@ -225,8 +225,8 @@ h3 { margin-bottom: 8px; font-size: 26px; }
 body { overflow-x: hidden; }
 .tiers li, .downloads p { color: var(--muted); }
 
-.screens { background: var(--ink); color: white; }
-.screens .eyebrow, .screens .section-head p { color: #b7ddd8; }
+.screens { background: var(--mint); color: var(--ink); }
+.screens .eyebrow, .screens .section-head p { color: var(--muted); }
 .screen-row {
   display: flex;
   gap: 14px;
@@ -253,9 +253,9 @@ body { overflow-x: hidden; }
 .device {
   padding: 8px;
   border-radius: 28px;
-  background: #02191a;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
+  background: var(--white);
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 36px rgba(9, 47, 50, 0.12);
 }
 .device img {
   width: 100%;
@@ -270,12 +270,12 @@ body { overflow-x: hidden; }
 .tiers ul { align-self: stretch; width: 100%; margin-left: 0; padding-left: 1.2em; list-style: disc; text-align: left; }
 .price { margin: 4px 0 8px; font-family: Montserrat, sans-serif; font-size: 40px; }
 .price small { font-family: Montserrat, sans-serif; font-size: 16px; color: var(--muted); }
-.tiers article.tier-pro { background: #07383a; color: white; border-color: #07383a; }
+.tiers article.tier-pro { background: var(--mint); color: var(--ink); border-color: var(--brand); }
 .tiers article.tier-pro .tier-name,
 .tiers article.tier-pro li,
-.tiers article.tier-pro .price small { color: #e7f7f4; }
+.tiers article.tier-pro .price small { color: var(--muted); }
 .tiers article.tier-pro h3,
-.tiers article.tier-pro .price { color: white; }
+.tiers article.tier-pro .price { color: var(--ink); }
 
 .pro { background: white; }
 .benefits { list-style: none; padding: 0; }
@@ -312,12 +312,12 @@ body { overflow-x: hidden; }
   margin: 8px 20px 36px;
   padding: 28px 22px 32px;
   border-radius: 32px;
-  background: #e7f4f1;
-  color: #07383a;
+  background: #F5F5F5;
+  color: #000000;
 }
-.about .eyebrow { color: #0b7c7a; }
-.about h2, .about b { color: #07383a; }
-.about p { color: #53716f; }
+.about .eyebrow { color: #667F80; }
+.about h2, .about b { color: #000000; }
+.about p { color: #667F80; }
 .about ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
 .about li {
   padding: 16px 18px;
@@ -328,15 +328,15 @@ body { overflow-x: hidden; }
 }
 .about li b { display: block; margin-bottom: 4px; font-size: 20px; }
 
-.legal { padding: 36px 20px 56px; background: var(--ink); color: white; }
-.legal .eyebrow, .legal p, .legal .fine { color: #e7f6f3; }
-.legal h2, .legal h3, .legal b { color: white; }
-.legal a { color: white; }
+.legal { padding: 36px 20px 56px; background: var(--mint); color: var(--ink); }
+.legal .eyebrow, .legal p, .legal .fine { color: var(--muted); }
+.legal h2, .legal h3, .legal b { color: var(--ink); }
+.legal a { color: var(--brand-dark); }
 .legal article {
   padding: 0;
   border: 0;
   background: transparent;
-  color: #e7f6f3;
+  color: var(--muted);
 }
 .legal .button-light { color: var(--ink); background: white; }
 
@@ -344,10 +344,10 @@ body { overflow-x: hidden; }
   display: grid;
   gap: 12px;
   padding: 22px 20px 32px;
-  background: #05292b;
-  color: #d5ece8;
+  background: var(--white);
+  color: var(--muted);
 }
-.footer .brand, .footer a { color: white; text-decoration: none; }
+.footer .brand, .footer a { color: var(--ink); text-decoration: none; }
 .social { display: flex; flex-wrap: wrap; gap: 14px; margin: 0; }
 .social a { font-weight: 800; }
 
