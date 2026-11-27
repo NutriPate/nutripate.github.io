@@ -1,31 +1,48 @@
 (function(){
   const style=document.createElement('style');
   style.textContent=`
-    #modal.pet-picker-dialog{width:min(100vw,430px);max-width:430px;height:100vh;max-height:100vh;margin:0;padding:0;border:0;border-radius:0;background:#fff;color:#07383a}
-    #modal.pet-picker-dialog::backdrop{background:rgba(7,56,58,.22)}
-    .pet-picker-shell{min-height:100%;padding:20px 24px 28px;box-sizing:border-box;background:#fff}
-    .pet-picker-back{display:flex;align-items:center;gap:10px;margin:0 0 18px;padding:0;border:0;background:transparent;color:#13b5b5;font:700 20px Montserrat,sans-serif;cursor:pointer}
-    .pet-picker-back span{color:#07383a}
-    .pet-picker-shell .pets-tab-screen{padding:0}
+    body.pet-picker-route .app-header{display:none!important}
+    body.pet-picker-route .bottom-nav{display:none!important}
+    body.pet-picker-route .app-shell{min-height:100vh}
+    body.pet-picker-route #appMain{padding-top:0}
+    body.pet-picker-route .pets-tab-screen{min-height:100vh;padding:20px 24px 32px}
+    body.pet-picker-route .pets-tab-back{cursor:pointer;color:#13b5b5}
   `;
   document.head.appendChild(style);
   const switcher=document.getElementById('petSwitcher');
   if(!switcher)return;
+
+  const leavePicker=()=>{
+    document.body.classList.remove('pet-picker-route');
+    window.__petPickerRoute=false;
+    tab='today';
+    render();
+  };
+
+  const bindPickerScreen=()=>{
+    const back=document.querySelector('.pets-tab-back');
+    if(back)back.onclick=leavePicker;
+    document.querySelectorAll('.pets-tab-screen [data-edit-pet]').forEach(button=>{
+      button.onclick=()=>{document.body.classList.remove('pet-picker-route');window.__petPickerRoute=false;petForm(state.pets.find(p=>p.id===button.dataset.editPet))};
+    });
+    document.querySelectorAll('.pets-tab-screen [data-action="add-pet"]').forEach(button=>{
+      button.onclick=()=>{document.body.classList.remove('pet-picker-route');window.__petPickerRoute=false;petForm()};
+    });
+  };
+
   switcher.onclick=function(){
     const modal=document.getElementById('modal');
-    const content=document.getElementById('modalContent');
-    if(!modal||!content||typeof viewPets!=='function')return;
-    modal.classList.add('pet-picker-dialog');
-    const petsView=viewPets().replace('<div class="pets-tab-back">‹ <span>NutriPate</span></div>','');
-    content.innerHTML=`<div class="pet-picker-shell"><button class="pet-picker-back" type="button"><span>‹</span><span>NutriPate</span></button>${petsView}</div>`;
-    modal.showModal();
-    content.querySelector('.pet-picker-back').onclick=()=>modal.close();
-    content.querySelectorAll('[data-edit-pet]').forEach(button=>{
-      button.onclick=()=>{modal.close();petForm(state.pets.find(p=>p.id===button.dataset.editPet))};
-    });
-    content.querySelectorAll('[data-action="add-pet"]').forEach(button=>{
-      button.onclick=()=>{modal.close();petForm()};
-    });
-    modal.addEventListener('close',()=>modal.classList.remove('pet-picker-dialog'),{once:true});
+    if(modal?.open)modal.close();
+    window.__petPickerRoute=true;
+    document.body.classList.add('pet-picker-route');
+    tab='pets';
+    render();
+    requestAnimationFrame(bindPickerScreen);
   };
+
+  document.addEventListener('click',event=>{
+    if(event.target.closest('[data-tab="pets"]')&&!window.__petPickerRoute){
+      document.body.classList.remove('pet-picker-route');
+    }
+  });
 })();
