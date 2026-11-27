@@ -410,18 +410,18 @@ window.selectPlan = applyPlan;
 <script id="legal-document-links">
   (() => {
     const privacy = document.querySelector('.privacy-pdf');
-    if (privacy) privacy.href = './privacy-policy-2026.pdf';
+    if (privacy) privacy.href = 'https://nutripate.github.io/privacy-policy-2026.pdf';
     const card = document.querySelector('.legal-card:first-of-type');
     if (!card || card.querySelector('.offer-pdf')) return;
     const links = document.createElement('p');
     links.className = 'legal-doc-links';
-    links.innerHTML = '<a class="privacy-pdf offer-pdf" href="./public-offer.pdf" target="_blank" rel="noopener">Открыть публичную оферту · PDF</a>';
+    links.innerHTML = '<a class="privacy-pdf offer-pdf" href="https://nutripate.github.io/public-offer.pdf" target="_blank" rel="noopener">Открыть публичную оферту · PDF</a>';
     card.appendChild(links);
     const footer = document.querySelector('.footer');
     if (footer && !footer.querySelector('.footer-legal-links')) {
       const footerLinks = document.createElement('div');
       footerLinks.className = 'footer-legal-links';
-      footerLinks.innerHTML = '<a href="./public-offer.pdf" target="_blank" rel="noopener">Публичная оферта · PDF</a> · <a href="./privacy-policy-2026.pdf" target="_blank" rel="noopener">Политика персональных данных · PDF</a>';
+      footerLinks.innerHTML = '<a href="https://nutripate.github.io/public-offer.pdf" target="_blank" rel="noopener">Публичная оферта · PDF</a> · <a href="https://nutripate.github.io/privacy-policy-2026.pdf" target="_blank" rel="noopener">Политика персональных данных · PDF</a>';
       footer.appendChild(footerLinks);
     }
   })();
