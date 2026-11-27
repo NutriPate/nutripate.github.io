@@ -421,6 +421,13 @@ window.selectPlan = applyPlan;
     links.className = 'legal-doc-links';
     links.innerHTML = '<a class="privacy-pdf offer-pdf" href="./public-offer.pdf" target="_blank" rel="noopener">Открыть публичную оферту · PDF</a>';
     card.appendChild(links);
+    const footer = document.querySelector('.footer');
+    if (footer && !footer.querySelector('.footer-legal-links')) {
+      const footerLinks = document.createElement('div');
+      footerLinks.className = 'footer-legal-links';
+      footerLinks.innerHTML = '<a href="./public-offer.pdf" target="_blank" rel="noopener">Публичная оферта · PDF</a> · <a href="./privacy-policy-2026.pdf" target="_blank" rel="noopener">Политика персональных данных · PDF</a>';
+      footer.appendChild(footerLinks);
+    }
   })();
 </script>
 </body>
