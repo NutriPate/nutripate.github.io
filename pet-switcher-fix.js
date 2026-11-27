@@ -1,7 +1,7 @@
 (function(){
   const style=document.createElement('style');
   style.textContent=`
-    body.pet-picker-route .app-header,body.pet-picker-route .bottom-nav{display:none!important}
+    body.pet-picker-route .app-header{display:none!important}
     body.pet-picker-route .app-shell{min-height:100vh}
     body.pet-picker-route #appMain{padding:0;max-width:760px;margin:0 auto}
     .pets-picker-screen{min-height:100vh;background:#fff;padding:18px 24px 36px;color:#092f32}
@@ -42,6 +42,8 @@
   document.addEventListener('click',event=>{
     const target=event.target.closest('#petSwitcher');
     if(target){event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();const modal=document.getElementById('modal');if(modal?.open)modal.close();renderPetPicker();return}
+    const navButton=event.target.closest('.nav-item[data-tab]');
+    if(navButton&&window.__petPickerRoute){event.preventDefault();event.stopPropagation();window.__petPickerRoute=false;document.body.classList.remove('pet-picker-route');tab=navButton.dataset.tab;render();return}
     if(event.target.closest('[data-tab="pets"]')&&!window.__petPickerRoute)leavePicker(false);
   },true);
 })();
