@@ -395,7 +395,11 @@ window.selectPlan = applyPlan;
   document.querySelectorAll('.facts li').forEach((item) => {
     const value = item.querySelector('b');
     if (!value) return;
-    if (value.textContent.trim() === 'Граммы') value.textContent = '3 порции';
+    if (value.textContent.trim() === 'Граммы') {
+      value.textContent = '3 порции';
+      const caption = item.querySelector('span');
+      if (caption) caption.textContent = 'на день';
+    }
     if (value.textContent.trim() === 'Один аккаунт') value.textContent = '1 аккаунт';
   });
 </script>
