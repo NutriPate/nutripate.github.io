@@ -275,6 +275,7 @@ body { overflow-x: hidden; }
 .tiers article.tier-pro .tier-name,
 .tiers article.tier-pro li,
 .tiers article.tier-pro .price small { color: var(--muted); }
+.tiers article.tier-pro .tier-name { color: var(--ink); }
 .tiers article.tier-pro h3,
 .tiers article.tier-pro .price { color: var(--ink); }
 
