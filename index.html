@@ -15,6 +15,16 @@
 .app-device{border:8px solid var(--ink)!important;border-radius:38px!important;background:#F5F5F5!important;box-shadow:16px 18px 0 rgba(9,47,50,.08)!important;outline:none}
 @media(max-width:850px){.app-device{border-width:6px!important;border-radius:25px!important}}
 @media(max-width:480px){.app-device{border-width:5px!important;border-radius:18px!important}}
+.footer{display:grid;grid-template-columns:1fr;gap:14px;align-items:start;padding:28px 20px 32px}
+.footer-side{display:grid;gap:4px}
+.footer-side p,.footer-docs{margin:0;line-height:1.45}
+.footer-docs{display:flex;flex-wrap:wrap;gap:8px 18px}
+.footer-docs a{white-space:nowrap}
+@media(min-width:800px){
+  .footer{grid-template-columns:auto minmax(0,1fr);align-items:center;column-gap:32px;row-gap:14px;padding:28px 40px 32px}
+  .footer-side{justify-self:end;text-align:right}
+  .footer-docs{grid-column:2;justify-self:end;justify-content:flex-end}
+}
 </style>
 </head>
 <body>
@@ -222,9 +232,12 @@
   </main>
   <footer class="footer">
     <a class="brand" href="#top">Nutri<em>Pate</em></a>
-    <p>ИП Шелепов Алексей Александрович · ИНН 442400715765 · ОГРНИП 321762700020702</p>
-    <p>150025, г. Ярославль, ул. Авиаторов, д. 31 · <a href="mailto:NutriPate@yandex.ru">NutriPate@yandex.ru</a></p>
-    <p><a href="https://nutripate.github.io/public-offer.pdf" target="_blank" rel="noopener">Публичная оферта · PDF</a> · <a href="https://nutripate.github.io/privacy-policy-2026.pdf" target="_blank" rel="noopener">Политика обработки персональных данных · PDF</a> · <a href="https://nutripate.github.io/personal-data-consent.pdf" target="_blank" rel="noopener">Согласие на обработку персональных данных · PDF</a></p>
+    <div class="footer-side">
+      <p>ИП Шелепов Алексей Александрович</p>
+      <p>ИНН 442400715765 · ОГРНИП 321762700020702</p>
+      <p>150025, г. Ярославль, ул. Авиаторов, д. 31 · <a href="mailto:NutriPate@yandex.ru">NutriPate@yandex.ru</a></p>
+    </div>
+    <p class="footer-docs"><a href="https://nutripate.github.io/public-offer.pdf" target="_blank" rel="noopener">Публичная оферта · PDF</a><a href="https://nutripate.github.io/privacy-policy-2026.pdf" target="_blank" rel="noopener">Политика обработки персональных данных · PDF</a><a href="https://nutripate.github.io/personal-data-consent.pdf" target="_blank" rel="noopener">Согласие на обработку персональных данных · PDF</a></p>
   </footer>
   <script>
     const menuButton = document.querySelector(".menu");
