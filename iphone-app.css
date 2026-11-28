@@ -220,13 +220,15 @@ body .screen-title h1,body .food-parity .screen-title h1,body .diary-parity .scr
 .hero-food-open.pack{display:grid;flex:0 0 82px;width:82px;height:104px}
 .store-map-close{width:52px;height:52px;min-width:52px;padding:0;border:0;border-radius:50%!important;background:#D9F3F2;color:#092F32;display:grid;place-items:center;cursor:pointer;flex:0 0 52px}
 .store-map-close svg{width:22px;height:22px;display:block}
-.ration-swipe{overflow:hidden;width:100%;touch-action:pan-y;cursor:grab}
-.ration-track{display:flex;width:100%}
-.ration-slide{flex:0 0 100%;width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+.ration-swipe{overflow:hidden;width:100%;touch-action:pan-y;cursor:grab;user-select:none}
+.ration-track{display:flex;align-items:stretch;will-change:transform}
+.ration-slide{box-sizing:border-box;min-width:0;overflow:hidden}
+.ration-slide h2{font-size:22px!important;line-height:1.15!important;margin:0}
 .ration-kind{margin:0 0 2px;color:#667F80;font-size:12px!important}
-.ration-dots{display:flex;justify-content:center;gap:8px;margin:4px 0 12px}
-.ration-dot{width:9px;height:9px;border-radius:50%;background:#fff;border:1.5px solid #13B5B5;box-sizing:border-box}
-.ration-dot.on{background:#13B5B5}
+.ration-dots{display:flex;justify-content:center;gap:4px;margin:2px 0 10px}
+.ration-dot{width:32px;height:32px;padding:0;border:0;border-radius:50%;background:transparent;display:grid;place-items:center;cursor:pointer}
+.ration-dot::before{content:"";width:9px;height:9px;border-radius:50%;background:#fff;border:1.5px solid #13B5B5;box-sizing:border-box}
+.ration-dot.on::before{background:#13B5B5}
 .food-detail-actions>button,.food-detail-actions>.food-page-link{width:100%;min-height:54px;margin:0!important;display:flex;align-items:center;justify-content:center;border-radius:16px;text-decoration:none;font:inherit;font-weight:650}
 .food-detail-actions>.food-page-link{background:#fff;color:#000;border:1px solid #DCE5DE}
 .food-parity .screen-title h1{font-size:28px!important}

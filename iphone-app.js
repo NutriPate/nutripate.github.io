@@ -69,7 +69,7 @@ function mealBar(){const p=activePet(),rows=mealRows(),next=rows[loggedToday().l
 function render(){const p=activePet();const nav=document.querySelector('.bottom-nav');const switcher=$('petSwitcher');if(!p){nav.hidden=false;nav.style.setProperty('display','grid','important');nav.style.setProperty('visibility','visible','important');switcher.style.display='none';document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));if(!tab||tab==='today'){$('appMain').innerHTML=viewWelcome();bind();return}$('appMain').innerHTML=({today:viewToday,foods:viewFoods,diary:viewDiary,pets:viewPets,more:viewMore}[tab]||viewWelcome)();bind();return}nav.style.display='grid';switcher.style.display='flex';$('petName').textContent=p.name||'Питомец';$('petAvatar').innerHTML=`<img class="pet-inline-photo" src="${petPhoto(p)}" alt="">`;document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));$('appMain').innerHTML=mealBar()+({today:viewToday,foods:viewFoods,diary:viewDiary,pets:viewPets,more:viewMore}[tab])();bind();}
 function title(kicker,title,sub=''){return `<div class="screen-title"><p class="eyebrow">${kicker||''}</p><h1>${title}</h1>${sub?`<p>${sub}</p>`:''}</div>`}
 function foodCardName(food){const name=String(food?.name||''),brand=String(food?.brand||'');if(brand&&name.toLowerCase().startsWith(brand.toLowerCase()))return name;return brand?brand+' · '+name:name}
-function rationFoodSlides(primary){const pet=activePet();const secondary=pet&&foodById(state.ration?.[pet.id]?.secondaryId);const foods=[primary,secondary].filter(Boolean);const rows=mealRows(),logged=loggedToday();const top=`СЛЕДУЮЩЕЕ · ${rows[logged.length]?.time||'19:00'}`;const meal=rows[logged.length]?.name||'Вечерняя порция';const grams=rows[logged.length]?.grams||0;const slides=foods.map((food,index)=>`<div class="hero-row ration-slide"><div><div class="meal-top">${top}</div><h2>${esc(meal)}</h2><div class="grams">${grams}<small>г</small></div>${foods.length>1?`<p class="ration-kind">${index?'Второй корм':'Основной корм'}</p>`:''}<button type="button" class="food-line hero-food-open" onclick="foodDetails('${esc(food.id)}')">${esc(foodCardName(food))}</button></div><button type="button" class="pack hero-food-open" onclick="foodDetails('${esc(food.id)}')" aria-label="${esc(food.name)}"><img class="hero-food-photo" src="${foodImage(food)}" alt=""></button></div>`).join('');const dots=foods.length>1?'<div class="ration-dots"><span class="ration-dot on"></span><span class="ration-dot"></span></div>':'';return `<div class="ration-swipe" data-ration-swipe><div class="ration-track">${slides}</div></div>${dots}`}
+function rationFoodSlides(primary){const pet=activePet();const secondary=pet&&foodById(state.ration?.[pet.id]?.secondaryId);const foods=[primary,secondary].filter(Boolean);const rows=mealRows(),logged=loggedToday();const top=`СЛЕДУЮЩЕЕ · ${rows[logged.length]?.time||'19:00'}`;const meal=rows[logged.length]?.name||'Вечерняя порция';const grams=rows[logged.length]?.grams||0;const slides=foods.map((food,index)=>`<div class="hero-row ration-slide"><div><div class="meal-top">${top}</div><h2>${esc(meal)}</h2><div class="grams">${grams}<small>г</small></div>${foods.length>1?`<p class="ration-kind">${index?'Второй корм':'Основной корм'}</p>`:''}<button type="button" class="food-line hero-food-open" onclick="foodDetails('${esc(food.id)}')">${esc(foodCardName(food))}</button></div><button type="button" class="pack hero-food-open" onclick="foodDetails('${esc(food.id)}')" aria-label="${esc(food.name)}"><img class="hero-food-photo" src="${foodImage(food)}" alt=""></button></div>`).join('');const dots=foods.length>1?`<div class="ration-dots">${foods.map((_,i)=>`<button type="button" class="ration-dot${i?'':' on'}" data-ration-dot="${i}" aria-label="${i?'Второй корм':'Основной корм'}"></button>`).join('')}</div>`:'';return `<div class="ration-swipe" data-ration-swipe data-index="0"><div class="ration-track">${slides}</div></div>${dots}`}
 function viewToday(){const p=activePet(),f=chosenFood(),rows=mealRows(),logged=loggedToday(),given=logged.reduce((a,x)=>a+(x.grams||0),0),total=dailyGrams();if(!p)return `<div class="empty">Добавьте питомца, чтобы начать.</div>`;return `${title('ВТОРНИК, 10 НОЯБРЯ','Сегодня','Демо-профиль · данные хранятся на устройстве')}${f?`<section class="card mint-card hero-card">${rationFoodSlides(f)}<button class="primary full" data-action="feed">Покормил</button></section>`:`<section class="card mint-card hero-card"><h2>Выберите корм для ${esc(p.name)}</h2><p class="muted">Подберите рацион в каталоге, чтобы получить суточную норму.</p><button class="primary" data-tab-go="foods">Выбрать корм</button></section>`}<section><div class="progress-head"><span>Питание сегодня</span><strong>${given} из ${total} г</strong></div><div class="progress"><i style="width:${total?Math.min(100,given/total*100):0}%"></i></div><div class="meal-slots">${rows.map((r,i)=>`<div class="meal-slot ${i<logged.length?'done':'pending'}"><b>${i<logged.length?'✓':'○'} ${r.name}</b><small>${r.time} · ${r.grams} г</small></div>`).join('')}</div></section><button class="kv" data-action="weight"><span>Взвешивание</span><strong>${lastWeightLabel()}</strong><span>›</span></button><button class="kv" data-action="stock"><span>Запас корма</span><strong>${f?'≈ 12 дней':'Нет корма'}</strong><span>›</span></button><div class="card norm"><strong>Норма ${total||'—'} г / день</strong><button class="link-button" data-action="calc">Как рассчитана порция&nbsp; ›</button></div>`}
 function lastWeightLabel(){const rows=state.weights.filter(x=>x.petId===activePet()?.id);return rows.length?`${rows[rows.length-1].kg} кг`:'Нет записей'}
 function foodHasAllergen(f,code){const words={chicken:['курин','куриц','цыпл','цыпля','chicken'],beef:['говя','beef'],fish:['рыб','лосос','тунец','тунц','треск','форел','сельд','минтай','камбал','fish'],lamb:['баран','ягнён','ягнен','ягнят','lamb'],turkey:['индей','turkey'],duck:['утк','утин','duck'],dairy:['молок','молоч','сыр','dairy','йогурт'],egg:['яйц','яичн','egg'],grain:['пшениц','кукуруз','ячмен','овёс','овес','ржи','рожь','глютен','злак'],soy:['соя','соев','soy']}[code]||[];const text=`${f.name||''} ${f.composition||''}`.toLowerCase().replace(/без\s+[^.]*/g,' ');return words.some(w=>text.includes(w))}
@@ -180,7 +180,80 @@ const actionsWithFoodTools=actions;actions=function(a){if(a==='manual')return ma
 const renderWithCustomFoods=render;render=function(){if(Array.isArray(state.customFoods)){const known=new Set(catalog.map(x=>x.id));catalog=[...catalog,...state.customFoods.filter(x=>!known.has(x.id))]}renderWithCustomFoods()};
 const todayLabel=()=>new Intl.DateTimeFormat('ru-RU',{weekday:'long',day:'numeric',month:'long'}).format(new Date()).toUpperCase();const viewTodayWithDate=viewToday;viewToday=function(){return viewTodayWithDate().replace('ВТОРНИК, 10 НОЯБРЯ',todayLabel())};
 const todayHeaderDate=()=>{const s=new Intl.DateTimeFormat('ru-RU',{weekday:'long',day:'numeric',month:'long'}).format(new Date());return s.charAt(0).toUpperCase()+s.slice(1)};const viewTodayWithAppHeader=viewToday;viewToday=function(){return viewTodayWithAppHeader().replace(/<p class="eyebrow">[^<]*<\/p><h1>Сегодня<\/h1><p>Демо-профиль · данные хранятся на устройстве<\/p>/,`<p class="eyebrow"></p><h1>Сегодня</h1><p>${todayHeaderDate()}</p>`) };
-(function(){let drag=null;const widthOf=root=>root.clientWidth||1;const paint=(root,index,dx,animate)=>{const track=root.querySelector('.ration-track');if(!track)return;track.style.transition=animate?'transform .28s ease':'none';track.style.transform='translateX(' + (-index*widthOf(root)+dx) + 'px)';root.parentElement?.querySelectorAll('.ration-dot').forEach((dot,i)=>dot.classList.toggle('on',i===index));root.dataset.index=String(index)};document.addEventListener('pointerdown',event=>{if(event.button>0)return;const root=event.target.closest&&event.target.closest('[data-ration-swipe]');if(!root||event.target.closest('.primary'))return;const count=root.querySelector('.ration-track')?.children.length||0;if(count<2)return;drag={root,count,index:Number(root.dataset.index||0),x:event.clientX,y:event.clientY,dx:0,dy:0,id:event.pointerId};try{root.setPointerCapture(event.pointerId)}catch(error){}});document.addEventListener('pointermove',event=>{if(!drag||event.pointerId!==drag.id)return;drag.dx=event.clientX-drag.x;drag.dy=event.clientY-drag.y;if(Math.abs(drag.dx)<8||Math.abs(drag.dx)<=Math.abs(drag.dy))return;event.preventDefault();paint(drag.root,drag.index,drag.dx,false)},{passive:false});const end=event=>{if(!drag||event.pointerId!==drag.id)return;let index=drag.index;if(drag.dx>36)index=Math.min(drag.count-1,index+1);else if(drag.dx<-36)index=Math.max(0,index-1);if(Math.abs(drag.dx)>12)drag.root.dataset.swiped='1';paint(drag.root,index,0,true);drag=null};document.addEventListener('pointerup',end);document.addEventListener('pointercancel',end);document.addEventListener('click',event=>{const root=event.target.closest&&event.target.closest('[data-ration-swipe]');if(!root||root.dataset.swiped!=='1')return;event.preventDefault();event.stopPropagation();delete root.dataset.swiped},true)})();
+(function(){
+  let page=0,drag=null,blockClick=false;
+  const roots=()=>[...document.querySelectorAll('[data-ration-swipe]')];
+  function measure(root){
+    const track=root.querySelector('.ration-track');
+    const slides=track?[...track.children]:[];
+    const w=root.clientWidth||0;
+    if(w<20)return {track,count:slides.length,w:0};
+    slides.forEach(slide=>{slide.style.flex='0 0 '+w+'px';slide.style.width=w+'px';slide.style.maxWidth=w+'px'});
+    if(track)track.style.width=(w*Math.max(slides.length,1))+'px';
+    return {track,count:slides.length,w};
+  }
+  function apply(root,next,dx,animate){
+    const {track,count,w}=measure(root);
+    if(!track||count<2||!w)return;
+    const i=Math.max(0,Math.min(count-1,next));
+    let shift=dx;
+    if((i===0&&dx>0)||(i===count-1&&dx<0))shift=dx*0.28;
+    track.style.transition=animate?'transform .34s cubic-bezier(.22,.8,.24,1)':'none';
+    track.style.transform='translate3d('+( -i*w+shift)+'px,0,0)';
+    (root.parentElement?root.parentElement.querySelectorAll('[data-ration-dot]'):[]).forEach((dot,n)=>dot.classList.toggle('on',n===i));
+    root.dataset.index=String(i);
+  }
+  function paint(animate){if(drag)return;cancelAnimationFrame(paint.frame);paint.frame=requestAnimationFrame(()=>roots().forEach(root=>apply(root,page,0,animate)))}
+  document.addEventListener('pointerdown',event=>{
+    if(event.button>0)return;
+    const root=event.target.closest&&event.target.closest('[data-ration-swipe]');
+    if(!root||(event.target.closest&&event.target.closest('[data-ration-dot],.primary')))return;
+    const {count}=measure(root);
+    if(count<2)return;
+    page=Math.max(0,Math.min(count-1,Number(root.dataset.index||page)||0));
+    drag={root,count,page,x:event.clientX,y:event.clientY,dx:0,dy:0,id:event.pointerId,lastX:event.clientX,lastT:performance.now(),vx:0,axis:''};
+    try{root.setPointerCapture(event.pointerId)}catch(error){}
+  });
+  document.addEventListener('pointermove',event=>{
+    if(!drag||event.pointerId!==drag.id)return;
+    const now=performance.now();
+    drag.vx=(event.clientX-drag.lastX)/Math.max(1,now-drag.lastT);
+    drag.lastX=event.clientX;drag.lastT=now;
+    drag.dx=event.clientX-drag.x;drag.dy=event.clientY-drag.y;
+    if(!drag.axis){
+      if(Math.abs(drag.dx)<10&&Math.abs(drag.dy)<10)return;
+      drag.axis=Math.abs(drag.dx)>Math.abs(drag.dy)?'x':'y';
+      if(drag.axis==='y'){drag=null;return}
+    }
+    event.preventDefault();
+    apply(drag.root,drag.page,drag.dx,false);
+  },{passive:false});
+  function finish(event){
+    if(!drag||event.pointerId!==drag.id)return;
+    const width=drag.root.clientWidth||1;
+    let next=drag.page;
+    const flick=Math.abs(drag.vx)>0.45&&Math.abs(drag.dx)>16;
+    const far=Math.abs(drag.dx)>width*0.2;
+    if(drag.axis==='x'&&((flick&&drag.vx<0)||(far&&drag.dx<0)))next=Math.min(drag.count-1,drag.page+1);
+    else if(drag.axis==='x'&&((flick&&drag.vx>0)||(far&&drag.dx>0)))next=Math.max(0,drag.page-1);
+    if(drag.axis==='x'&&Math.abs(drag.dx)>10){blockClick=true;setTimeout(()=>{blockClick=false},400)}
+    page=next;
+    apply(drag.root,page,0,true);
+    drag=null;
+  }
+  document.addEventListener('pointerup',finish);
+  document.addEventListener('pointercancel',event=>{if(!drag||event.pointerId!==drag.id)return;apply(drag.root,drag.page,0,true);drag=null});
+  document.addEventListener('click',event=>{
+    const dot=event.target.closest&&event.target.closest('[data-ration-dot]');
+    if(dot){event.preventDefault();event.stopPropagation();page=Number(dot.getAttribute('data-ration-dot'))||0;roots().forEach(root=>apply(root,page,0,true));return}
+    if(!blockClick)return;
+    if(!(event.target.closest&&event.target.closest('[data-ration-swipe]')))return;
+    event.preventDefault();event.stopPropagation();
+  },true);
+  const host=document.getElementById('appMain')||document.body;
+  new MutationObserver(()=>paint(false)).observe(host,{childList:true,subtree:true});
+  window.addEventListener('resize',()=>paint(false));
+})();
 function stockRecord(){const p=activePet(),f=chosenFood();return p&&f?(state.stock?.[p.id]?.[f.id]||{}):{}}
 function stockDaysLabel(){const r=stockRecord(),f=chosenFood(),day=dailyGrams();if(!r.left||!day)return f?'Нет данных':'Нет корма';return `≈ ${Math.max(0,Math.round(Number(r.left)/day))} дней`}
 function stockModal(){const p=activePet(),f=chosenFood(),r=stockRecord();if(!p||!f)return toast('Сначала выберите корм');openModal(`<h2>Запас корма</h2><p class="muted">Считаем по текущему расходу и тому, что указано на пачке.</p><div class="card mint-card"><b>${esc(f.brand)} · ${esc(f.name)}</b><p>Расход: ${dailyGrams()} г / день</p></div><div class="form"><label>Вес упаковки, г<input id="stockPack" inputmode="decimal" value="${r.pack||''}"></label><label>Осталось в упаковке, г<input id="stockLeft" inputmode="decimal" value="${r.left||''}"></label><label>Цена упаковки, ₽<input id="stockPrice" inputmode="decimal" value="${r.price||''}"></label><div class="form-actions"><button class="soft-button" onclick="modal.close()">Отмена</button><button class="primary" onclick="saveStockWeb()">Сохранить</button></div></div>`)}
