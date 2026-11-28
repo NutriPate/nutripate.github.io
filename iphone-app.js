@@ -263,7 +263,16 @@ const foodDetailsAppParity=foodDetails;foodDetails=function(id){
   const nutrition=[f.proteinPer100g!=null?`белок ${f.proteinPer100g}%`:null,f.fatPer100g!=null?`жир ${f.fatPer100g}%`:null,f.kcalPer100g!=null?`${f.kcalPer100g} ккал / 100 г`:null,f.fiberPer100g!=null?`клетчатка ${f.fiberPer100g}%`:null].filter(Boolean).join(', ');
   const breed=p?.breed||'вашего питомца';
   const primaryId=p&&state.selectedFoods?.[p.id],primary=foodById(primaryId),secondaryId=p&&state.ration?.[p.id]?.secondaryId,isPrimary=primaryId===f.id,isSecondary=secondaryId===f.id;
-  openModal(`<div class="food-detail app-parity-food"><h2>${esc(f.name)}</h2><div class="food-detail-hero">${image?`<img src="${esc(image)}" alt="${esc(f.name)}">`:'<div class="food-placeholder">🥫</div>'}</div>${shortComposition(f.composition)?'<div class="mint-card card food-brief"><h3>Состав</h3><p>'+esc(shortComposition(f.composition))+'</p></div>':''}<div class="food-detail-actions">${isPrimary?`<button class="soft-button full" type="button" onclick="removePrimaryFoodWeb()">Убрать из рациона</button>`:isSecondary?`<button class="soft-button full" type="button" onclick="removeSecondaryFood()">Убрать второй корм</button>`:`<button class="primary full" type="button" onclick="${p&&primary&&f.form!==primary.form?`addSecondaryFoodWeb('${esc(f.id)}')`:`selectFood('${esc(f.id)}')`}" data-add-ration="${esc(f.id)}">${p&&primary&&f.form!==primary.form?'Добавить вторым кормом':'Добавить в рацион'}</button>`}${(f.productUrl||f.buy_url)?`<a class="food-page-link" href="${esc(f.productUrl||f.buy_url)}" target="_blank" rel="noopener noreferrer">Страница корма</a>`:''}<button class="soft-button full food-detail-back" type="button" onclick="document.getElementById('modal').close()">Назад к кормам</button></div></div>`)
+  const pageLink=(f.productUrl||f.buy_url)?`<a class="food-page-link" href="${esc(f.productUrl||f.buy_url)}" target="_blank" rel="noopener noreferrer">Страница корма</a>`:'';
+  const backButton=`<button class="soft-button full food-detail-back" type="button" onclick="document.getElementById('modal').close()">Назад к кормам</button>`;
+  const rationButtons=isPrimary
+    ?`<button class="soft-button full" type="button" onclick="removePrimaryFoodWeb()">Убрать из рациона</button>`
+    :isSecondary
+    ?`<button class="soft-button full" type="button" onclick="removeSecondaryFood()">Убрать второй корм</button>`
+    :(primary
+      ?`<button class="primary full" type="button" data-add-ration="${esc(f.id)}">Добавить вторым кормом</button><button class="soft-button full" type="button" data-add-ration="${esc(f.id)}">Заменить основной корм</button>`
+      :`<button class="primary full" type="button" data-add-ration="${esc(f.id)}">Добавить в рацион</button>`);
+  openModal(`<div class="food-detail app-parity-food"><h2>${esc(f.name)}</h2><div class="food-detail-hero">${image?`<img src="${esc(image)}" alt="${esc(f.name)}">`:'<div class="food-placeholder">🥫</div>'}</div>${shortComposition(f.composition)?'<div class="mint-card card food-brief"><h3>Состав</h3><p>'+esc(shortComposition(f.composition))+'</p></div>':''}<div class="food-detail-actions">${rationButtons}${pageLink}${backButton}</div></div>`)
 };
 state.foodChoiceSource=state.foodChoiceSource&&typeof state.foodChoiceSource==='object'?state.foodChoiceSource:{};
 state.foodChoiceConfirmed=state.foodChoiceConfirmed&&typeof state.foodChoiceConfirmed==='object'?state.foodChoiceConfirmed:{};
