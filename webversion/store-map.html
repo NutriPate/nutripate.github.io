@@ -16,43 +16,88 @@
   </style>
 </head>
 <body>
-  <div id="map"><div id="layer" class="layer"></div></div>
+  <div id="map"><div id="layer" class="layer"></div><div id="marks" class="layer"></div></div>
   <div id="selected" class="selected" role="status"></div>
   <div class="ui"><button id="minus" aria-label="Отдалить">−</button><button id="plus" aria-label="Приблизить">+</button><button id="locate" aria-label="Найти магазины рядом">◎</button><span id="count" class="count">Загрузка магазинов…</span></div>
   <div class="credit">© OpenStreetMap contributors</div>
   <script>
-  (()=>{
-    const map=document.getElementById('map'),layer=document.getElementById('layer'),selected=document.getElementById('selected'),count=document.getElementById('count'),locateButton=document.getElementById('locate'),T=256;
-    let zoom=5,center=[55.75,37.62],points=[],drag=null,raf=0,tx=0,ty=0,originX=0,originY=0,userPosition=null,nearbyRadiusKm=3,selectedStoreId=null,nearbyCollapsed=false;const cache=new Map();
-    const world=(lon,lat)=>{const s=T*2**zoom,r=Math.sin(lat*Math.PI/180);return[(lon+180)/360*s,(.5-Math.log((1+r)/(1-r))/(4*Math.PI))*s]};
-    const lngLat=(x,y)=>{const s=T*2**zoom,n=Math.PI-2*Math.PI*Math.max(0,Math.min(s,y))/s;return[180/Math.PI*Math.atan(Math.sinh(n)),x/s*360-180]};
-    const isRussia=p=>Number.isFinite(+p.lat)&&Number.isFinite(+p.lon)&&+p.lat>=41&&+p.lat<=82&&+p.lon>=19&&+p.lon<=180;
-    let mapProvider='osm',mapKey='';
-    const tileUrl=(x,y)=>mapProvider==='2gis'?`https://tile${(x+y)%5}.maps.2gis.com/v2/tiles/online/${zoom}/${x}/${y}.png?key=${encodeURIComponent(mapKey)}`:mapProvider==='yandex'?`https://tiles.api-maps.yandex.ru/v1/tiles/?x=${x}&y=${y}&z=${zoom}&lang=ru_RU&l=map&apikey=${encodeURIComponent(mapKey)}`:`https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
-    async function loadMapProvider(){for(const [name,file] of [['2gis','2gis_maps_api_key.txt'],['yandex','yandex_maps_api_key.txt']]){try{const r=await fetch(file,{cache:'no-store'});const key=(await r.text()).trim();if(r.ok&&key&& !/PASTE_YOUR/i.test(key)){mapProvider=name;mapKey=key;document.querySelector('.credit').textContent=name==='2gis'?'© 2ГИС': '© Яндекс';render();return}}catch(_){}}}
-    function allNearbyStores(){if(!userPosition)return[];return points.map(p=>({...p,distanceKm:distanceKm(userPosition,{lat:+p.lat,lon:+p.lon})})).filter(p=>p.distanceKm<=nearbyRadiusKm).sort((a,b)=>a.distanceKm-b.distanceKm)}
-    function fitNearbyView(){if(!userPosition)return;const latRadius=nearbyRadiusKm/111.32,lonRadius=nearbyRadiusKm/(111.32*Math.max(.2,Math.cos(userPosition.lat*Math.PI/180)));const project=(lon,lat,z)=>{const s=T*2**z,r=Math.sin(lat*Math.PI/180);return[(lon+180)/360*s,(.5-Math.log((1+r)/(1-r))/(4*Math.PI))*s]};let chosen=12;for(let z=18;z>=3;z--){const a=project(userPosition.lon-lonRadius,userPosition.lat-latRadius,z),b=project(userPosition.lon+lonRadius,userPosition.lat+latRadius,z);if(b[0]-a[0]<=map.clientWidth*.78&&b[1]-a[1]<=map.clientHeight*.72){chosen=z;break}}zoom=chosen;center=[userPosition.lat,userPosition.lon]}
-    const showNearbyBase=showNearby;
-    showNearby=function(){if(userPosition)fitNearbyView();showNearbyBase();if(!userPosition)return;selected.classList.add('nearby-panel');selected.classList.toggle('nearby-collapsed',nearbyCollapsed);const toggle=document.createElement('button');toggle.type='button';toggle.className='nearby-toggle';toggle.textContent=nearbyCollapsed?'▲':'▼';toggle.setAttribute('aria-label',nearbyCollapsed?'Развернуть список адресов':'Свернуть список адресов');toggle.onclick=e=>{e.stopPropagation();nearbyCollapsed=!nearbyCollapsed;selected.classList.toggle('nearby-collapsed',nearbyCollapsed);toggle.textContent=nearbyCollapsed?'▲':'▼';toggle.setAttribute('aria-label',nearbyCollapsed?'Развернуть список адресов':'Свернуть список адресов')};selected.prepend(toggle)};
-    function distanceKm(a,b){const rad=Math.PI/180,dLat=(b.lat-a.lat)*rad,dLon=(b.lon-a.lon)*rad,lat1=a.lat*rad,lat2=b.lat*rad;const h=Math.sin(dLat/2)**2+Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;return 6371*2*Math.atan2(Math.sqrt(h),Math.sqrt(1-h))}
-    function formatDistance(km){return km<1?`${Math.round(km*1000)} м`:`${km.toFixed(1).replace('.',',')} км`}
-    function nearestStores(){return allNearbyStores().slice(0,5)}
-    function applyMarkerSelection(){document.querySelectorAll('.marker.selected-marker').forEach(x=>x.classList.remove('selected-marker'));if(!selectedStoreId)return;const nearest=nearestStores()[0];if(nearest&&String(nearest.id)===String(selectedStoreId))return;const p=points.find(x=>String(x.id)===String(selectedStoreId));if(!p)return;const a=world(+p.lon,+p.lat),left=a[0]-originX*T,top=a[1]-originY*T;for(const marker of document.querySelectorAll('.marker:not(.nearest-marker)')){if(Math.abs(parseFloat(marker.style.left)+10-left)<3&&Math.abs(parseFloat(marker.style.top)+10-top)<3){marker.classList.add('selected-marker');break}}}
-    function showStore(p){selectedStoreId=String(p.id);document.querySelectorAll('.marker.selected-marker').forEach(x=>x.classList.remove('selected-marker'));const active=document.activeElement;if(active&&active.classList.contains('marker')&&!active.classList.contains('nearest-marker'))active.classList.add('selected-marker');else applyMarkerSelection();selected.innerHTML=`<b>Магазин 4 Лапы</b>${escapeHtml([p.city,p.title].filter(Boolean).join(', ')||'Адрес не указан')}`;selected.classList.add('show')}
-    function showLocationMessage(message){selected.innerHTML=`<b>Магазины рядом</b><span>${escapeHtml(message)}</span>`;selected.classList.add('show')}
-    function showNearby(){if(!userPosition)return;const stores=nearestStores();const radiusButtons=[3,5,10].map(r=>`<button type="button" data-radius="${r}" class="${r===nearbyRadiusKm?'active':''}">${r} км</button>`).join('');const list=stores.length?stores.map((p,i)=>`<button type="button" class="nearby-item${i===0?' nearest':''}" data-store-id="${escapeHtml(p.id)}"><span>${escapeHtml([p.city,p.title].filter(Boolean).join(', ')||'Адрес не указан')}${i===0?'<em>Ближайший магазин</em>':''}</span><strong>${formatDistance(p.distanceKm)}</strong></button>`).join(''):'<small>В выбранном радиусе магазинов не найдено. Увеличьте радиус.</small>';selected.innerHTML=`<b>Ближайшие магазины</b><div class="nearby-list">${list}</div><div class="radius-row"><span>Радиус:</span>${radiusButtons}</div>`;selected.classList.add('show')}
-    function locateUser(){if(!navigator.geolocation){showLocationMessage('Геолокация не поддерживается этим браузером.');return}locateButton.disabled=true;showLocationMessage('Определяем ваше местоположение…');navigator.geolocation.getCurrentPosition(pos=>{userPosition={lat:pos.coords.latitude,lon:pos.coords.longitude};center=[userPosition.lat,userPosition.lon];zoom=Math.max(12,Math.min(14,zoom));locateButton.disabled=false;render();showNearby()},err=>{locateButton.disabled=false;const message=err.code===1?'Разрешите доступ к геолокации в настройках браузера.':err.code===2?'Не удалось определить координаты устройства.':'Запрос геолокации занял слишком много времени.';showLocationMessage(message)},{enableHighAccuracy:false,timeout:10000,maximumAge:300000})}
-    function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-    function render(){const W=map.clientWidth,H=map.clientHeight,q=world(center[1],center[0]),cols=Math.ceil(W/T)+2,rows=Math.ceil(H/T)+2,fx=Math.floor(q[0]/T)-Math.floor(cols/2),fy=Math.floor(q[1]/T)-Math.floor(rows/2);originX=fx;originY=fy;layer.style.width=cols*T+'px';layer.style.height=rows*T+'px';const frag=document.createDocumentFragment();for(let yy=fy;yy<fy+rows;yy++)for(let xx=fx;xx<fx+cols;xx++){const n=2**zoom,key=`${zoom}/${xx}/${yy}`,kx=((xx%n)+n)%n,ky=Math.max(0,Math.min(n-1,yy));let im=cache.get(key);if(!im){im=new Image();im.className='tile';im.loading='lazy';im.decoding='async';im.src=tileUrl(kx,ky);im.onerror=()=>{im.style.opacity='.15'};cache.set(key,im)}im.style.left=(xx-fx)*T+'px';im.style.top=(yy-fy)*T+'px';frag.appendChild(im)}tx=W/2-(q[0]-fx*T);ty=H/2-(q[1]-fy*T);layer.style.transform=`translate3d(${tx}px,${ty}px,0)`;while(layer.firstChild)layer.removeChild(layer.firstChild);layer.appendChild(frag);
-      const cell=zoom<8?34:22,groups=new Map();for(const p of points){const a=world(+p.lon,+p.lat),sx=a[0]-fx*T,sy=a[1]-fy*T;if(sx<-35||sy<-35||sx>cols*T+35||sy>rows*T+35)continue;const key=Math.floor(sx/cell)+','+Math.floor(sy/cell);if(!groups.has(key))groups.set(key,[]);groups.get(key).push([sx,sy,p])}const marks=document.createDocumentFragment();for(const group of groups.values()){const sx=group.reduce((n,v)=>n+v[0],0)/group.length,sy=group.reduce((n,v)=>n+v[1],0)/group.length,d=document.createElement('button'),multi=group.length>1;d.type='button';d.className='marker'+(multi?' cluster':'');d.textContent=multi?group.length:'';d.style.left=(sx-(multi?14:10))+'px';d.style.top=(sy-(multi?14:10))+'px';d.title=multi?`${group.length} магазинов`:'Открыть адрес';d.onpointerdown=e=>e.stopPropagation();d.onclick=e=>{e.stopPropagation();if(multi){const worldX=originX*T+sx,worldY=originY*T+sy;center=lngLat(worldX,worldY);zoom=Math.min(18,zoom+1);render()}else showStore(group[0][2])};marks.appendChild(d)}layer.appendChild(marks);if(userPosition){const a=world(userPosition.lon,userPosition.lat),u=document.createElement('div');u.className='user-location';u.style.left=(a[0]-fx*T)+'px';u.style.top=(a[1]-fy*T)+'px';u.title='Ваше местоположение';layer.appendChild(u)}count.textContent=`${points.length} магазинов в России`}
-    const renderBase=render;
-    render=function(){renderBase();const nearest=nearestStores()[0];if(nearest){const a=world(+nearest.lon,+nearest.lat),d=document.createElement('button');d.type='button';d.className='marker nearest-marker';d.title='Ближайший магазин';d.setAttribute('aria-label','Ближайший магазин 4 Лапы');d.style.left=(a[0]-originX*T-12)+'px';d.style.top=(a[1]-originY*T-12)+'px';d.onpointerdown=e=>e.stopPropagation();d.onclick=e=>{e.stopPropagation();showStore(nearest)};layer.appendChild(d)}applyMarkerSelection()}
-    function fit(){if(!points.length)return;const xs=points.map(p=>+p.lon),ys=points.map(p=>+p.lat);center=[(Math.min(...ys)+Math.max(...ys))/2,(Math.min(...xs)+Math.max(...xs))/2];for(let n=8;n>=3;n--){zoom=n;const dx=(Math.max(...xs)-Math.min(...xs))/360*T*2**n,dy=(Math.max(...ys)-Math.min(...ys))/180*T*2**n;if(dx<innerWidth*.78&&dy<innerHeight*.78)break}}
-    function move(x,y){if(!drag)return;drag.dx=x-drag.x;drag.dy=y-drag.y;if(raf)return;const activeDrag=drag;raf=requestAnimationFrame(()=>{raf=0;if(!drag||drag!==activeDrag)return;layer.style.transform=`translate3d(${activeDrag.baseTx+activeDrag.dx}px,${activeDrag.baseTy+activeDrag.dy}px,0)`})}
-    map.onpointerdown=e=>{if(e.pointerType==='mouse'&&e.button!==0)return;drag={x:e.clientX,y:e.clientY,dx:0,dy:0,baseTx:tx,baseTy:ty};map.setPointerCapture?.(e.pointerId);map.style.cursor='grabbing';e.preventDefault()};map.onpointermove=e=>move(e.clientX,e.clientY);map.onpointerup=()=>{if(!drag)return;const q=world(center[1],center[0]);center=lngLat(q[0]-drag.dx,q[1]-drag.dy);drag=null;map.style.cursor='grab';render()};map.onpointercancel=()=>{drag=null;map.style.cursor='grab';render()};map.onwheel=e=>{e.preventDefault();zoom=Math.max(3,Math.min(18,zoom+(e.deltaY<0?1:-1)));render()};document.getElementById('plus').onclick=()=>{zoom=Math.min(18,zoom+1);render()};document.getElementById('minus').onclick=()=>{zoom=Math.max(3,zoom-1);render()};window.addEventListener('resize',render);
-    const pinchPointers=new Map();let pinchDistance=0;const oldPointerDown=map.onpointerdown,oldPointerMove=map.onpointermove,oldPointerUp=map.onpointerup,oldPointerCancel=map.onpointercancel;const distance=()=>{const a=[...pinchPointers.values()];return a.length<2?0:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)};map.onpointerdown=e=>{if(e.pointerType==='touch'){pinchPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pinchPointers.size>=2){drag=null;pinchDistance=distance();map.releasePointerCapture?.(e.pointerId);e.preventDefault();return}}oldPointerDown(e)};map.onpointermove=e=>{if(e.pointerType==='touch'&&pinchPointers.has(e.pointerId)){pinchPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pinchPointers.size>=2){const next=distance();if(pinchDistance&&Math.abs(next-pinchDistance)>18){zoom=Math.max(3,Math.min(18,zoom+(next>pinchDistance?1:-1)));pinchDistance=next;render()}e.preventDefault();return}}oldPointerMove(e)};map.onpointerup=e=>{if(e.pointerType==='touch'){pinchPointers.delete(e.pointerId);if(pinchPointers.size>=1){pinchDistance=distance();e.preventDefault();return}pinchDistance=0}oldPointerUp(e)};map.onpointercancel=e=>{if(e.pointerType==='touch'){pinchPointers.delete(e.pointerId);pinchDistance=distance()}oldPointerCancel(e)};
-    selected.onclick=e=>{const radius=e.target.closest('[data-radius]');if(radius){nearbyRadiusKm=Number(radius.dataset.radius);showNearby();return}const store=e.target.closest('[data-store-id]');if(store){const p=points.find(x=>String(x.id)===String(store.dataset.storeId));if(p)showStore(p)}};locateButton.onclick=locateUser;const cached=(()=>{try{return JSON.parse(localStorage.getItem('nutripate-russia-stores')||'[]')}catch(_){return[]}})();if(cached.length){points=cached.filter(isRussia);fit();render()}loadMapProvider();fetch('store-points.json',{cache:'force-cache'}).then(r=>r.json()).then(x=>{points=(x.stores||[]).filter(isRussia);localStorage.setItem('nutripate-russia-stores',JSON.stringify(points));fit();render();if(userPosition)showNearby()}).catch(()=>{if(!cached.length)count.textContent='Не удалось загрузить магазины'});
-  })();
-  </script>
+(()=>{
+  const map=document.getElementById('map'),layer=document.getElementById('layer'),marks=document.getElementById('marks'),selected=document.getElementById('selected'),count=document.getElementById('count'),locateButton=document.getElementById('locate'),T=256;
+  let zoom=5,center=[55.75,37.62],points=[],drag=null,raf=0,tx=0,ty=0,originX=0,originY=0,userPosition=null,nearbyRadiusKm=3,nearbyCollapsed=false,wheelPending=null,wheelRaf=0;
+  const cache=new Map();
+  const world=(lon,lat,z=zoom)=>{const s=T*2**z,r=Math.sin(lat*Math.PI/180);return[(lon+180)/360*s,(.5-Math.log((1+r)/(1-r))/(4*Math.PI))*s]};
+  const lngLat=(x,y)=>{const s=T*2**zoom,n=Math.PI-2*Math.PI*Math.max(0,Math.min(s,y))/s;return[180/Math.PI*Math.atan(Math.sinh(n)),x/s*360-180]};
+  const isRussia=p=>Number.isFinite(+p.lat)&&Number.isFinite(+p.lon)&&+p.lat>=41&&+p.lat<=82&&+p.lon>=19&&+p.lon<=180;
+  const tileUrl=(x,y)=>`https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
+  function applyTransform(x,y){const value=`translate3d(${x}px,${y}px,0)`;layer.style.transform=value;if(marks)marks.style.transform=value}
+  function labelOf(p){return [p.city,p.address||p.title].filter(Boolean).join(', ')||'Адрес не указан'}
+  function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  function distanceKm(a,b){const rad=Math.PI/180,dLat=(b.lat-a.lat)*rad,dLon=(b.lon-a.lon)*rad,lat1=a.lat*rad,lat2=b.lat*rad;const h=Math.sin(dLat/2)**2+Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;return 6371*2*Math.atan2(Math.sqrt(h),Math.sqrt(1-h))}
+  function formatDistance(km){return km<1?`${Math.round(km*1000)} м`:`${km.toFixed(1).replace('.',',')} км`}
+  function allNearbyStores(){if(!userPosition)return[];return points.map(p=>({...p,distanceKm:distanceKm(userPosition,{lat:+p.lat,lon:+p.lon})})).filter(p=>p.distanceKm<=nearbyRadiusKm).sort((a,b)=>a.distanceKm-b.distanceKm)}
+  function nearestStores(){return allNearbyStores().slice(0,5)}
+  function showStore(p){selected.innerHTML=`<b>Магазин 4 Лапы</b>${escapeHtml(labelOf(p))}`;selected.classList.add('show')}
+  function showLocationMessage(message){selected.innerHTML=`<b>Магазины рядом</b><span>${escapeHtml(message)}</span>`;selected.classList.add('show')}
+  function showNearby(){if(!userPosition)return;const stores=nearestStores();const radiusButtons=[3,5,10].map(r=>`<button type="button" data-radius="${r}" class="${r===nearbyRadiusKm?'active':''}">${r} км</button>`).join('');const list=stores.length?stores.map((p,i)=>`<button type="button" class="nearby-item${i===0?' nearest':''}" data-store-id="${escapeHtml(p.id)}"><span>${escapeHtml(labelOf(p))}${i===0?'<em>Ближайший магазин</em>':''}</span><strong>${formatDistance(p.distanceKm)}</strong></button>`).join(''):'<small>В выбранном радиусе магазинов не найдено. Увеличьте радиус.</small>';selected.innerHTML=`<b>Ближайшие магазины</b><div class="nearby-list">${list}</div><div class="radius-row"><span>Радиус:</span>${radiusButtons}</div>`;selected.classList.add('show','nearby-panel');selected.classList.toggle('nearby-collapsed',nearbyCollapsed);const toggle=document.createElement('button');toggle.type='button';toggle.className='nearby-toggle';toggle.setAttribute('aria-label',nearbyCollapsed?'Развернуть список адресов':'Свернуть список адресов');toggle.onclick=e=>{e.stopPropagation();nearbyCollapsed=!nearbyCollapsed;showNearby()};selected.prepend(toggle)}
+  function locateUser(){if(!navigator.geolocation){showLocationMessage('Геолокация не поддерживается этим браузером.');return}locateButton.disabled=true;showLocationMessage('Определяем ваше местоположение…');navigator.geolocation.getCurrentPosition(pos=>{userPosition={lat:pos.coords.latitude,lon:pos.coords.longitude};center=[userPosition.lat,userPosition.lon];zoom=Math.max(zoom,14);locateButton.disabled=false;render();showNearby()},err=>{locateButton.disabled=false;showLocationMessage(err.code===1?'Разрешите доступ к геолокации в настройках браузера.':'Не удалось определить координаты.')},{enableHighAccuracy:false,timeout:10000,maximumAge:300000})}
+  function render(){
+    const W=map.clientWidth,H=map.clientHeight,q=world(center[1],center[0]),cols=Math.ceil(W/T)+2,rows=Math.ceil(H/T)+2,fx=Math.floor(q[0]/T)-Math.floor(cols/2),fy=Math.floor(q[1]/T)-Math.floor(rows/2);
+    originX=fx;originY=fy;layer.style.width=cols*T+'px';layer.style.height=rows*T+'px';if(marks){marks.style.width=cols*T+'px';marks.style.height=rows*T+'px'}
+    const live=new Set();
+    for(let yy=fy;yy<fy+rows;yy++)for(let xx=fx;xx<fx+cols;xx++){
+      const n=2**zoom,kx=((xx%n)+n)%n,ky=Math.max(0,Math.min(n-1,yy)),key=`${zoom}/${kx}/${ky}`;
+      live.add(key);let im=cache.get(key);
+      if(!im){im=new Image();im.className='tile';im.decoding='async';im.alt='';im.src=tileUrl(kx,ky);im.onerror=()=>{im.style.opacity='.2'};cache.set(key,im)}
+      im.style.left=(xx-fx)*T+'px';im.style.top=(yy-fy)*T+'px';if(im.parentNode!==layer)layer.appendChild(im);
+    }
+    for(const [key,im] of cache){if(!live.has(key)&&im.parentNode===layer)im.remove()}
+    if(cache.size>180){for(const key of [...cache.keys()]){if(!live.has(key))cache.delete(key);if(cache.size<=140)break}}
+    tx=W/2-(q[0]-fx*T);ty=H/2-(q[1]-fy*T);applyTransform(tx,ty);
+    if(marks){
+      const cell=zoom>=16?0:56,groups=new Map(),frag=document.createDocumentFragment();
+      for(const p of points){
+        const a=world(+p.lon,+p.lat),sx=a[0]-fx*T,sy=a[1]-fy*T;
+        if(sx<-40||sy<-40||sx>cols*T+40||sy>rows*T+40)continue;
+        const key=cell?Math.floor(sx/cell)+','+Math.floor(sy/cell):String(p.id);
+        if(!groups.has(key))groups.set(key,[]);groups.get(key).push([sx,sy,p]);
+      }
+      for(const group of groups.values()){
+        const sx=group.reduce((n,v)=>n+v[0],0)/group.length,sy=group.reduce((n,v)=>n+v[1],0)/group.length,multi=group.length>1,d=document.createElement('button');
+        d.type='button';d.className='marker'+(multi?' cluster':'');d.textContent=multi?String(group.length):'';
+        d.style.left=(sx-(multi?14:10))+'px';d.style.top=(sy-(multi?14:10))+'px';
+        d.title=multi?`${group.length} магазинов`:'Открыть адрес';
+        d.onpointerdown=e=>e.stopPropagation();
+        d.onclick=e=>{e.stopPropagation();if(multi){center=lngLat(originX*T+sx,originY*T+sy);zoom=Math.min(18,zoom+2);render()}else showStore(group[0][2])};
+        frag.appendChild(d);
+      }
+      if(userPosition){const a=world(userPosition.lon,userPosition.lat),u=document.createElement('div');u.className='user-location';u.style.left=(a[0]-fx*T)+'px';u.style.top=(a[1]-fy*T)+'px';frag.appendChild(u)}
+      marks.replaceChildren(frag);
+    }
+    count.textContent=`${points.length} магазинов в России`;
+  }
+  function fit(){if(!points.length)return;let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;for(const p of points){const x=+p.lon,y=+p.lat;if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y}center=[(minY+maxY)/2,(minX+maxX)/2];for(let n=8;n>=3;n--){zoom=n;const dx=(maxX-minX)/360*T*2**n,dy=(maxY-minY)/180*T*2**n;if(dx<innerWidth*.78&&dy<innerHeight*.78)break}}
+  function move(x,y){if(!drag)return;drag.dx=x-drag.x;drag.dy=y-drag.y;if(raf)return;const active=drag;raf=requestAnimationFrame(()=>{raf=0;if(drag!==active)return;applyTransform(active.baseTx+active.dx,active.baseTy+active.dy)})}
+  map.onpointerdown=e=>{if(e.target.closest&&e.target.closest('.marker'))return;if(e.pointerType==='mouse'&&e.button!==0)return;drag={x:e.clientX,y:e.clientY,dx:0,dy:0,baseTx:tx,baseTy:ty};map.setPointerCapture?.(e.pointerId);map.style.cursor='grabbing'};
+  map.onpointermove=e=>move(e.clientX,e.clientY);
+  map.onpointerup=()=>{if(!drag)return;const q=world(center[1],center[0]);center=lngLat(q[0]-drag.dx,q[1]-drag.dy);drag=null;map.style.cursor='grab';render()};
+  map.onpointercancel=()=>{drag=null;map.style.cursor='grab';render()};
+  map.onwheel=e=>{e.preventDefault();wheelPending=Math.max(3,Math.min(18,(wheelPending??zoom)+(e.deltaY<0?1:-1)));if(wheelRaf)return;wheelRaf=requestAnimationFrame(()=>{wheelRaf=0;zoom=wheelPending;wheelPending=null;render()})};
+  document.getElementById('plus').onclick=()=>{zoom=Math.min(18,zoom+1);render()};
+  document.getElementById('minus').onclick=()=>{zoom=Math.max(3,zoom-1);render()};
+  window.addEventListener('resize',render);
+  const pinchPointers=new Map();let pinchDistance=0;
+  const pinchDistanceNow=()=>{const a=[...pinchPointers.values()];return a.length<2?0:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)};
+  const previousDown=map.onpointerdown,previousMove=map.onpointermove,previousUp=map.onpointerup,previousCancel=map.onpointercancel;
+  map.onpointerdown=e=>{if(e.pointerType==='touch'){pinchPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pinchPointers.size>=2){drag=null;pinchDistance=pinchDistanceNow();return}}previousDown(e)};
+  map.onpointermove=e=>{if(e.pointerType==='touch'&&pinchPointers.has(e.pointerId)){pinchPointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pinchPointers.size>=2){const next=pinchDistanceNow();if(pinchDistance&&Math.abs(next-pinchDistance)>28){zoom=Math.max(3,Math.min(18,zoom+(next>pinchDistance?1:-1)));pinchDistance=next;if(!wheelRaf)wheelRaf=requestAnimationFrame(()=>{wheelRaf=0;render()})}return}}previousMove(e)};
+  map.onpointerup=e=>{if(e.pointerType==='touch'){pinchPointers.delete(e.pointerId);if(pinchPointers.size){pinchDistance=pinchDistanceNow();return}pinchDistance=0}previousUp(e)};
+  map.onpointercancel=e=>{if(e.pointerType==='touch')pinchPointers.delete(e.pointerId);previousCancel(e)};
+  if(selected)selected.onclick=e=>{const radius=e.target.closest('[data-radius]');if(radius){nearbyRadiusKm=Number(radius.dataset.radius);showNearby();return}const store=e.target.closest('[data-store-id]');if(store){const p=points.find(x=>String(x.id)===String(store.dataset.storeId));if(p){center=[+p.lat,+p.lon];zoom=Math.max(zoom,16);render();showStore(p)}}};
+  if(locateButton)locateButton.onclick=locateUser;
+  const pointsUrl=(document.body.dataset.points||'store-points.json')+'?v=20261128-1';
+  fetch(pointsUrl).then(r=>r.json()).then(x=>{points=(x.stores||[]).filter(isRussia);fit();render()}).catch(()=>{count.textContent='Не удалось загрузить магазины'});
+})();
+
+</script>
 </body>
 </html>

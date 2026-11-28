@@ -61,9 +61,9 @@
   if (typeof window.selectFood === 'function') {
     const previousSelect = window.selectFood;
     window.selectFood = function (id) {
-      if (state.secondaryPicking && needPro()) {
+      if (state.secondaryPicking) {
         state.secondaryPicking = false;
-        return;
+        if (typeof window.addSecondaryFoodWeb === 'function') return window.addSecondaryFoodWeb(id);
       }
       const ids = freeIds();
       if (ids && ids.indexOf(id) < 0) {
@@ -78,7 +78,7 @@
     const previousActions = actions;
     actions = function (name) {
       if (name === 'add-pet' && Array.isArray(state.pets) && state.pets.length >= 1 && needPro()) return;
-      const gates = ['reminders', 'treat', 'note', 'report', 'stock', 'weight', 'add-weight', 'scan'];
+      const gates = ['reminders', 'treat', 'note', 'report', 'scan'];
       if (gates.indexOf(name) >= 0 && needPro()) return;
       return previousActions(name);
     };
@@ -87,12 +87,6 @@
   document.addEventListener('click', function (event) {
     const day = event.target.closest('[data-day]');
     if (day && needPro()) {
-      event.preventDefault();
-      event.stopPropagation();
-      return;
-    }
-    const weightTab = event.target.closest('[data-diary="weight"]');
-    if (weightTab && needPro()) {
       event.preventDefault();
       event.stopPropagation();
     }

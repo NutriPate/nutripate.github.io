@@ -206,3 +206,26 @@ body .screen-title h1,body .food-parity .screen-title h1,body .diary-parity .scr
 /* Светлая палитра: тёмный цвет используется для текста, а не для поверхностей. */
 .pro-hero{background:#D9F8F5!important;color:#062B2D!important}
 .pro-hero p{color:#405F5C!important}
+.food-thumb,.pack,.food-detail-hero{display:grid;place-items:center;overflow:hidden;background:#fff}
+.food-thumb img,.hero-food-photo,.food-detail-hero img{display:block;width:auto!important;height:auto!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;object-position:center!important}
+.food-brief{margin:6px 0 0}
+.food-brief h3{margin:0 0 8px}
+.food-brief p{margin:0;line-height:1.5}
+#modal{max-height:calc(100svh - 24px);overflow-y:auto}
+.app-parity-food .food-detail-hero{min-height:0;max-height:220px;margin:8px 0 0}
+.app-parity-food .food-detail-hero img{max-height:200px!important}
+.food-brief{margin-top:16px}
+.food-detail-actions{display:flex;flex-direction:column;gap:16px;margin-top:16px}
+.hero-food-open{display:block;margin:0;padding:0;border:0;background:transparent;color:inherit;text-align:left;min-height:0;height:auto;cursor:pointer}
+.hero-food-open.pack{display:grid;flex:0 0 82px;width:82px;height:104px}
+.store-map-close{width:52px;height:52px;min-width:52px;padding:0;border:0;border-radius:50%!important;background:#D9F3F2;color:#092F32;display:grid;place-items:center;cursor:pointer;flex:0 0 52px}
+.store-map-close svg{width:22px;height:22px;display:block}
+.ration-swipe{overflow:hidden;width:100%;touch-action:pan-y;cursor:grab}
+.ration-track{display:flex;width:100%}
+.ration-slide{flex:0 0 100%;width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+.ration-kind{margin:0 0 2px;color:#667F80;font-size:12px!important}
+.ration-dots{display:flex;justify-content:center;gap:8px;margin:4px 0 12px}
+.ration-dot{width:9px;height:9px;border-radius:50%;background:#fff;border:1.5px solid #13B5B5;box-sizing:border-box}
+.ration-dot.on{background:#13B5B5}
+.food-detail-actions>button,.food-detail-actions>.food-page-link{width:100%;min-height:54px;margin:0!important;display:flex;align-items:center;justify-content:center;border-radius:16px;text-decoration:none;font:inherit;font-weight:650}
+.food-detail-actions>.food-page-link{background:#fff;color:#000;border:1px solid #DCE5DE}

@@ -38,9 +38,9 @@
         <img class="pets-hero-photo" src="${escText(typeof window.petPhoto === 'function' ? window.petPhoto(p) : '')}" alt="${escText(p.name || 'Питомец')}">
       </section>
       <div class="pets-info-list">
-        <div class="pets-info-row"><span>Пол · стерилизация</span><strong>${sex} · ${sterilized} <b>›</b></strong></div>
-        <div class="pets-info-row"><span>Вес · активность</span><strong>${escText(String(p.weight || '—').replace('.', ','))} кг · ${activityLabel(p.activity)} <b>›</b></strong></div>
-        <div class="pets-info-row"><span>Здоровье и аллергии</span><strong>${escText(petValue(p))} <b>›</b></strong></div>
+        <button class="pets-info-row" type="button" data-edit-pet="${escText(p.id)}"><span>Пол · стерилизация</span><strong>${sex} · ${sterilized} <b>›</b></strong></button>
+        <button class="pets-info-row" type="button" data-edit-pet="${escText(p.id)}"><span>Вес · активность</span><strong>${escText(String(p.weight || '—').replace('.', ','))} кг · ${activityLabel(p.activity)} <b>›</b></strong></button>
+        <button class="pets-info-row" type="button" data-edit-pet="${escText(p.id)}"><span>Здоровье и аллергии</span><strong>${escText(petValue(p))} <b>›</b></strong></button>
       </div>
       <section class="pets-ration-card"><h3>Рацион ${species}</h3><p>${escText(grams)} г / день · 3 кормления</p><p>${escText(rationName)}</p></section>
       <section class="pets-report-card"><h3>История питомца в одном отчёте</h3><p>График веса, рацион и ваши записи. Отчёт можно сохранить и отправить ветеринару.</p><button class="primary" data-action="report">Скачать отчёт</button></section>

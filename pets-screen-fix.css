@@ -9,7 +9,7 @@
 .pets-hero-card .soft-button { margin-top:7px; min-height:36px; padding:7px 14px; border:0; border-radius:18px; font-size:13px; }
 .pets-hero-photo { width:126px; height:142px; object-fit:contain; align-self:end; }
 .pets-info-list { margin-bottom:16px; }
-.pets-info-row { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:66px; padding:15px 0; border-bottom:1px solid var(--line); }
+.pets-info-row { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:66px; padding:15px 0; border:0; border-bottom:1px solid var(--line); background:transparent; color:inherit; font:inherit; text-align:left; cursor:pointer; }
 .pets-info-row span { color:var(--muted); }
 .pets-info-row strong { font-weight:400; text-align:right; }
 .pets-info-row b { color:var(--teal); font-size:20px; font-weight:400; }

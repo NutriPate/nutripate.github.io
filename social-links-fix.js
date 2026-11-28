@@ -19,9 +19,7 @@
     const credits = document.querySelector('.more-parity .credits');
     if (credits && !credits.querySelector('.flag-mark')) credits.innerHTML = '<span class="credit-item"><img class="flag-mark" src="/assets/social/russia-flag.png" alt="Флаг России"><span>made in Russia</span></span><span class="credit-item"><img class="hse-mark" src="/assets/social/hse.png" alt="Логотип НИУ ВШЭ"><span>НИУ ВШЭ</span></span>';
   };
+  const main = document.getElementById('appMain');
+  if (main) new MutationObserver(() => bind()).observe(main, { childList: true });
   setTimeout(bind, 0);
-  setTimeout(bind, 500);
-  const observer = new MutationObserver(bind);
-  observer.observe(document.body, { childList: true, subtree: true });
-  setInterval(bind, 1000);
 }());

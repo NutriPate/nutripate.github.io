@@ -586,7 +586,7 @@
         merged.state.proPlan = serverPro.proPlan;
         if (!same) merged.changed = true;
       }
-      window.nutripateReplaceState(merged.state);
+      if (merged.changed && typeof window.nutripateReplaceState === 'function') window.nutripateReplaceState(merged.state);
       syncing = false;
       if (merged.changed) await pushAccount();
     } finally {
@@ -737,7 +737,7 @@
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") pullAccount().catch(() => {});
   });
-  setInterval(() => { pullAccount().catch(() => {}); }, 4000);
+  setInterval(() => { pullAccount().catch(() => {}); }, 30000);
 
   if (typeof window.savePet === "function" && !window.savePet.nutripateBreed) {
     const previousSavePet = window.savePet;
