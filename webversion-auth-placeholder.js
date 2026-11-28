@@ -407,6 +407,7 @@
     const foodSetAt = {};
     const foodClearedAt = {};
     const ration = {};
+    const rationSetAt = {};
     const foodPets = new Set([...petIds, ...Object.keys(local.selectedFoods || {}), ...Object.keys(remote.selectedFoods || {}), ...Object.keys(local.ration || {}), ...Object.keys(remote.ration || {})]);
     foodPets.forEach((petId) => {
       if (!petIds.has(petId)) return;
@@ -433,7 +434,14 @@
         if (chosenAt) foodSetAt[petId] = chosenAt;
         const localRation = (local.ration || {})[petId];
         const remoteRation = (remote.ration || {})[petId];
-        ration[petId] = Object.assign({}, remoteSaved >= localSaved && remoteRation ? remoteRation : (localRation || remoteRation || {}));
+        const localRationAt = String((local.rationSetAt || {})[petId] || '');
+        const remoteRationAt = String((remote.rationSetAt || {})[petId] || '');
+        const pickedRation = (localRationAt || remoteRationAt)
+          ? (remoteRationAt >= localRationAt ? (remoteRation || localRation) : (localRation || remoteRation))
+          : (remoteSaved >= localSaved && remoteRation ? remoteRation : (localRation || remoteRation || {}));
+        if (pickedRation && (pickedRation.secondaryId || pickedRation.share)) ration[petId] = Object.assign({}, pickedRation);
+        const pickedAt = remoteRationAt >= localRationAt ? (remoteRationAt || localRationAt) : (localRationAt || remoteRationAt);
+        if (pickedAt) rationSetAt[petId] = pickedAt;
       } else if (clearAt) foodClearedAt[petId] = clearAt;
     });
     const favoritesByPet = {};
@@ -477,6 +485,7 @@
       foodSetAt,
       foodClearedAt,
       ration,
+      rationSetAt,
       favoritesByPet,
       favoriteOnAt,
       removedFavorites,
@@ -496,7 +505,7 @@
       pro,
       proPlan,
     };
-    ["selectedFoods", "ration", "favoritesByPet", "feedDiary", "weightDiary", "stock"].forEach((key) => {
+    ["selectedFoods", "ration", "rationSetAt", "favoritesByPet", "feedDiary", "weightDiary", "stock"].forEach((key) => {
       Object.keys(state[key] || {}).forEach((id) => { if (!petIds.has(id)) delete state[key][id]; });
     });
     const before = JSON.stringify(slim(remote));
